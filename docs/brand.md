@@ -138,3 +138,5 @@ Notes:
   the saucer and is fixed before use (plan Task 9).
 - The steam loop arrives as HEVC, which not every browser plays; it is always re-encoded to VP9 WebM
   and H.264 MP4.
+- Planned: one 3D model per menu drink (plan Task 9b), each listed here once the owner approves and it
+  is made.

@@ -20,6 +20,8 @@ From design section 4 (decided by the owner):
 - Mood: cinematic and moody. Scope: the full café site.
 - Four 3D moments: living background, scroll journey, hero cup, brew-your-own, on a **photoreal**
   base: generated stills, loops and a 3D cup under live WebGL effects ([ADR 0002](adr/0002-photoreal-media.md)).
+- A **3D menu** (owner, 2026-11-26): a 3D counter plus a scroll-through bar, every drink its own
+  generated model (plan Task 9b, each on the owner's go); the landing cup transforms on scroll.
 - Visitor actions: reserve a table, order ahead for pickup, join the list, just explore. Forms save
   to a real, free backend.
 - Repository: public, `rehrabbi/umbrista`, MIT licence. Hosting: Vercel. Database: Neon Postgres,
