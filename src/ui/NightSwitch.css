@@ -1,0 +1,19 @@
+.night-switch {
+  min-height: 2.75rem;
+  padding: 0 var(--space-4);
+  border: 2px solid var(--color-shadow);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.night-switch[aria-pressed='true'] {
+  border-color: var(--color-signal);
+}
+
+.night-switch:focus-visible {
+  outline: 3px solid var(--color-signal);
+  outline-offset: 3px;
+}

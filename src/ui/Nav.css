@@ -111,3 +111,13 @@
     width: auto;
   }
 }
+
+.nav-night {
+  padding-top: var(--space-2);
+}
+
+@media (min-width: 56rem) {
+  .nav-night {
+    padding-top: 0;
+  }
+}

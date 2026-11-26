@@ -1,4 +1,5 @@
 import { useSmoothScroll } from '../scroll/useSmoothScroll'
+import { TimeOfDay } from '../time/TimeOfDay'
 import { Footer } from '../ui/Footer'
 import { Nav } from '../ui/Nav'
 import { SkipLink } from '../ui/SkipLink'
@@ -14,6 +15,7 @@ export function App() {
 
   return (
     <RouteFocusProvider value={routeFocus}>
+      <TimeOfDay />
       <SkipLink />
       <div className="shell">
         <Nav />
