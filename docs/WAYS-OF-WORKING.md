@@ -58,8 +58,8 @@ commit hashes, pull request link):
 - renaming a merged task branch to `merged/task-<n>-<slug>`.
 
 Before every commit the builder shows `git status`, checks that the diff holds only the
-intended work and no secrets, `.env` files, or build artifacts, and confirms the docs match
-reality.
+intended work and no secrets, `.env` files, or build artifacts, searches the docs and the commit
+messages for mentions of the tools used to write the work, and confirms the docs match reality.
 
 ## 5. Always ask the owner first
 

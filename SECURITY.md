@@ -17,7 +17,7 @@ choose **Report a vulnerability**. No email address is published for reports.
 Useful reports name the affected page, endpoint or file, what an attacker can achieve, and the
 steps to reproduce. A working proof of concept helps but is not required.
 
-Expect a first reply within about a week. This is a personal project, so there is no formal
+This is a personal project, so there is no guaranteed response time, no formal
 disclosure timeline and no bug bounty.
 
 ## Scope
