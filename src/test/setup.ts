@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom/vitest'
-import { beforeEach } from 'vitest'
+import { cleanup } from '@testing-library/react'
+import { afterEach, beforeEach } from 'vitest'
 
 type MediaMatches = Record<string, boolean>
 
@@ -46,4 +47,9 @@ beforeEach(() => {
   mediaMatches = {}
   installMatchMedia()
   setWebGL(true)
+})
+
+// Vitest globals are off, so Testing Library cannot register its own cleanup.
+afterEach(() => {
+  cleanup()
 })
