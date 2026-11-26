@@ -17,3 +17,7 @@ once the whole site is built.
   heading after in-app navigation, and the page title follows the route.
 - The interface kit: buttons, form fields with hints and errors, and toast messages, plus smooth
   scrolling that stays off when reduced motion is on.
+- Two clocks. The page follows the visitor's own dusk, estimated from their time zone with no
+  location prompt, and a "See it at night" button overrides it. The café's hours follow Calvessa:
+  open from its computed sunset until 03:00 café time, shown as "Opens tonight at ..." or "Open now,
+  until 03:00" on the landing and Visit pages.

@@ -49,3 +49,16 @@ test('following a nav link moves focus to the new page heading', async ({ page }
   await expect(page.getByRole('heading', { level: 1, name: 'Story' })).toBeFocused()
   await expect(page).toHaveTitle('Story · Umbrista')
 })
+
+test('the See it at night switch sets and clears the night look', async ({ page }) => {
+  await page.goto('/')
+  const html = page.locator('html')
+  const toggle = page.getByRole('button', { name: 'See it at night' })
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+  await expect(html).toHaveAttribute('data-time', 'night')
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+  await expect(html).toHaveAttribute('data-time', /^(night|day)$/)
+})

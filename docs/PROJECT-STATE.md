@@ -6,9 +6,10 @@ Last updated: 2026-11-26.
 
 ## 1. Current stage
 
-**Design system.** The repository foundation (Task 0), the app scaffold with CI (Task 1) and the
-approved brand (Task 2) are on `develop`, and both `main` and `develop` are protected. The brand
-system (Task 3) is merged, and the site shell (Task 4) is in progress on `task/4-kit-shell-routes`.
+**Time and the site shell.** Tasks 0 to 4 are merged into `develop`: the repository foundation, the
+app scaffold with CI, the approved brand, the brand system and the site shell (pull request #5, branch
+archived as `merged/task-4-kit-shell-routes`). Both `main` and `develop` are protected. Task 5, the
+two clocks, is built on `task/5-two-clocks` and is in review.
 
 ## 2. Locked decisions
 
@@ -64,7 +65,7 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   logo files in `docs/brand/`. Tests: `tokens.test.ts` (hex values and contrast), `Logo.test.tsx`,
   `brand-assets.test.ts`.
 
-- Task 4, in progress on `task/4-kit-shell-routes` (not yet merged): the interface kit in `src/ui/`
+- Task 4, merged into `develop` (pull request #5): the interface kit in `src/ui/`
   (`Button`, `Field`, toasts through `toast(message, {kind})` in `toast-store.ts` with the `Toaster`
   live regions, `HonestyNote`, `SkipLink`, `Nav`, `Footer`, `PageHeading`), the router (React Router,
   declarative `Routes`) in `src/app/routes.tsx` with every page except the landing page loaded lazily,
@@ -73,14 +74,21 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   motion), a stub for every page in `src/pages/`, and the not-found page. `BrowserRouter` is in
   `main.tsx`; tests wrap `App` in a `MemoryRouter`. The end-to-end smoke test now visits every route.
 
+- Task 5, in progress on `task/5-two-clocks` (not yet merged): the two clocks. `shared/hours.ts` is
+  pure and has no imports (the server reuses it): `CAFE`, `sunset` (NOAA solar position, null only
+  for polar day or night), `cafeNight`, `openingWindow` and `isOpen`, all in café time through `Intl`.
+  `src/time/useNight.ts` is the scene's clock: the visitor's dusk estimated from the time zone (no
+  location prompt); night runs from that dusk until 06:00 local. The "See it at night" override lives
+  in memory in `src/time/night-store.ts`. `TimeOfDay`, mounted in `App`, sets `data-time` on `<html>`.
+  `NightSwitch` is in the navigation; `OpeningTime` is on the landing and Visit pages.
+
 Not yet: any real page content.
 
 ## 4. Exact next step
 
-**Finish Task 4**: open the pull request from `task/4-kit-shell-routes` into `develop`, merge it on
-green and rename the branch to `merged/task-4-kit-shell-routes`. Check the 16 px favicon in a real
-browser tab. Then the next task of the plan. Setting `data-time` on `<html>` from the visitor's clock
-is for a later task; until then the site is always night.
+**Finish Task 5**: open the pull request from `task/5-two-clocks` into `develop`, merge it on
+green and rename the branch to `merged/task-5-two-clocks`. Check the 16 px favicon in a real
+browser tab. Then the next task of the plan.
 
 ## 5. Bring-up on a new machine
 

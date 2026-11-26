@@ -90,3 +90,25 @@ landing page, which is built in 3D from Task 6 on.
 - An invented currency, written as a word, keeps the prices from reading as a real offer.
 - The city is invented but sits on real coordinates in a real time zone, so its sunset, and the
   café's opening time, can be computed for any day.
+
+## 2026-11-26: Two clocks
+
+**Decided.** The scene and the café keep separate clocks. The scene follows the visitor's own dusk,
+guessed from the time zone (longitude from the offset, latitude fixed at 30 degrees), and is night
+until 06:00 local. The café's hours belong to Calvessa: sunset from the NOAA solar equations, close at
+03:00 in `Europe/Lisbon`. `shared/hours.ts` has no imports so the server can reuse it.
+
+**What to remember.**
+
+- Sunset is checked against published tables (timeanddate.com) within three minutes, for three places,
+  plus a polar case that must return `null`. A formula that looks right is not evidence.
+- "Tonight" does not change at midnight. At 01:30 café time the night that began yesterday is still
+  the one in use, so `cafeNight` moves to the new date at 03:00.
+- Lisbon changes its clocks at 01:00 UTC, so 03:00 local is never skipped or repeated, but it is
+  02:00 UTC on one night and 03:00 UTC on another. Never add hours to a UTC date; ask `Intl` for the
+  zone's offset at that instant, and test both change nights.
+- The visitor's offset can be anything from -12 h to +14 h, with half and quarter hours. The estimate
+  must always return a valid time and never throw.
+- A visitor's choice that must not outlive the page lives in a small in-memory store read with
+  `useSyncExternalStore`, so every component sees the same value and nothing touches storage.
+

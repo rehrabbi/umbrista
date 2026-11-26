@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import { Logo } from '../brand/Logo'
 import { buttonClasses } from './Button'
+import { NightSwitch } from './NightSwitch'
 import './Nav.css'
 
 const LINKS = [
@@ -62,6 +63,9 @@ export function Nav() {
               </NavLink>
             </li>
           ))}
+          <li className="nav-night">
+            <NightSwitch />
+          </li>
           <li className="nav-cta">
             <NavLink to="/reserve" className={buttonClasses('primary')}>
               Reserve a table
