@@ -54,14 +54,15 @@ function whenIdleOrIntent(task: () => void): () => void {
 
 /**
  * Chapter 1's scroll choreography (pin, lamps, title), while motion is allowed. GSAP loads with
- * it, once the page is idle or the visitor starts to scroll. Returns whether the title should still wait for its cue: if the
- * choreography cannot load, the title is simply shown.
+ * it, once the page is idle or the visitor starts to scroll. If it cannot load, the chapter ends
+ * as it does under reduced motion: the title shown, the lamps on, the photograph undimmed.
+ * Returns whether the title should still wait for its cue, and whether the choreography failed.
  */
 function useOpeningScroll(
   reduced: boolean,
   section: RefObject<HTMLElement | null>,
   stage: RefObject<HTMLElement | null>,
-): boolean {
+): { waiting: boolean; failed: boolean } {
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
@@ -70,19 +71,25 @@ function useOpeningScroll(
     if (reduced || !sectionElement || !stageElement) return
     let cancelled = false
     let stop: (() => void) | undefined
+    const lamps = [...stageElement.querySelectorAll<HTMLElement>('.landing-scene, .scroll-cue')]
     const cancelWait = whenIdleOrIntent(() => {
       import('./landing/openingScroll')
         .then(({ playOpening }) => {
           if (cancelled) return
           stop = playOpening({
             section: sectionElement,
-            lamps: [...stageElement.querySelectorAll<HTMLElement>('.landing-scene, .scroll-cue')],
+            lamps,
             letters: [...sectionElement.querySelectorAll<HTMLElement>('[data-letter]')],
             onProgress: journeyProgress.set,
           })
         })
         .catch(() => {
-          if (!cancelled) setFailed(true)
+          if (cancelled) return
+          for (const element of lamps) element.style.setProperty('--lamp', '1')
+          stop = () => {
+            for (const element of lamps) element.style.removeProperty('--lamp')
+          }
+          setFailed(true)
         })
     })
     return () => {
@@ -93,7 +100,7 @@ function useOpeningScroll(
     }
   }, [reduced, section, stage])
 
-  return !reduced && !failed
+  return { waiting: !reduced && !failed, failed: !reduced && failed }
 }
 
 /**
@@ -130,7 +137,7 @@ export function Landing() {
   const reduced = usePrefersReducedMotion()
   const section = useRef<HTMLElement>(null)
   const stage = useRef<HTMLDivElement>(null)
-  const waiting = useOpeningScroll(reduced, section, stage)
+  const { waiting, failed } = useOpeningScroll(reduced, section, stage)
 
   return (
     <div className="landing">
@@ -159,7 +166,7 @@ export function Landing() {
             label="A fogged hill street in Calvessa at dusk, tram rails running down it and one café window lit."
             priority
           >
-            <LiveJourney still={reduced} />
+            <LiveJourney still={reduced || failed} />
           </SceneHost>
           {!reduced && (
             <p className="scroll-cue" aria-hidden="true">
