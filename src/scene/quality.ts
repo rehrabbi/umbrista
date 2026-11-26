@@ -95,3 +95,14 @@ export function quality(frameMs?: number): Quality {
   const tier = tierFrom({ cores: navigator.hardwareConcurrency || undefined, memory, frameMs, reducedMotion })
   return { tier, dpr: dprFor(tier) }
 }
+
+const SOFTWARE_RENDERER = /swiftshader|llvmpipe|softpipe|basic render driver/i
+
+/**
+ * Is this WebGL renderer string a software rasteriser (SwiftShader, Mesa's llvmpipe or softpipe,
+ * Windows' Basic Render Driver)? Those draw a full-screen effect at 45 to 140 ms a frame, so the
+ * photograph alone is the better page.
+ */
+export function isSoftwareRenderer(renderer: string): boolean {
+  return SOFTWARE_RENDERER.test(renderer)
+}

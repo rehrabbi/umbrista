@@ -9,6 +9,12 @@ once the whole site is built.
 
 ### Added
 
+- The landing photograph comes alive: rain runs down the glass in front of the Calvessa street and
+  bends the view through each drop, a sodium lamp glow follows the pointer and rests on the lit café
+  window, the street recedes a little as the page scrolls, and the scene grades from overcast dusk
+  by day to lamp-lit night. It loads after first paint, lines up exactly with the photograph under
+  it, scales its work to the device, and is a still frame when reduced motion is on. Browsers that
+  can only draw WebGL in software keep the photograph instead.
 - Media and 3D foundation: responsive `Picture` stills (AVIF with WebP fallback), a `VideoLoop` that
   plays only while on screen and is just its poster under reduced motion, and a `SceneHost` that
   loads the 3D canvas after first paint and falls back to the photograph without WebGL or when the

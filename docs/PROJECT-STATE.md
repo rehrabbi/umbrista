@@ -6,9 +6,10 @@ Last updated: 2026-11-26.
 
 ## 1. Current stage
 
-**Media and 3D.** Task 6 is in progress (see section 3). Tasks 0 to 5 are merged into `develop`: the repository foundation, the app
-scaffold with CI, the approved brand, the brand system, the site shell and the two clocks (pull
-request #6). Both `main` and `develop` are protected. The owner approved a photoreal direction after a
+**Media and 3D.** Task 7, the living background, is in progress on `task/7-living-background` (see
+section 3). Tasks 0 to 6 are merged into `develop`: the repository foundation, the app scaffold with
+CI, the approved brand, the brand system, the site shell, the two clocks (pull request #6) and the
+media and 3D foundation (pull request #8). Both `main` and `develop` are protected. The owner approved a photoreal direction after a
 look-development round (ADR 0002); the design and plan are amended for it.
 
 ## 2. Locked decisions
@@ -91,7 +92,7 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   direction. The masters stay in Higgsfield; the owner's local copies are in the git-ignored
   `.superpowers/lookdev/`, and Task 6 commits the web derivatives.
 
-- Task 6, in progress on `task/6-media-3d-foundation` (not merged): the media and 3D foundation.
+- Task 6, merged into `develop` (pull request #8): the media and 3D foundation.
   `npm run media` (`scripts/media.mjs`, ffmpeg only) builds `public/media/` (AVIF and WebP stills at
   640, 1280, 1920 and 2560 px; the steam loop as VP9 WebM and H.264 MP4 at 1920 and 1280 px; its
   poster) and writes `src/media/manifest.ts`; the masters live in the git-ignored `media-src/`.
@@ -102,13 +103,31 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   landing page is now a lazy route with the street hero (empty scene) and a decorative steam loop.
   The unit-test helper `src/test/intersection.ts` fakes IntersectionObserver.
 
+- Task 7, in progress on `task/7-living-background` (committed locally, no pull request yet): the
+  living background on the landing hero. `src/scene/background/`: `uniforms.ts` (pure and tested:
+  pointer easing, night stepping over `--dur-scene`, tier to layer config, `coverUv` for the
+  `object-fit: cover` crop, parallax, scroll progress, width picking), `rain-glass.frag.glsl` (drops,
+  runnels and beads that refract the photo, light mist between them), `glow.frag.glsl` (the sodium
+  lamp and the dusk-to-night grade), and `LivingBackground` (one full-screen quad; the texture is an
+  ImageBitmap copy of the still's own `<img>`, so there is no second download, in sRGB with tone
+  mapping off; textures are cached for the page and only disposed on unmount, so remounts never
+  suspend again; a still frame under reduced motion). Tiers: low has no rain, mid one drop size and a one-tap mist, high two sizes and a
+  four-tap mist. `SceneHost` now shares its tier through `useSceneQuality` (`scene-quality.ts`). The
+  canvas carries `data-backdrop="ready"` and `data-tier` once drawn. `SceneHost` keeps the still and
+  mounts no canvas on a software renderer (`failIfMajorPerformanceCaveat`, plus
+  `isSoftwareRenderer` in `quality.ts` on the unmasked renderer name). Test-only window flags, set by
+  Playwright through `e2e/software-gl.ts`: `umbristaTestAllowSoftwareGL`, `umbristaTestTier` and
+  `umbristaTestIntensity`; CI's SwiftShader needs the first for every canvas test. End-to-end tests:
+  `e2e/living-background.spec.ts`.
+
 Not yet: any real page content.
 
 ## 4. Exact next step
 
-**Finish Task 6** (pull request into `develop`, merge on green, archive the branch as
-`merged/task-6-media-3d-foundation`), then Task 7. Still open from earlier tasks: check the 16 px
-favicon in a real browser tab.
+**Finish Task 7**: push `task/7-living-background`, open the pull request into `develop`, merge on
+green and archive the branch as `merged/task-7-living-background`. Then Task 8, the landing prototype
+checkpoint with the owner. Still open from earlier tasks: check the 16 px favicon in a real browser
+tab.
 
 ## 5. Bring-up on a new machine
 

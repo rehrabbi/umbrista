@@ -19,9 +19,10 @@ The site sets out to show three things at once:
 **In development.** The design, the plan, the repository foundation, the app scaffold with CI, the
 brand and the site shell (navigation, footer, a page for every route) are done. The two clocks (the
 visitor's dusk with a "See it at night" switch, and the café's hours in café time) are built and in
-review. The media and 3D foundation is in progress: responsive photographs, silent video loops and a
-WebGL host that falls back to the photograph. Pages are mostly stubs: there is no live site yet. Next
-is the 3D landing prototype.
+review. The media and 3D foundation is done: responsive photographs, silent video loops and a WebGL
+host that falls back to the photograph. The landing's living background (rain on the glass, a lamp
+that follows the pointer, a night grade) is in progress. Pages are mostly stubs: there is no live site
+yet. Next is the landing prototype checkpoint.
 
 ## Running it
 

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { allowSoftwareGL } from './software-gl'
 
 function collectProblems(page: import('@playwright/test').Page): string[] {
   const problems: string[] = []
@@ -30,6 +31,7 @@ test('the landing hero image loads, and the h1 comes first', async ({ page }) =>
 
 test('the canvas mounts over the still when WebGL works, and the page stays quiet', async ({ page }) => {
   const problems = collectProblems(page)
+  await allowSoftwareGL(page)
   await page.goto('/')
   await expect(page.locator('.landing-scene canvas')).toHaveCount(1, { timeout: 10_000 })
   await expect(page.locator('.landing-scene img')).toBeVisible()
@@ -41,6 +43,16 @@ test('without WebGL only the still is shown, with no errors', async ({ page }) =
   await page.addInitScript(() => {
     HTMLCanvasElement.prototype.getContext = () => null
   })
+  await page.goto('/')
+  await expect(page.locator('.landing-scene img')).toBeVisible()
+  await page.waitForTimeout(1500)
+  await expect(page.locator('.landing-scene canvas')).toHaveCount(0)
+  expect(problems).toEqual([])
+})
+
+test('on a software renderer only the still is shown, with no errors', async ({ page }) => {
+  // This browser's WebGL is SwiftShader; without the test override the site must refuse it.
+  const problems = collectProblems(page)
   await page.goto('/')
   await expect(page.locator('.landing-scene img')).toBeVisible()
   await page.waitForTimeout(1500)
@@ -64,8 +76,10 @@ test('under reduced motion the loop is its poster and there is no video element'
 })
 
 test('the canvas covers the still exactly and does not block clicks', async ({ page }) => {
+  await allowSoftwareGL(page)
   await page.goto('/')
-  const canvas = page.locator('.landing-scene canvas')
+  // The canvas is in the page while its scene loads, but hidden until the photograph is on it.
+  const canvas = page.locator('.landing-scene canvas[data-backdrop="ready"]')
   await expect(canvas).toHaveCount(1, { timeout: 10_000 })
   const still = await page.locator('.landing-scene img').boundingBox()
   const box = await canvas.boundingBox()

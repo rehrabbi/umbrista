@@ -93,4 +93,54 @@ describe('SceneHost', () => {
     expect(dpr[0]).toBe(1)
     expect([1, 1.5, 2]).toContain(dpr[1])
   })
+
+  it('keeps only the still on a software renderer', async () => {
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function (
+      this: HTMLCanvasElement,
+    ) {
+      const RENDERER = 0x9246
+      return {
+        canvas: this,
+        getExtension: (name: string) => (name === 'WEBGL_debug_renderer_info' ? { UNMASKED_RENDERER_WEBGL: RENDERER } : null),
+        getParameter: (parameter: number) => (parameter === RENDERER ? 'Google SwiftShader' : null),
+      } as unknown as WebGLRenderingContext
+    } as unknown as HTMLCanvasElement['getContext'])
+    renderHost()
+    await new Promise((resolve) => setTimeout(resolve, 900))
+    expect(screen.getByAltText(LABEL)).toBeInTheDocument()
+    expect(screen.queryByTestId('r3f')).toBeNull()
+    getContext.mockRestore()
+  })
+
+  it('asks the browser to refuse a context with a major performance caveat', async () => {
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext')
+    renderHost()
+    await screen.findByTestId('r3f', {}, SLOW)
+    expect(getContext).toHaveBeenCalledWith('webgl2', { failIfMajorPerformanceCaveat: true })
+    getContext.mockRestore()
+  })
+
+  it('allows a software renderer when a test sets the override', async () => {
+    ;(window as Window & { umbristaTestAllowSoftwareGL?: boolean }).umbristaTestAllowSoftwareGL = true
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext')
+    try {
+      renderHost()
+      await screen.findByTestId('r3f', {}, SLOW)
+      expect(getContext).toHaveBeenCalledWith('webgl2', undefined)
+    } finally {
+      delete (window as Window & { umbristaTestAllowSoftwareGL?: boolean }).umbristaTestAllowSoftwareGL
+      getContext.mockRestore()
+    }
+  })
+
+  it('draws at the tier a test forces', async () => {
+    ;(window as Window & { umbristaTestTier?: string }).umbristaTestTier = 'low'
+    try {
+      renderHost()
+      const dpr = (await screen.findByTestId('r3f', {}, SLOW)).getAttribute('data-dpr')
+      expect(JSON.parse(dpr!)).toEqual([1, 1])
+    } finally {
+      delete (window as Window & { umbristaTestTier?: string }).umbristaTestTier
+    }
+  })
 })

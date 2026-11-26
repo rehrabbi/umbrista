@@ -1,8 +1,9 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { StillName } from '../media/manifest'
 import { Picture } from '../media/Picture'
-import { measureFrameTime, quality, type Quality } from './quality'
+import { dprFor, isSoftwareRenderer, measureFrameTime, quality, type Quality, type Tier } from './quality'
 import { SceneBoundary } from './SceneBoundary'
+import { SceneQualityContext } from './scene-quality'
 import { useSceneActive } from './visibility'
 import './SceneHost.css'
 
@@ -23,14 +24,46 @@ export interface SceneHostProps {
 
 const FALLBACK_DELAY_MS = 200
 
-function hasWebGL(): boolean {
+/*
+ * Test-only hooks. Playwright sets these with `addInitScript`; nothing in the app sets them.
+ * - `umbristaTestAllowSoftwareGL = true`: CI's headless browser only has software WebGL
+ *   (SwiftShader), and the canvas still needs testing there.
+ * - `umbristaTestTier = 'low' | 'mid' | 'high'`: draw at that tier, to test each tier's shader.
+ */
+type TestHooks = Window & { umbristaTestAllowSoftwareGL?: boolean; umbristaTestTier?: Tier }
+
+function softwareAllowed(): boolean {
+  return (window as TestHooks).umbristaTestAllowSoftwareGL === true
+}
+
+function forcedTier(): Tier | undefined {
+  const tier = (window as TestHooks).umbristaTestTier
+  return tier === 'low' || tier === 'mid' || tier === 'high' ? tier : undefined
+}
+
+/** The unmasked renderer name, or '' if the browser will not say. */
+function rendererName(gl: WebGLRenderingContext): string {
+  const info = gl.getExtension?.('WEBGL_debug_renderer_info')
+  const name: unknown = gl.getParameter?.(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER)
+  return typeof name === 'string' ? name : ''
+}
+
+/**
+ * Is there WebGL fast enough for a live scene? The browser is asked to refuse a context it would
+ * have to emulate in software, and the renderer's name is checked too, since not every browser
+ * honours that request.
+ */
+function hasFastWebGL(): boolean {
   try {
+    const allowSoftware = softwareAllowed()
+    const options = allowSoftware ? undefined : { failIfMajorPerformanceCaveat: true }
     const canvas = document.createElement('canvas')
-    const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl')
+    const gl = (canvas.getContext('webgl2', options) ?? canvas.getContext('webgl', options)) as WebGLRenderingContext | null
     if (!gl) return false
+    const fast = allowSoftware || !isSoftwareRenderer(rendererName(gl))
     // Hand the probe context straight back, so it does not count against the browser's limit.
-    ;(gl as WebGLRenderingContext).getExtension?.('WEBGL_lose_context')?.loseContext()
-    return true
+    gl.getExtension?.('WEBGL_lose_context')?.loseContext()
+    return fast
   } catch {
     return false
   }
@@ -49,8 +82,9 @@ function afterFirstPaint(task: () => void): () => void {
 /**
  * The stage for a live 3D scene. The still is always there first, so the page has a photograph
  * before any 3D loads. The Canvas mounts after first paint, fades in, and runs its frame loop only
- * while the scene is visible. If WebGL is missing, or the context is lost during the visit, the
- * canvas is removed and the still is all that remains: never a blank or black canvas.
+ * while the scene is visible. If WebGL is missing or only emulated in software, or the context is
+ * lost during the visit, the canvas is removed and the still is all that remains: never a blank or
+ * black canvas, and never a slideshow of slow frames.
  */
 export function SceneHost({ still, label, priority = false, className, children }: SceneHostProps) {
   const ref = useRef<HTMLDivElement>(null)
@@ -62,9 +96,11 @@ export function SceneHost({ still, label, priority = false, className, children 
     let cancelled = false
     const cancel = afterFirstPaint(() => {
       // Probed here, not at mount, so no WebGL context is created during the LCP window.
-      if (!hasWebGL()) return
+      if (!hasFastWebGL()) return
       void measureFrameTime().then((frameMs) => {
-        if (!cancelled) setTier(quality(frameMs))
+        if (cancelled) return
+        const forced = forcedTier()
+        setTier(forced ? { tier: forced, dpr: dprFor(forced) } : quality(frameMs))
       })
     })
     return () => {
@@ -91,7 +127,7 @@ export function SceneHost({ still, label, priority = false, className, children 
         <SceneBoundary onError={() => setLost(true)}>
           <Suspense fallback={null}>
             <SceneCanvas frameloop={active ? 'always' : 'demand'} dpr={tier.dpr}>
-              {children}
+              <SceneQualityContext value={tier}>{children}</SceneQualityContext>
             </SceneCanvas>
           </Suspense>
         </SceneBoundary>
