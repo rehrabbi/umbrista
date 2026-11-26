@@ -8,7 +8,7 @@ Last updated: 2026-11-26.
 
 **Design system.** The repository foundation (Task 0), the app scaffold with CI (Task 1) and the
 approved brand (Task 2) are on `develop`, and both `main` and `develop` are protected. The brand
-system (Task 3) is in progress on `task/3-brand-system`.
+system (Task 3) is merged, and the site shell (Task 4) is in progress on `task/4-kit-shell-routes`.
 
 ## 2. Locked decisions
 
@@ -56,7 +56,7 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   by the owner: Logo A "Long shadow", Palette 1 "Sodium", Type 1 "Signage", the city of Calvessa,
   prices in crowns. The values are in `docs/brand.md`.
 
-- Task 3, in progress on `task/3-brand-system` (not yet merged): the design tokens
+- Task 3, merged into `develop`: the design tokens
   (`src/styles/tokens.css`, night on `:root`, day under `[data-time="day"]`), `base.css`, self-hosted
   fonts (`src/styles/fonts.ts`), `src/brand/geometry.ts` and the `Logo` component (mark, wordmark,
   lockup; the wordmark is outlined by `npm run wordmark`), every icon and the link preview image from
@@ -64,14 +64,23 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   logo files in `docs/brand/`. Tests: `tokens.test.ts` (hex values and contrast), `Logo.test.tsx`,
   `brand-assets.test.ts`.
 
-Not yet: any feature of the site.
+- Task 4, in progress on `task/4-kit-shell-routes` (not yet merged): the interface kit in `src/ui/`
+  (`Button`, `Field`, toasts through `toast(message, {kind})` in `toast-store.ts` with the `Toaster`
+  live regions, `HonestyNote`, `SkipLink`, `Nav`, `Footer`, `PageHeading`), the router (React Router,
+  declarative `Routes`) in `src/app/routes.tsx` with every page except the landing page loaded lazily,
+  `useRouteFocus` (focus moves to the new page's `h1` after in-app navigation, never on first load;
+  titles come from `src/app/titles.ts`), `useSmoothScroll` (Lenis, never constructed under reduced
+  motion), a stub for every page in `src/pages/`, and the not-found page. `BrowserRouter` is in
+  `main.tsx`; tests wrap `App` in a `MemoryRouter`. The end-to-end smoke test now visits every route.
+
+Not yet: any real page content.
 
 ## 4. Exact next step
 
-**Finish Task 3**: open the pull request from `task/3-brand-system` into `develop`, merge it on green
-and rename the branch to `merged/task-3-brand-system`. Check the 16 px favicon in a real browser tab.
-Then the next task of the plan. Setting `data-time` on `<html>` from the visitor's clock is for a
-later task; until then the site is always night.
+**Finish Task 4**: open the pull request from `task/4-kit-shell-routes` into `develop`, merge it on
+green and rename the branch to `merged/task-4-kit-shell-routes`. Check the 16 px favicon in a real
+browser tab. Then the next task of the plan. Setting `data-time` on `<html>` from the visitor's clock
+is for a later task; until then the site is always night.
 
 ## 5. Bring-up on a new machine
 
