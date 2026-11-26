@@ -7,8 +7,13 @@ two overlap, that file wins.
 
 ## Local setup
 
-The app does not exist yet; setup instructions arrive with the scaffold (plan Task 1) and will be
-kept in the [README](README.md).
+You need Node 24 (the version in [`.nvmrc`](.nvmrc)) and npm. Setup and the everyday scripts are in
+the [README](README.md).
+
+```bash
+npm ci
+npx playwright install chromium   # once, for the end-to-end test
+```
 
 ## Branching model
 
@@ -44,10 +49,19 @@ feat: add the reservation form
 
 ## Before opening a pull request
 
-Run what CI runs so nothing fails after the fact. The commands are added here as the scaffold
-and CI land; once they exist this section lists lint, type check, unit tests, build and the
-end-to-end suite. Until then check that no secret, `.env` file or build artifact is in the diff
-and that the documentation in `docs/` still matches reality.
+Run what CI runs so nothing fails after the fact:
+
+```bash
+npm run lint        # oxlint
+npm run typecheck   # tsc -b
+npm test            # Vitest unit tests
+npm run build       # type check, then the production build
+npm run e2e         # Playwright smoke test against the built site
+```
+
+A clean build only proves the code compiles, so also open the page and use what you changed.
+Then check that no secret, `.env` file or build artifact is in the diff and that the documentation
+in `docs/` still matches reality.
 
 ## Code of conduct and ownership
 

@@ -46,3 +46,24 @@ rewriting history is something the working agreement forbids without the owner's
 
 **Practice.** Tool-specific instruction files stay out of the repository (they are git-ignored), and
 the checks before a commit include a search of the docs and the commit messages for such mentions.
+
+## 2026-11-26: The scaffold and the seven checks
+
+**Decided.** The app starts as a plain Vite, React 19 and TypeScript project on Node 24, installing
+only what the first task uses; the 3D, scroll and form libraries arrive with the tasks that need
+them. CI runs four jobs (lint and types, unit tests, build, Playwright end-to-end) and a security
+workflow runs three (CodeQL, `npm audit`, gitleaks). All seven become required checks on `main` and
+`develop`.
+
+**Why.** A small first dependency tree is quick to audit, and every later addition shows up as its
+own reviewed change. Required checks only work once they exist and have passed at least once, so
+protection comes after this task merges rather than before.
+
+**What to remember.**
+
+- Every GitHub Action is pinned to a full commit SHA with its version in a comment. A tag can be
+  moved; a commit cannot. Annotated tags have to be dereferenced to find the commit they point at.
+- gitleaks runs as a release binary checked against the release's checksum file, not as an Action.
+- Every job has a time limit, so a hung run fails in minutes instead of GitHub's six-hour default.
+- A test that proves "state resets between tests" needs two tests: one that changes the state and a
+  later one that checks the defaults. A single test can't catch a missing reset.

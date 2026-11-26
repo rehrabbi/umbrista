@@ -16,8 +16,25 @@ The site sets out to show three things at once:
 
 ## Status
 
-**In design and setup.** The design and the plan are written and the repository foundation is in
-place; the app itself is not built yet. There is no live site and there are no screenshots yet.
+**In setup.** The design and the plan are written, the repository foundation is in place, and the
+app scaffold (Vite, React, TypeScript, tests and CI) is in progress. The page is still just a
+heading: there is no live site and there are no screenshots yet. Next is the brand board.
+
+## Running it
+
+You need Node 24 (see [`.nvmrc`](.nvmrc)).
+
+```bash
+npm ci                            # install exactly what package-lock.json says
+npm run dev                       # development server with hot reload
+npm run build                     # type check, then build to dist/
+npm run preview                   # serve the built site locally
+npm test                          # unit tests (Vitest)
+npm run lint                      # oxlint
+npm run typecheck                 # tsc -b
+npx playwright install chromium   # once, then:
+npm run e2e                       # end-to-end smoke test (Playwright)
+```
 
 ## Planned stack
 
