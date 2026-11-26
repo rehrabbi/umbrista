@@ -252,8 +252,9 @@ letter by letter. Waiting for the owner's verdict on the feel.
   (`uNight`) is still the visitor's clock or the switch.
 - **The lamps scrub; the title is a cue.** Tied directly to the scroll, the letters would crawl or
   jump with the visitor's hand. Instead, crossing a point plays them in their own time (about
-  1.2 s from the first letter to the last at rest), on the settle curve read from the CSS token, and
-  scrolling back sinks them faster.
+  1.15 s from the first letter starting to the last at rest), on the settle curve read from the
+  CSS token, and scrolling back sinks them 1.8 times faster (about 0.64 s), both inside the motion
+  band of 0.6 to 1.2 s.
 - **Composition before effect.** The lit window sat behind the title and under the heaviest scrim,
   so the chapter's one moving idea was hidden. On wide screens the copy is now a low band with the
   opening time beside the title, and the scrim stops lower; on phones the crop is shifted
@@ -263,6 +264,11 @@ letter by letter. Waiting for the owner's verdict on the feel.
 
 - GSAP reads a CSS `translateY(105%)` as a pixel `y`. Animating `yPercent` on top of it left the
   letters 146 px low and invisible; set `y: 0` in both ends of the tween.
+- Give Lenis one clock. Before the handover it had rAF timestamps (since the page started); GSAP's
+  ticker time counts from when GSAP loaded, seconds lower. The first step after the handover was
+  negative, the damping overshot by tens of thousands of pixels, and a smooth scroll in flight
+  jumped to the top, which is the usual case, since the visitor's first wheel loads GSAP. The
+  ticker now passes `performance.now()`, and a new driver is lined up with the last time given.
 - GSAP's ticker runs on `Date.now`. A test clock that freezes the date (Playwright's
   `setFixedTime`) freezes Lenis too; use `setSystemTime`, which lets time flow.
 - A custom property set on a container restyles everything inside it. Writing `--lamp` on the stage

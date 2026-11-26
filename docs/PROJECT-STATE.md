@@ -138,19 +138,28 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
     (the pin); one ScrollTrigger reads its progress (`src/pages/landing/openingScroll.ts`, loaded
     on idle or on the first scroll intent, never on the critical path). The lamps follow the scroll
     exactly; the title is a cue: past `OPENING.titleAt` its letters rise one by one on
-    `--ease-settle` over `--dur-chapter`, and sink back faster above it. `--lamp` is set on the scene
+    `--ease-settle` over `--dur-chapter`, 25 ms apart (about 1.15 s in all), and sink back 1.8
+    times faster (about 0.64 s) above it (`titleTiming.ts`). If the choreography cannot load, the
+    chapter ends as under reduced motion: title shown, lamps on, photograph undimmed. `--lamp` is set on the scene
     host and the scroll cue only, and dims the still underneath while there is no canvas.
     `KineticTitle` (`src/pages/landing/`) keeps the phrase as visually hidden text and the letters
     `aria-hidden`. The h1 is "Umbrista" plus the promise. Under reduced motion there is no pin, no
     ScrollTrigger and no GSAP: the title is whole, the lamps are on, and later chapters fade in.
   - `src/scroll/useSmoothScroll.ts` has a frame driver (`driveWith`) and scroll listeners
     (`onSmoothScroll`); `src/scroll/scrollTrigger.ts` hands Lenis to GSAP's ticker and updates
-    ScrollTrigger on every Lenis scroll. One Lenis, one loop.
+    ScrollTrigger on every Lenis scroll. One Lenis, one loop, on one clock: the ticker passes
+    `performance.now()`, and a new driver's first time is lined up with the last, because a
+    backward step made a smooth scroll in flight jump to the top.
   - `VideoLoop` asks for its poster only near the screen. `vite.config.ts` preloads the three
     first-screen font files (the swap had shifted the large title).
   - `lighthouserc.json` and the CI job "Lighthouse budget" (`npx lhci autorun` against
     `vite preview`, mobile preset, `/`): performance at least 0.9, LCP at most 2.5 s, CLS at most
-    0.05, median of three runs. The new job is not yet a required check on `develop`.
+    0.05, median of five runs. The new job is not yet a required check on `develop`.
+  - **What that budget measures.** CI's runner has no GPU and `SceneHost` refuses software WebGL,
+    so the job audits the landing without its canvas (it scores 0.96 to 0.99 there). On a desktop
+    with a GPU the canvas mounts during the audit and the score is about 0.80 locally: the page's
+    first WebGL context and evaluating three.js block the main thread. Whether the canvas should
+    mount later on phones is the owner's call at the checkpoint.
   - End-to-end: `e2e/landing-chapter.spec.ts`.
 
 Not yet: the rest of the journey, the hero cup, and any real page content beyond the landing.

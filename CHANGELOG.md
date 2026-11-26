@@ -15,7 +15,9 @@ once the whole site is built.
   reduced motion it is one still screen with the lamps on and the title whole, and the sections
   below fade in. The scroll is smooth and the animation follows it in the same frame.
 - A Lighthouse budget in CI for the landing on a phone profile: performance at least 90, the largest
-  image painted within 2.5 seconds, and layout shift below 0.05.
+  image painted within 2.5 seconds, and layout shift below 0.05. CI's runner has no GPU, so it
+  measures the landing without its 3D canvas; on a desktop with a GPU the score is about 80, held
+  back by starting WebGL and loading three.js.
 
 ### Changed
 
