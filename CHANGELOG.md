@@ -9,6 +9,13 @@ once the whole site is built.
 
 ### Added
 
+- Media and 3D foundation: responsive `Picture` stills (AVIF with WebP fallback), a `VideoLoop` that
+  plays only while on screen and is just its poster under reduced motion, and a `SceneHost` that
+  loads the 3D canvas after first paint and falls back to the photograph without WebGL or when the
+  context is lost. Quality tiers set the canvas pixel ratio from the device. `npm run media` builds
+  the committed web derivatives from local masters.
+- The landing page now opens on a full-bleed photograph of the Calvessa street at dusk under the
+  heading, with a steam loop below it.
 - Repository foundation: design, plan, governance documents, licence and GitHub templates.
 - The Umbrista brand: the logo (a cup with a long shadow), the favicon and app icons, the link
   preview image, the web manifest, the night and day colours, and the two self-hosted fonts.
