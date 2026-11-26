@@ -6,9 +6,9 @@ Last updated: 2026-11-26.
 
 ## 1. Current stage
 
-**Brand.** The repository foundation (Task 0) and the app scaffold with CI (Task 1) are on
-`develop`, and both `main` and `develop` are protected. Next is the brand board (Task 2), an owner
-checkpoint.
+**Design system.** The repository foundation (Task 0), the app scaffold with CI (Task 1) and the
+approved brand (Task 2) are on `develop`, and both `main` and `develop` are protected. Next are the
+design tokens (Task 3).
 
 ## 2. Locked decisions
 
@@ -52,17 +52,17 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   required and up to date, conversations resolved, administrators included, no force pushes or
   deletions.
 
+- Task 2, the brand board (`docs/brand/board.html`, options in `docs/brand/explorations/`), approved
+  by the owner: Logo A "Long shadow", Palette 1 "Sodium", Type 1 "Signage", the city of Calvessa,
+  prices in crowns. The values are in `docs/brand.md`.
+
 Not yet: any feature of the site.
 
 ## 4. Exact next step
 
-**Task 2: the brand board**, on `task/2-brand-board` from `develop`. Explore three logo directions,
-two palettes, two type pairings, three city names and a price format; lay them out on one board
-(`docs/brand/board.html`) and open it for the owner. The owner's choices go into `docs/brand.md`
-and the learning log. Any generated mood frame needs the owner's go first, asset by asset. Task 3
-does not start until the owner approves the board.
-
-ired checks from Task 1 exist.
+**Task 3: design tokens**, on `task/3-design-tokens` from `develop`, copying the values in
+`docs/brand.md` verbatim: the palette (night and day), the two font families through Fontsource, the
+motion timings, and the redrawn logo files with an outlined wordmark.
 
 ## 5. Bring-up on a new machine
 
@@ -72,10 +72,9 @@ accounts are created from the command line.
 
 ## 6. Owner checkpoints still ahead
 
-1. The brand board (plan Task 2).
-2. The landing prototype.
-3. Each pull request.
-4. The launch: the release from `develop` to `main` and the production deploy.
+1. The landing prototype (plan Task 8).
+2. Each pull request.
+3. The launch: the release from `develop` to `main` and the production deploy.
 
-The design and the plan are the first two checkpoints; they are written and stay open to the
-owner's review.
+The design, the plan and the brand board were the first three checkpoints; they are approved and
+stay open to the owner's review.

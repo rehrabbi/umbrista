@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Umbrista brand board</title>
+<meta name="description" content="Brand options for Umbrista, a night coffee bar that opens at dusk. A design project, not a real café.">
+<link rel="icon" href="board/logo-a-16-on-dark.svg" type="image/svg+xml" id="page-icon">
+<link rel="stylesheet" href="board/board.css">
+</head>
+<body>
+
+<header class="masthead wrap">
+  <p class="masthead-kicker">Umbrista, owner checkpoint 3</p>
+  <h1>Brand board</h1>
+  <p class="lede">Umbrista is a night coffee bar that opens at dusk in a city that does not exist. This board puts every brand option side by side so you can choose. Nothing here is final until you pick.</p>
+  <div class="answer">
+    <h2>How to answer</h2>
+    <p>Reply with one choice per line. For example:</p>
+    <pre>Logo B, Palette 1, Type 2, City 1, price format yes</pre>
+    <dl class="answer-list">
+      <div><dt>Logo</dt><dd>A, B or C</dd></div>
+      <div><dt>Palette</dt><dd>1 or 2 (each has a night and a day set)</dd></div>
+      <div><dt>Type</dt><dd>1 or 2</dd></div>
+      <div><dt>City</dt><dd>1, 2 or 3</dd></div>
+      <div><dt>Price format</dt><dd>yes, or what to change</dd></div>
+    </dl>
+    <p class="note">You can mix freely: any logo works with any palette and type. Try combinations in the frame below.</p>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ Mock hero ============ -->
+<section class="wrap section" id="hero" aria-labelledby="hero-h">
+  <h2 id="hero-h">The landing page, first frame</h2>
+  <p class="section-lede">A still of the first screen, built from the options on this board. Switch any option to see the combination. In the real site the scene behind the words is live 3D.</p>
+
+  <form class="controls" id="controls" aria-label="Options shown in the frame">
+    <fieldset><legend>Logo</legend>
+      <label><input type="radio" name="logo" value="a" checked> A</label>
+      <label><input type="radio" name="logo" value="b"> B</label>
+      <label><input type="radio" name="logo" value="c"> C</label>
+    </fieldset>
+    <fieldset><legend>Palette</legend>
+      <label><input type="radio" name="palette" value="1" checked> 1</label>
+      <label><input type="radio" name="palette" value="2"> 2</label>
+    </fieldset>
+    <fieldset><legend>Time</legend>
+      <label><input type="radio" name="time" value="night" checked> Night</label>
+      <label><input type="radio" name="time" value="day"> Day</label>
+    </fieldset>
+    <fieldset><legend>Type</legend>
+      <label><input type="radio" name="type" value="1" checked> 1</label>
+      <label><input type="radio" name="type" value="2"> 2</label>
+    </fieldset>
+    <fieldset><legend>City</legend>
+      <label><input type="radio" name="city" value="1" checked> 1</label>
+      <label><input type="radio" name="city" value="2"> 2</label>
+      <label><input type="radio" name="city" value="3"> 3</label>
+    </fieldset>
+  </form>
+
+  <div class="hero" id="hero-frame" data-logo="a" data-palette="1" data-time="night" data-type="1">
+    <svg class="scene" viewBox="0 0 1600 900" preserveAspectRatio="xMaxYMax slice" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" class="s-top"/>
+          <stop offset="1" class="s-bottom"/>
+        </linearGradient>
+        <radialGradient id="glow" cx="0.5" cy="0.3" r="0.75">
+          <stop offset="0" class="g-in"/>
+          <stop offset="0.55" class="g-mid"/>
+          <stop offset="1" class="g-out"/>
+        </radialGradient>
+        <radialGradient id="pool" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" class="p-in"/>
+          <stop offset="1" class="p-out"/>
+        </radialGradient>
+        <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="18"/></filter>
+      </defs>
+      <rect width="1600" height="900" fill="url(#sky)"/>
+      <rect class="wall" x="760" y="110" width="840" height="680"/>
+      <rect class="wall-edge" x="760" y="110" width="840" height="14"/>
+      <rect class="win" x="850" y="270" width="650" height="420"/>
+      <rect x="850" y="270" width="650" height="420" fill="url(#glow)" class="win-glow"/>
+      <g class="inside">
+        <rect class="counter" x="850" y="590" width="650" height="100"/>
+        <rect class="counter-top" x="850" y="584" width="650" height="10"/>
+        <line class="cord" x1="1010" y1="270" x2="1010" y2="372"/>
+        <path class="shade" d="M976 404 L996 372 H1024 L1044 404 Z"/>
+        <ellipse class="bulb" cx="1010" cy="408" rx="22" ry="8"/>
+        <line class="cord" x1="1300" y1="270" x2="1300" y2="352"/>
+        <path class="shade" d="M1266 384 L1286 352 H1314 L1334 384 Z"/>
+        <ellipse class="bulb" cx="1300" cy="388" rx="22" ry="8"/>
+        <path class="cup" d="M1124 548 C1124 572 1134 584 1150 584 C1166 584 1176 572 1176 548 Z"/>
+        <path class="cup-handle" d="M1175 556 C1192 556 1192 574 1172 574"/>
+        <g class="steam">
+          <path d="M1140 538 C1128 512 1156 498 1142 470 C1132 450 1148 436 1144 420"/>
+          <path d="M1160 538 C1172 516 1150 500 1162 478 C1170 462 1158 448 1162 434"/>
+        </g>
+      </g>
+      <rect class="mullion" x="1166" y="270" width="12" height="420"/>
+      <rect class="sill" x="836" y="690" width="678" height="16"/>
+      <rect class="ground" x="0" y="790" width="1600" height="110"/>
+      <ellipse class="pool" cx="1175" cy="830" rx="420" ry="46" fill="url(#pool)" filter="url(#soft)"/>
+    </svg>
+    <div class="rain" aria-hidden="true"></div>
+    <div class="scrim" aria-hidden="true"></div>
+
+    <div class="hero-ui">
+      <div class="hero-nav">
+        <span class="hero-brand">
+          <svg class="hero-mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <!-- Inline copies of the three marks (same geometry as board/logo-*.svg) so they take the frame's palette. -->
+            <g class="m m-a" transform="translate(0 -2)">
+              <path class="m-shadow" d="M14.5 43 C14.5 40.9 18 40.4 22 40.6 L59 44 C61.2 44.2 61.2 47.6 59 47.8 L22 46.4 C18 46.3 14.5 45.2 14.5 43 Z"/>
+              <path class="m-stroke" d="M12 28.5 C6.2 28.5 5.6 36.5 13.4 36.5"/>
+              <path class="m-ink" d="M11 24 C11 35.5 15 43 22 43 C29 43 33 35.5 33 24 Z"/>
+              <ellipse class="m-lamp" cx="22" cy="24" rx="11" ry="3.4"/>
+            </g>
+            <g class="m m-b">
+              <rect class="m-ink" x="31" y="4" width="2" height="11"/>
+              <path class="m-ink" d="M21 27 L27 14 H37 L43 27 Z"/>
+              <path class="m-lamp" d="M21 29.5 H43 L54 58 H10 Z"/>
+              <path class="m-cut" d="M25.5 46 C25.5 52.6 28.2 56 32 56 C35.8 56 38.5 52.6 38.5 46 Z"/>
+              <path class="m-cut-stroke" d="M38 48.2 C42.4 48.2 42.4 53.8 37.2 53.8"/>
+            </g>
+            <g class="m m-c">
+              <path class="m-lamp" d="M21.5 34 A10.5 10.5 0 0 0 42.5 34 Z"/>
+              <path class="m-u" d="M18 12 V34 A14 14 0 0 0 46 34 V12"/>
+              <rect class="m-ink" x="6" y="32" width="52" height="3.5"/>
+            </g>
+          </svg>
+          <span class="hero-word">umbrista</span>
+        </span>
+        <span class="hero-links" aria-hidden="true"><span>Menu</span><span>Brew</span><span>Story</span><span>Visit</span></span>
+      </div>
+
+      <div class="hero-copy">
+        <p class="hero-title">We open when the light goes.</p>
+        <p class="hero-sub">A coffee bar in <span data-city-name>Calvessa</span>, lit from dusk until three.</p>
+        <p class="hero-time">Lamps on tonight at <span data-city-sunset>17:19</span>, café time.</p>
+        <p class="hero-ctas" aria-hidden="true"><span class="cta">Reserve a table</span><span class="cta cta-quiet">See the menu</span></p>
+      </div>
+
+      <p class="hero-honest">Umbrista is a design project, not a real café.</p>
+    </div>
+  </div>
+  <p class="caption">The opening time is computed live for the chosen city from its coordinates and time zone. Day shows the scene before the lamps come on.</p>
+</section>
+
+<!-- ============ Logos ============ -->
+<section class="wrap section" id="logos" aria-labelledby="logos-h">
+  <h2 id="logos-h">Logo</h2>
+  <p class="section-lede">Three ideas, not three colourways. Each is shown at 512, 64 and 16 pixels, on dark and on light. The 16 pixel version is a simplified drawing; the magnified view shows its actual pixels. Colours here use Palette 1 and will follow whichever palette you choose.</p>
+
+  <article class="option logo-option" data-logo-id="a">
+    <header class="option-head">
+      <span class="option-tag">Logo A</span>
+      <div>
+        <h3>Long shadow</h3>
+        <p>A cup at dusk throws a shadow far longer than itself. The shadow is the <em>umbra</em> in the name, and the low light is the hour the bar opens. The crema catches the lamp.</p>
+      </div>
+    </header>
+    <div class="big-pair">
+      <figure class="tile tile-dark"><img src="board/logo-a-on-dark.svg" width="512" height="512" alt="Logo A on dark at 512 pixels"><figcaption>512 px on dark</figcaption></figure>
+      <figure class="tile tile-light"><img src="board/logo-a-on-light.svg" width="512" height="512" alt="Logo A on light at 512 pixels"><figcaption>512 px on light</figcaption></figure>
+    </div>
+    <div class="small-row">
+      <figure class="tile tile-dark small"><img src="board/logo-a-on-dark.svg" width="64" height="64" alt="Logo A on dark at 64 pixels"><figcaption>64 px</figcaption></figure>
+      <figure class="tile tile-light small"><img src="board/logo-a-on-light.svg" width="64" height="64" alt="Logo A on light at 64 pixels"><figcaption>64 px</figcaption></figure>
+      <figure class="tile tile-dark small"><img src="board/logo-a-16-on-dark.svg" width="16" height="16" alt="Logo A on dark at 16 pixels"><figcaption>16 px</figcaption></figure>
+      <figure class="tile tile-light small"><img src="board/logo-a-16-on-light.svg" width="16" height="16" alt="Logo A on light at 16 pixels"><figcaption>16 px</figcaption></figure>
+      <figure class="tile tile-dark small loupe"><canvas data-loupe="board/logo-a-16-on-dark.svg" width="16" height="16" role="img" aria-label="Logo A at 16 pixels on dark, magnified eight times"></canvas><figcaption>16 px, ×8</figcaption></figure>
+      <figure class="tile tile-light small loupe"><canvas data-loupe="board/logo-a-16-on-light.svg" width="16" height="16" role="img" aria-label="Logo A at 16 pixels on light, magnified eight times"></canvas><figcaption>16 px, ×8</figcaption></figure>
+    </div>
+    <div class="lockup tile-dark"><img src="board/logo-a-on-dark.svg" width="72" height="72" alt=""><span class="lockup-word lockup-a">umbrista</span></div>
+  </article>
+
+  <article class="option logo-option" data-logo-id="b">
+    <header class="option-head">
+      <span class="option-tag">Logo B</span>
+      <div>
+        <h3>The lamp</h3>
+        <p>The signal that the bar is open: one pendant lamp switched on. In its pool of light, the cup appears as a dark shape, the shadow it casts upward into the light. Light and shadow in a single mark.</p>
+      </div>
+    </header>
+    <div class="big-pair">
+      <figure class="tile tile-dark"><img src="board/logo-b-on-dark.svg" width="512" height="512" alt="Logo B on dark at 512 pixels"><figcaption>512 px on dark</figcaption></figure>
+      <figure class="tile tile-light"><img src="board/logo-b-on-light.svg" width="512" height="512" alt="Logo B on light at 512 pixels"><figcaption>512 px on light</figcaption></figure>
+    </div>
+    <div class="small-row">
+      <figure class="tile tile-dark small"><img src="board/logo-b-on-dark.svg" width="64" height="64" alt="Logo B on dark at 64 pixels"><figcaption>64 px</figcaption></figure>
+      <figure class="tile tile-light small"><img src="board/logo-b-on-light.svg" width="64" height="64" alt="Logo B on light at 64 pixels"><figcaption>64 px</figcaption></figure>
+      <figure class="tile tile-dark small"><img src="board/logo-b-16-on-dark.svg" width="16" height="16" alt="Logo B on dark at 16 pixels"><figcaption>16 px</figcaption></figure>
+      <figure class="tile tile-light small"><img src="board/logo-b-16-on-light.svg" width="16" height="16" alt="Logo B on light at 16 pixels"><figcaption>16 px</figcaption></figure>
+      <figure class="tile tile-dark small loupe"><canvas data-loupe="board/logo-b-16-on-dark.svg" width="16" height="16" role="img" aria-label="Logo B at 16 pixels on dark, magnified eight times"></canvas><figcaption>16 px, ×8</figcaption></figure>
+      <figure class="tile tile-light small loupe"><canvas data-loupe="board/logo-b-16-on-light.svg" width="16" height="16" role="img" aria-label="Logo B at 16 pixels on light, magnified eight times"></canvas><figcaption>16 px, ×8</figcaption></figure>
+    </div>
+    <div class="lockup tile-dark"><img src="board/logo-b-on-dark.svg" width="72" height="72" alt=""><span class="lockup-word lockup-b">umbrista</span></div>
+  </article>
+
+  <article class="option logo-option" data-logo-id="c">
+    <header class="option-head">
+      <span class="option-tag">Logo C</span>
+      <div>
+        <h3>Last light</h3>
+        <p>A monogram U that is also a cup. A horizon line crosses it, and the last of the daylight sits below the line, poured into the cup. The sun has gone down; the bar has the light now.</p>
+      </div>
+    </header>
+    <div class="big-pair">
+      <figure class="tile tile-dark"><img src="board/logo-c-on-dark.svg" width="512" height="512" alt="Logo C on dark at 512 pixels"><figcaption>512 px on dark</figcaption></figure>
+      <figure class="tile tile-light"><img src="board/logo-c-on-light.svg" width="512" height="512" alt="Logo C on light at 512 pixels"><figcaption>512 px on light</figcaption></figure>
+    </div>
+    <div class="small-row">
+      <figure class="tile tile-dark small"><img src="board/logo-c-on-dark.svg" width="64" height="64" alt="Logo C on dark at 64 pixels"><figcaption>64 px</figcaption></figure>
+      <figure class="tile tile-light small"><img src="board/logo-c-on-light.svg" width="64" height="64" alt="Logo C on light at 64 pixels"><figcaption>64 px</figcaption></figure>
+      <figure class="tile tile-dark small"><img src="board/logo-c-16-on-dark.svg" width="16" height="16" alt="Logo C on dark at 16 pixels"><figcaption>16 px</figcaption></figure>
+      <figure class="tile tile-light small"><img src="board/logo-c-16-on-light.svg" width="16" height="16" alt="Logo C on light at 16 pixels"><figcaption>16 px</figcaption></figure>
+      <figure class="tile tile-dark small loupe"><canvas data-loupe="board/logo-c-16-on-dark.svg" width="16" height="16" role="img" aria-label="Logo C at 16 pixels on dark, magnified eight times"></canvas><figcaption>16 px, ×8</figcaption></figure>
+      <figure class="tile tile-light small loupe"><canvas data-loupe="board/logo-c-16-on-light.svg" width="16" height="16" role="img" aria-label="Logo C at 16 pixels on light, magnified eight times"></canvas><figcaption>16 px, ×8</figcaption></figure>
+    </div>
+    <div class="lockup tile-dark"><img src="board/logo-c-on-dark.svg" width="72" height="72" alt=""><span class="lockup-word lockup-c">umbrista</span></div>
+  </article>
+  <p class="caption">The wordmarks beside each mark are set in a candidate typeface for now. Once you choose a type option, the wordmark is drawn in it and converted to outlines.</p>
+</section>
+
+<!-- ============ Favicon ============ -->
+<section class="wrap section" id="favicon" aria-labelledby="fav-h">
+  <h2 id="fav-h">Favicon in a browser tab</h2>
+  <p class="section-lede">The three marks at their real size, 16 pixels, among ordinary tabs. Dark and light browser themes. You can also put a mark on this page's own tab.</p>
+  <div class="browser browser-dark" role="img" aria-label="Browser tab strip in a dark theme with the three favicons">
+    <div class="tab"><span class="fav-blank"></span><span class="tab-title">Inbox</span></div>
+    <div class="tab is-active"><img src="board/logo-a-16-on-dark.svg" width="16" height="16" alt=""><span class="tab-title">A: Umbrista, opens at dusk</span></div>
+    <div class="tab"><img src="board/logo-b-16-on-dark.svg" width="16" height="16" alt=""><span class="tab-title">B: Umbrista, opens at dusk</span></div>
+    <div class="tab"><img src="board/logo-c-16-on-dark.svg" width="16" height="16" alt=""><span class="tab-title">C: Umbrista, opens at dusk</span></div>
+  </div>
+  <div class="browser browser-light" role="img" aria-label="Browser tab strip in a light theme with the three favicons">
+    <div class="tab"><span class="fav-blank"></span><span class="tab-title">Inbox</span></div>
+    <div class="tab is-active"><img src="board/logo-a-16-on-light.svg" width="16" height="16" alt=""><span class="tab-title">A: Umbrista, opens at dusk</span></div>
+    <div class="tab"><img src="board/logo-b-16-on-light.svg" width="16" height="16" alt=""><span class="tab-title">B: Umbrista, opens at dusk</span></div>
+    <div class="tab"><img src="board/logo-c-16-on-light.svg" width="16" height="16" alt=""><span class="tab-title">C: Umbrista, opens at dusk</span></div>
+  </div>
+  <div class="fav-try">
+    <span>Try on this tab:</span>
+    <button type="button" data-favicon="a">Logo A</button>
+    <button type="button" data-favicon="b">Logo B</button>
+    <button type="button" data-favicon="c">Logo C</button>
+  </div>
+</section>
+
+<!-- ============ Palettes ============ -->
+<section class="wrap section" id="palettes" aria-labelledby="pal-h">
+  <h2 id="pal-h">Palette</h2>
+  <p class="section-lede">Both palettes are built from night inks with one warm lamp colour as the signal and crema in small amounts. Each has a night set and a day set, because the site follows the visitor's clock: before their dusk the scene is late afternoon, after it the lamps are lit. The bar under each set shows roughly how much of each colour a page uses.</p>
+
+  <article class="option">
+    <header class="option-head">
+      <span class="option-tag">Palette 1</span>
+      <div>
+        <h3>Sodium</h3>
+        <p>Navy ink and the orange of a sodium street lamp. The cool blue-grey day is an overcast late afternoon, waiting for the lamps.</p>
+      </div>
+    </header>
+    <div class="pal-set">
+      <h4>Night</h4>
+      <div class="share" aria-hidden="true"><span style="--c:#0D1524;--w:64"></span><span style="--c:#15203A;--w:20"></span><span style="--c:#E4E8EF;--w:8"></span><span style="--c:#97A3B8;--w:4"></span><span style="--c:#F4A13A;--w:3"></span><span style="--c:#D3B48C;--w:1"></span></div>
+      <ul class="swatches">
+        <li><span class="chip" style="--c:#0D1524"></span><b>Ink</b><code>#0D1524</code><small>background</small></li>
+        <li><span class="chip" style="--c:#15203A"></span><b>Dusk</b><code>#15203A</code><small>surfaces</small></li>
+        <li><span class="chip" style="--c:#E4E8EF"></span><b>Glass</b><code>#E4E8EF</code><small>text</small></li>
+        <li><span class="chip" style="--c:#97A3B8"></span><b>Rain</b><code>#97A3B8</code><small>quiet text</small></li>
+        <li><span class="chip" style="--c:#F4A13A"></span><b>Sodium</b><code>#F4A13A</code><small>signal: actions, open</small></li>
+        <li><span class="chip" style="--c:#D3B48C"></span><b>Crema</b><code>#D3B48C</code><small>sparingly</small></li>
+      </ul>
+    </div>
+    <div class="pal-set">
+      <h4>Day</h4>
+      <div class="share" aria-hidden="true"><span style="--c:#DCE3EC;--w:64"></span><span style="--c:#EEF2F6;--w:20"></span><span style="--c:#0D1524;--w:8"></span><span style="--c:#46536A;--w:4"></span><span style="--c:#965000;--w:3"></span><span style="--c:#7E6040;--w:1"></span></div>
+      <ul class="swatches">
+        <li><span class="chip" style="--c:#DCE3EC"></span><b>Overcast</b><code>#DCE3EC</code><small>background</small></li>
+        <li><span class="chip" style="--c:#EEF2F6"></span><b>Paper</b><code>#EEF2F6</code><small>surfaces</small></li>
+        <li><span class="chip" style="--c:#0D1524"></span><b>Ink</b><code>#0D1524</code><small>text</small></li>
+        <li><span class="chip" style="--c:#46536A"></span><b>Slate</b><code>#46536A</code><small>quiet text</small></li>
+        <li><span class="chip" style="--c:#965000"></span><b>Unlit sodium</b><code>#965000</code><small>signal by day</small></li>
+        <li><span class="chip" style="--c:#7E6040"></span><b>Crema</b><code>#7E6040</code><small>sparingly</small></li>
+      </ul>
+    </div>
+    <div class="table-scroll">
+    <table class="contrast">
+      <caption>Palette 1, WCAG contrast. Body text needs 4.5:1; large text and interface parts need 3:1.</caption>
+      <thead><tr><th scope="col">Pair</th><th scope="col">Used for</th><th scope="col">Night</th><th scope="col">Day</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Text on background</th><td>body</td><td>14.86:1 <span class="ok">AAA</span></td><td>14.13:1 <span class="ok">AAA</span></td></tr>
+        <tr><th scope="row">Quiet text on background</th><td>body</td><td>7.17:1 <span class="ok">AAA</span></td><td>6.00:1 <span class="ok">AA</span></td></tr>
+        <tr><th scope="row">Text on surface</th><td>body</td><td>13.15:1 <span class="ok">AAA</span></td><td>16.23:1 <span class="ok">AAA</span></td></tr>
+        <tr><th scope="row">Quiet text on surface</th><td>body</td><td>6.35:1 <span class="ok">AA</span></td><td>6.90:1 <span class="ok">AA</span></td></tr>
+        <tr><th scope="row">Signal on background</th><td>links, body</td><td>8.70:1 <span class="ok">AAA</span></td><td>4.72:1 <span class="ok">AA</span></td></tr>
+        <tr><th scope="row">Signal on surface</th><td>links, body</td><td>7.70:1 <span class="ok">AAA</span></td><td>5.42:1 <span class="ok">AA</span></td></tr>
+        <tr><th scope="row">Button label on signal</th><td>body</td><td>8.70:1 <span class="ok">AAA</span></td><td>5.42:1 <span class="ok">AA</span></td></tr>
+        <tr><th scope="row">Crema on background</th><td>large, detail</td><td>9.29:1 <span class="ok">AAA</span></td><td>4.47:1 <span class="ok">AA large</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </article>
+
+  <article class="option">
+    <header class="option-head">
+      <span class="option-tag">Palette 2</span>
+      <div>
+        <h3>Filament</h3>
+        <p>Petrol, the blue-green of deep water at night, with the pale gold of a bare filament bulb. Softer and more glassy than Palette 1. The day is sea-glass grey-green.</p>
+      </div>
+    </header>
+    <div class="pal-set">
+      <h4>Night</h4>
+      <div class="share" aria-hidden="true"><span style="--c:#0A1C20;--w:64"></span><span style="--c:#12292E;--w:20"></span><span style="--c:#E1ECE9;--w:8"></span><span style="--c:#8DA9A5;--w:4"></span><span style="--c:#FFD27A;--w:3"></span><span style="--c:#E2C7A0;--w:1"></span></div>
+      <ul class="swatches">
+        <li><span class="chip" style="--c:#0A1C20"></span><b>Petrol</b><code>#0A1C20</code><small>background</small></li>
+        <li><span class="chip" style="--c:#12292E"></span><b>Harbour</b><code>#12292E</code><small>surfaces</small></li>
+        <li><span class="chip" style="--c:#E1ECE9"></span><b>Mist</b><code>#E1ECE9</code><small>text</small></li>
+        <li><span class="chip" style="--c:#8DA9A5"></span><b>Fog</b><code>#8DA9A5</code><small>quiet text</small></li>
+        <li><span class="chip" style="--c:#FFD27A"></span><b>Filament</b><code>#FFD27A</code><small>signal: actions, open</small></li>
+        <li><span class="chip" style="--c:#E2C7A0"></span><b>Crema</b><code>#E2C7A0</code><small>sparingly</small></li>
+      </ul>
+    </div>
+    <div class="pal-set">
+      <h4>Day</h4>
+      <div class="share" aria-hidden="true"><span style="--c:#D6E3E0;--w:64"></span><span style="--c:#ECF2F0;--w:20"></span><span style="--c:#0A1C20;--w:8"></span><span style="--c:#3E5957;--w:4"></span><span style="--c:#7D5100;--w:3"></span><span style="--c:#7A5E3A;--w:1"></span></div>
+      <ul class="swatches">
+        <li><span class="chip" style="--c:#D6E3E0"></span><b>Sea-glass</b><code>#D6E3E0</code><small>background</small></li>
+        <li><span class="chip" style="--c:#ECF2F0"></span><b>Salt</b><code>#ECF2F0</code><small>surfaces</small></li>
+        <li><span class="chip" style="--c:#0A1C20"></span><b>Petrol</b><code>#0A1C20</code><small>text</small></li>
+        <li><span class="chip" style="--c:#3E5957"></span><b>Kelp</b><code>#3E5957</code><small>quiet text</small></li>
+        <li><span class="chip" style="--c:#7D5100"></span><b>Cold filament</b><code>#7D5100</code><small>signal by day</small></li>
+        <li><span class="chip" style="--c:#7A5E3A"></span><b>Crema</b><code>#7A5E3A</code><small>sparingly</small></li>
+      </ul>
+    </div>
+    <div class="table-scroll">
+    <table class="contrast">
+      <caption>Palette 2, WCAG contrast. Body text needs 4.5:1; large text and interface parts need 3:1.</caption>
+      <thead><tr><th scope="col">Pair</th><th scope="col">Used for</th><th scope="col">Night</th><th scope="col">Day</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Text on background</th><td>body</td><td>14.48:1 <span class="ok">AAA</span></td><td>13.27:1 <span class="ok">AAA</span></td></tr>
+        <tr><th scope="row">Quiet text on background</th><td>body</td><td>6.96:1 <span class="ok">AA</span></td><td>5.75:1 <span class="ok">AA</span></td></tr>
+        <tr><th scope="row">Text on surface</th><td>body</td><td>12.57:1 <span class="ok">AAA</span></td><td>15.44:1 <span class="ok">AAA</span></td></tr>
+        <tr><th scope="row">Quiet text on surface</th><td>body</td><td>6.04:1 <span class="ok">AA</span></td><td>6.68:1 <span class="ok">AA</span></td></tr>
+        <tr><th scope="row">Signal on background</th><td>links, body</td><td>12.29:1 <span class="ok">AAA</span></td><td>5.22:1 <span class="ok">AA</span></td></tr>
+        <tr><th scope="row">Signal on surface</th><td>links, body</td><td>10.67:1 <span class="ok">AAA</span></td><td>6.08:1 <span class="ok">AA</span></td></tr>
+        <tr><th scope="row">Button label on signal</th><td>body</td><td>12.29:1 <span class="ok">AAA</span></td><td>6.08:1 <span class="ok">AA</span></td></tr>
+        <tr><th scope="row">Crema on background</th><td>large, detail</td><td>10.76:1 <span class="ok">AAA</span></td><td>4.56:1 <span class="ok">AA</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </article>
+  <p class="caption">Every pair passes. "AA large" means it passes for large text and interface parts only (Palette 1 day crema, 4.47:1); crema is never used for body text.</p>
+</section>
+
+<!-- ============ Type ============ -->
+<section class="wrap section" id="type" aria-labelledby="type-h">
+  <h2 id="type-h">Type</h2>
+  <p class="section-lede">A display face with presence for the big moving words, and a text face built for reading. All four are open-licence (OFL) families available from Fontsource, so the site can host them itself.</p>
+
+  <article class="option type-option t1">
+    <header class="option-head">
+      <span class="option-tag">Type 1</span>
+      <div>
+        <h3>Signage</h3>
+        <p>Big Shoulders Display, a condensed face drawn from city signage, with Atkinson Hyperlegible Next, designed for low-vision readers. Night streets and painted shopfronts, and the most readable small text on the board.</p>
+      </div>
+    </header>
+    <div class="kinetic" data-kinetic>
+      <p class="kin-line" aria-label="Open after dark"><span style="--i:0">O</span><span style="--i:1">p</span><span style="--i:2">e</span><span style="--i:3">n</span><span class="kin-gap" style="--i:4"> </span><span style="--i:5">a</span><span style="--i:6">f</span><span style="--i:7">t</span><span style="--i:8">e</span><span style="--i:9">r</span><span class="kin-gap" style="--i:10"> </span><span style="--i:11">d</span><span style="--i:12">a</span><span style="--i:13">r</span><span style="--i:14">k</span></p>
+      <p class="kin-shadow" data-text="dusk" aria-label="dusk, with a lengthening shadow">dusk</p>
+    </div>
+    <div class="specimen">
+      <p class="spec-display">Umbrista</p>
+      <p class="spec-head">We open when the light goes.</p>
+      <p class="spec-body">The first cup goes out as the street lamps come on. After that it is quiet work: beans roasted dark enough to stand up to the night, milk steamed slowly, and a table by the window kept for whoever needs it at two in the morning.</p>
+      <p class="spec-small">Opens 17:19 café time. Closes at 03:00. Rua das Lanternas 14.</p>
+      <p class="spec-meta">Big Shoulders Display 800, 900 &nbsp;|&nbsp; Atkinson Hyperlegible Next 400, 700, italic</p>
+    </div>
+  </article>
+
+  <article class="option type-option t2">
+    <header class="option-head">
+      <span class="option-tag">Type 2</span>
+      <div>
+        <h3>Title card</h3>
+        <p>Bodoni Moda, a high-contrast face like the title card of an old film, with Schibsted Grotesk, a sturdy news grotesque. More cinematic and more formal; the display is a serif, chosen for the film-title mood.</p>
+      </div>
+    </header>
+    <div class="kinetic" data-kinetic>
+      <p class="kin-line" aria-label="Open after dark"><span style="--i:0">O</span><span style="--i:1">p</span><span style="--i:2">e</span><span style="--i:3">n</span><span class="kin-gap" style="--i:4"> </span><span style="--i:5">a</span><span style="--i:6">f</span><span style="--i:7">t</span><span style="--i:8">e</span><span style="--i:9">r</span><span class="kin-gap" style="--i:10"> </span><span style="--i:11">d</span><span style="--i:12">a</span><span style="--i:13">r</span><span style="--i:14">k</span></p>
+      <p class="kin-shadow" data-text="dusk" aria-label="dusk, with a lengthening shadow">dusk</p>
+    </div>
+    <div class="specimen">
+      <p class="spec-display">Umbrista</p>
+      <p class="spec-head">We open when the light goes.</p>
+      <p class="spec-body">The first cup goes out as the street lamps come on. After that it is quiet work: beans roasted dark enough to stand up to the night, milk steamed slowly, and a table by the window kept for whoever needs it at two in the morning.</p>
+      <p class="spec-small">Opens 17:19 café time. Closes at 03:00. Rua das Lanternas 14.</p>
+      <p class="spec-meta">Bodoni Moda 400 to 900, italic &nbsp;|&nbsp; Schibsted Grotesk 400, 600</p>
+    </div>
+  </article>
+
+  <div class="motion-note">
+    <h3>How things move</h3>
+    <ul>
+      <li><b>Like light, not like rubber.</b> Things fade up and settle the way a lamp warms. No bounces, no springs. Scene changes take 0.6 to 1.2 seconds; interface responses 160 to 240 milliseconds.</li>
+      <li><b>One moment at a time.</b> A chapter has one moving idea. Everything else holds still.</li>
+      <li><b>Still is complete.</b> With reduced motion turned on, the samples above stop and show their finished state, and the site becomes still chapters with gentle fades. Nobody loses information.</li>
+    </ul>
+    <p class="caption">The kinetic samples loop for the board only. On the site they play once, tied to scroll.</p>
+  </div>
+</section>
+
+<!-- ============ Voice ============ -->
+<section class="wrap section" id="voice" aria-labelledby="voice-h">
+  <h2 id="voice-h">Voice</h2>
+  <p class="section-lede">Quiet, warm, a little poetic, never cute. Short sentences. Night-owl humour only in small places: the 404, empty states, the loading line.</p>
+  <div class="voice-grid">
+    <figure class="voice voice-hero">
+      <figcaption>Hero line</figcaption>
+      <p class="v-big">We open when the light goes.</p>
+      <p class="v-small">A coffee bar in Calvessa, lit from dusk until three.</p>
+    </figure>
+    <figure class="voice voice-404">
+      <figcaption>404 page</figcaption>
+      <p class="v-big">Nothing down here but the dark.</p>
+      <p class="v-small">Wrong turn after midnight. It happens. The lamps are back this way.</p>
+      <p class="v-link">Back to the bar</p>
+    </figure>
+    <figure class="voice voice-confirm">
+      <figcaption>Reservation confirmed</figcaption>
+      <p class="v-big">Your table is held.</p>
+      <p class="v-small">Saturday at 21:30 café time, for two. We'll keep a lamp on.</p>
+      <p class="v-honest">Umbrista is a design project, not a real café. No table is booked and nobody is expecting you. Your details are stored only as the privacy notice says.</p>
+    </figure>
+  </div>
+  <ul class="rules">
+    <li>Say what happens. A button that says "Reserve a table" leads to "Your table is held".</li>
+    <li>Times are always 24-hour and always labelled café time.</li>
+    <li>No exclamation marks and no coffee puns.</li>
+    <li>Errors say what went wrong and how to fix it, in plain words.</li>
+  </ul>
+</section>
+
+<!-- ============ Cities ============ -->
+<section class="wrap section" id="cities" aria-labelledby="city-h">
+  <h2 id="city-h">City</h2>
+  <p class="section-lede">The bar's hours belong to its city: it opens at that city's sunset and closes at 03:00 café time. Each city is invented, but sits on real coordinates in a real time zone, so its sunset can be computed every day of the year. Opening times below are computed for 2026.</p>
+  <div class="cities">
+    <article class="city">
+      <span class="option-tag">City 1</span>
+      <h3>Calvessa</h3>
+      <p class="city-story">A hill port on the Atlantic where the fog rolls in every evening and the trams run all night.</p>
+      <dl>
+        <div><dt>Address</dt><dd>Rua das Lanternas 14</dd></div>
+        <div><dt>Coordinates</dt><dd>38.81° N, 9.47° W</dd></div>
+        <div><dt>Time zone</dt><dd><code>Europe/Lisbon</code></dd></div>
+        <div><dt>Opens</dt><dd>17:19 in December, 21:06 in June</dd></div>
+      </dl>
+    </article>
+    <article class="city">
+      <span class="option-tag">City 2</span>
+      <h3>Port Ellery</h3>
+      <p class="city-story">A rain-coast harbour where the night ferry crew needs coffee long after the town has gone to bed.</p>
+      <dl>
+        <div><dt>Address</dt><dd>9 Tidewater Steps</dd></div>
+        <div><dt>Coordinates</dt><dd>47.95° N, 124.60° W</dd></div>
+        <div><dt>Time zone</dt><dd><code>America/Los_Angeles</code></dd></div>
+        <div><dt>Opens</dt><dd>16:27 in December, 21:21 in June</dd></div>
+      </dl>
+    </article>
+    <article class="city">
+      <span class="option-tag">City 3</span>
+      <h3>Santa Velada</h3>
+      <p class="city-story">A river city where dinner starts at ten, and the night watchmen once called the hours on every corner.</p>
+      <dl>
+        <div><dt>Address</dt><dd>Calle del Sereno 880</dd></div>
+        <div><dt>Coordinates</dt><dd>34.72° S, 58.05° W</dd></div>
+        <div><dt>Time zone</dt><dd><code>America/Argentina/Buenos_Aires</code></dd></div>
+        <div><dt>Opens</dt><dd>17:48 in June, 20:04 in December</dd></div>
+      </dl>
+    </article>
+  </div>
+</section>
+
+<!-- ============ Price ============ -->
+<section class="wrap section" id="price" aria-labelledby="price-h">
+  <h2 id="price-h">Price format</h2>
+  <p class="section-lede">Prices are in an invented currency, the <b>crown</b>. A real currency would place the café in a real country and make the prices look like a real offer. An invented one, named in words and with no symbol, reads naturally on a menu and cannot be mistaken for money anyone can spend.</p>
+  <div class="price-demo">
+    <div class="menu-card">
+      <p class="menu-key">Prices in crowns, the money of <span data-city-name>Calvessa</span>. Nothing here is for sale.</p>
+      <ul class="menu-list">
+        <li><span>Night flat white</span><span class="num">4.60</span></li>
+        <li><span>Sodium cortado</span><span class="num">3.80</span></li>
+        <li><span>Last cup, decaf</span><span class="num">4.20</span></li>
+        <li><span>Burnt honey toast</span><span class="num">6.50</span></li>
+      </ul>
+    </div>
+    <div class="cart-line">
+      <p>Order total</p>
+      <p class="num total">19.10 crowns</p>
+    </div>
+    <ul class="rules">
+      <li>Menu shows the number only, two decimals, tabular figures: <span class="num">4.60</span>.</li>
+      <li>Totals and confirmations write the word: <span class="num">19.10 crowns</span>.</li>
+      <li>One key line at the top of the menu names the currency and says nothing is for sale.</li>
+      <li>Prices step in tenths. No .99 endings.</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer class="wrap foot">
+  <p>Umbrista is a design project, not a real café. Board prepared 26 November 2026. Fonts load from Fontsource for comparison only; the site will host its own.</p>
+</footer>
+
+<script src="board/board.js"></script>
+</body>
+</html>
