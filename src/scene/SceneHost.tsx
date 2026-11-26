@@ -3,6 +3,7 @@ import type { StillName } from '../media/manifest'
 import { Picture } from '../media/Picture'
 import { measureFrameTime, quality, type Quality } from './quality'
 import { SceneBoundary } from './SceneBoundary'
+import { SceneQualityContext } from './scene-quality'
 import { useSceneActive } from './visibility'
 import './SceneHost.css'
 
@@ -91,7 +92,7 @@ export function SceneHost({ still, label, priority = false, className, children 
         <SceneBoundary onError={() => setLost(true)}>
           <Suspense fallback={null}>
             <SceneCanvas frameloop={active ? 'always' : 'demand'} dpr={tier.dpr}>
-              {children}
+              <SceneQualityContext value={tier}>{children}</SceneQualityContext>
             </SceneCanvas>
           </Suspense>
         </SceneBoundary>
