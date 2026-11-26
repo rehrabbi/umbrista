@@ -2,7 +2,8 @@
 
 The brand as the owner approved it on the brand board (`docs/brand/board.html`) on 2026-11-26. The
 board and the notes in `docs/brand/explorations/` keep the options that were not chosen, and why.
-Task 3 turns these values into design tokens; this file is their source.
+These values are the source for the design tokens in `src/styles/tokens.css`; a test compares the
+two and computes the contrast of every pair.
 
 ## Logo: A, "Long shadow"
 
@@ -13,10 +14,22 @@ is the hour the bar opens. The crema on top is the one warm spot, catching the l
 - Drawings: `docs/brand/board/logo-a-on-dark.svg`, `logo-a-on-light.svg`, and the simplified
   16 px versions `logo-a-16-on-dark.svg`, `logo-a-16-on-light.svg` (no handle; a solid bowl with a
   crema cap over a thick shadow bar).
-- Wordmark: UMBRISTA in capitals, set in the display face below.
-- Before it ships, the final logo files are redrawn in the approved palette with the wordmark
-  converted to outlines, and the 16 px favicon is checked again in a real browser tab: it is the
-  quietest of the three directions at that size.
+- Wordmark: UMBRISTA in capitals, set in the display face below (Big Shoulders Display 800,
+  tracked 0.05em) and converted to outlines, so it looks the same with or without the font. The
+  outlines are generated into `src/brand/wordmark-path.ts` by `npm run wordmark`.
+- Final files, in the approved palette on their own background: `docs/brand/logo-a-mark-on-dark.svg`,
+  `logo-a-mark-on-light.svg`, `logo-a-lockup-on-dark.svg`, `logo-a-lockup-on-light.svg`, and the 16 px
+  drawing as `logo-a-16-on-dark.svg` and `logo-a-16-on-light.svg`. On light, the crema cap takes the
+  day signal colour (`#965000`), not the board's `#C46A0C`, so every colour is in the palette.
+- One drawing in code: `src/brand/geometry.ts` holds the full and 16 px drawings and the colours,
+  `Logo` (mark, wordmark, lockup) draws from it and follows the day and night tokens, and
+  `npm run icons` writes the files below from it.
+- Icons, from the same data: `public/favicon.svg` (the 16 px drawing, light or dark by the browser's
+  scheme), `favicon.ico` (16 and 32 px with the 16 px drawing, 48 px with the full one),
+  `favicon-32.png`, `apple-touch-icon.png` (180, opaque), `icon-192.png`, `icon-512.png`,
+  `og-image.png` (1200x630) and `site.webmanifest`.
+- The 16 px favicon still needs its check in a real browser tab: it is the quietest of the three
+  directions at that size. At 16 px the crema cap falls between pixel rows, so its top edge is soft.
 - The scene reuses the motif: cups in the 3D scene cast the same long, low shadow.
 
 ## Palette: 1, "Sodium"
@@ -58,7 +71,8 @@ warm background, so it is used on the cool day greys only.
 - Text: **Atkinson Hyperlegible Next**, variable 200 to 800, with italic,
   `@fontsource/atkinson-hyperlegible-next` (OFL-1.1). Built so that easily
   confused letters never are.
-- Both are self-hosted through Fontsource; no font is loaded from another origin.
+- Both are self-hosted through Fontsource; no font is loaded from another origin. Only the latin
+  files in use are imported (`src/styles/fonts.ts`): display 800; text 400, 400 italic and 700.
 
 ## City: 1, "Calvessa"
 

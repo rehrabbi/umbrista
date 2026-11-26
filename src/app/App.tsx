@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { Logo } from '../brand/Logo'
 
 export function App() {
   useEffect(() => {
@@ -7,7 +8,9 @@ export function App() {
 
   return (
     <main>
-      <h1>Umbrista</h1>
+      <h1>
+        <Logo variant="lockup" />
+      </h1>
     </main>
   )
 }

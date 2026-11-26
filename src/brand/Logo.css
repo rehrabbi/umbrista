@@ -1,0 +1,34 @@
+/* The logo takes its colours from the theme tokens, so it follows the day and night sets. */
+.logo {
+  display: block;
+  height: auto;
+}
+
+/* Default sizes, easy to override from a class or a container. */
+:where(.logo-mark) {
+  width: 3rem;
+}
+
+:where(.logo-wordmark) {
+  width: 9rem;
+}
+
+:where(.logo-lockup) {
+  width: 12rem;
+}
+
+.logo-body {
+  fill: var(--color-text);
+}
+
+.logo-body-stroke {
+  stroke: var(--color-text);
+}
+
+.logo-shadow {
+  fill: var(--color-shadow);
+}
+
+.logo-crema {
+  fill: var(--color-signal);
+}

@@ -1,0 +1,60 @@
+/*
+ * Design tokens. Values are copied from docs/brand.md (Palette 1, "Sodium").
+ * Night is the default; the day set applies under [data-time="day"] on <html>.
+ * tokens.test.ts checks every hex value and the contrast of each pair.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* Colour roles, night */
+  --color-bg: #0d1524; /* Ink */
+  --color-surface: #15203a; /* Dusk */
+  --color-text: #e4e8ef; /* Glass */
+  --color-text-quiet: #97a3b8; /* Rain */
+  --color-signal: #f4a13a; /* Sodium: actions, "open now" */
+  --color-on-signal: #0d1524; /* label on a signal fill */
+  --color-crema: #d3b48c; /* details only, never body text */
+  --color-shadow: #5b6f93; /* logo and scene shadow */
+
+  /* Type */
+  --font-display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  --font-text: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+
+  /* Space (4px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* Motion: like light, not like rubber. Decelerating, never overshooting. */
+  --dur-ui-fast: 160ms;
+  --dur-ui: 200ms;
+  --dur-ui-slow: 240ms;
+  --dur-chapter: 600ms;
+  --dur-scene: 1200ms;
+  --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root[data-time="day"] {
+  color-scheme: light;
+
+  --color-bg: #dce3ec; /* Overcast */
+  --color-surface: #eef2f6; /* Paper */
+  --color-text: #0d1524; /* Ink */
+  --color-text-quiet: #46536a; /* Slate */
+  --color-signal: #965000; /* Unlit sodium */
+  --color-on-signal: #eef2f6;
+  --color-crema: #7e6040;
+  --color-shadow: #7d8aa2;
+}
