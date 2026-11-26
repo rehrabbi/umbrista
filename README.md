@@ -16,9 +16,11 @@ The site sets out to show three things at once:
 
 ## Status
 
-**In setup.** The design and the plan are written, the repository foundation is in place, and the
-app scaffold (Vite, React, TypeScript, tests and CI) is in progress. The page is still just a
-heading: there is no live site and there are no screenshots yet. Next is the brand board.
+**In development.** The design, the plan, the repository foundation, the app scaffold with CI, the
+brand and the site shell (navigation, footer, a page for every route) are done. The two clocks (the
+visitor's dusk with a "See it at night" switch, and the café's hours in café time) are built and in
+review. Pages are still stubs: there is no live site and there are no screenshots yet. Next is the
+3D landing prototype.
 
 ## Running it
 
