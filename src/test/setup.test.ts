@@ -1,22 +1,24 @@
 import { describe, expect, it } from 'vitest'
 import { setMatchMedia, setWebGL } from './setup'
 
-describe('test setup helpers', () => {
-  it('reports no media query as matching by default', () => {
-    expect(window.matchMedia('(prefers-reduced-motion: reduce)').matches).toBe(false)
-  })
+const query = '(prefers-reduced-motion: reduce)'
 
-  it('lets a test turn one media query on', () => {
-    setMatchMedia('(prefers-reduced-motion: reduce)', true)
-    expect(window.matchMedia('(prefers-reduced-motion: reduce)').matches).toBe(true)
-    expect(window.matchMedia('(pointer: coarse)').matches).toBe(false)
-  })
-
-  it('starts each test with WebGL available and lets a test remove it', () => {
-    const canvas = document.createElement('canvas')
-    expect(canvas.getContext('webgl2')).not.toBeNull()
+// The tests in this block run in order: the first changes state, the second proves the
+// beforeEach in setup.ts put the defaults back.
+describe('test setup helpers reset between tests', () => {
+  it('lets a test turn a media query on and remove WebGL', () => {
+    setMatchMedia(query, true)
     setWebGL(false)
-    expect(canvas.getContext('webgl2')).toBeNull()
-    expect(canvas.getContext('webgl')).toBeNull()
+
+    expect(window.matchMedia(query).matches).toBe(true)
+    expect(window.matchMedia('(pointer: coarse)').matches).toBe(false)
+    expect(document.createElement('canvas').getContext('webgl2')).toBeNull()
+    expect(document.createElement('canvas').getContext('webgl')).toBeNull()
+  })
+
+  it('starts the next test with media queries off and WebGL available', () => {
+    expect(window.matchMedia(query).matches).toBe(false)
+    expect(document.createElement('canvas').getContext('webgl2')).not.toBeNull()
+    expect(document.createElement('canvas').getContext('webgl')).not.toBeNull()
   })
 })
