@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" role="img" aria-labelledby="t">
+<title id="t">Umbrista, Logo B at 16 px</title>
+<mask id="cup">
+<rect width="16" height="16" fill="#fff"/>
+<path fill="#000" d="M6 11.5 C6 14 6.9 15 8 15 C9.1 15 10 14 10 11.5 Z"/>
+</mask>
+<rect fill="#E4E8EF" x="7.5" y="0" width="1" height="3"/>
+<path fill="#E4E8EF" d="M4.5 7 L6.5 3 H9.5 L11.5 7 Z"/>
+<path fill="#F4A13A" mask="url(#cup)" d="M4.5 8 H11.5 L15 16 H1 Z"/>
+</svg>
