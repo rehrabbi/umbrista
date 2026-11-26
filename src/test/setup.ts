@@ -29,6 +29,14 @@ export function setMatchMedia(query: string, matches: boolean): void {
   installMatchMedia()
 }
 
+// jsdom has no ResizeObserver; Lenis and the 3D canvas need one to exist.
+class ResizeObserverStub {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+window.ResizeObserver ??= ResizeObserverStub
+
 let webglAvailable = true
 
 /** Make a canvas report WebGL as available (a minimal context object) or missing (null). */
