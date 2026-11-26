@@ -199,6 +199,15 @@ function imageAspect(texture: Texture): number | undefined {
 }
 
 /**
+ * Test-only: Playwright may set `window.umbristaTestIntensity` (0..1) before the page loads, to check
+ * the canvas against the still with the effect off. Nothing in the app sets it.
+ */
+function testIntensity(): number | undefined {
+  const value = (window as Window & { umbristaTestIntensity?: unknown }).umbristaTestIntensity
+  return typeof value === 'number' && value >= 0 && value <= 1 ? value : undefined
+}
+
+/**
  * Flags the canvas once the photograph is on it, with the tier it drew at, for tests and tools that
  * wait for the scene or measure it.
  */
@@ -219,7 +228,9 @@ function markBackdrop(canvas: HTMLCanvasElement, tier: Tier | null): void {
  * while hidden, off screen or under reduced motion). Under reduced motion it is a still: a static
  * grade with the rain frozen and the lamp at rest on the café window.
  */
-export function LivingBackground({ backdrop, intensity = 1 }: LivingBackgroundProps) {
+export function LivingBackground({ backdrop, intensity: requested = 1 }: LivingBackgroundProps) {
+  const [forced] = useState(testIntensity)
+  const intensity = forced ?? requested
   const quality = useSceneQuality()
   const tier = quality?.tier ?? 'mid'
   const layers = layersFor(tier)

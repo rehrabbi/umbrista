@@ -14,3 +14,10 @@ export async function allowSoftwareGL(page: Page, tier?: Tier): Promise<void> {
     if (forced) hooks.umbristaTestTier = forced
   }, tier)
 }
+
+/** Draw the living background at this intensity (0 is the plain photograph), through its test hook. */
+export async function forceIntensity(page: Page, intensity: number): Promise<void> {
+  await page.addInitScript((value) => {
+    ;(window as Window & { umbristaTestIntensity?: number }).umbristaTestIntensity = value
+  }, intensity)
+}

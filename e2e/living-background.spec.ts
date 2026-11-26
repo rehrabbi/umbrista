@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { allowSoftwareGL } from './software-gl'
+import { allowSoftwareGL, forceIntensity } from './software-gl'
 
 // The clock decides night or day, so pin it: 22:00 and 13:00 in London are night and day.
 test.use({ timezoneId: 'Europe/London', viewport: { width: 1440, height: 900 } })
@@ -118,6 +118,19 @@ test.describe('the living background', () => {
       expect(problems).toEqual([])
     })
   }
+
+  test('with the effect off, the canvas is the still to within a few levels', async ({ page }) => {
+    await allowSoftwareGL(page)
+    await forceIntensity(page, 0)
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/')
+    await expect(page.locator(READY)).toHaveCount(1, { timeout: 20_000 })
+    const [canvas, still] = await canvasAndStill(page)
+    const { meanDiff, deviation } = await compare(page, canvas, still)
+    expect(deviation).toBeGreaterThan(15)
+    // Measured at about 1 level in 255: the same file, the same crop, the same colours.
+    expect(meanDiff).toBeLessThan(3)
+  })
 
   // Each tier compiles a different shader (no rain, one size of drop, two sizes and a finer mist).
   for (const tier of ['low', 'mid', 'high'] as const) {
