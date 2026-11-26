@@ -1,8 +1,14 @@
+import { lazy } from 'react'
 import { VideoLoop } from '../media/VideoLoop'
 import { SceneHost } from '../scene/SceneHost'
 import { OpeningTime } from '../time/OpeningTime'
 import { PageHeading } from '../ui/PageHeading'
 import './Landing.css'
+
+// The rain, lamp and grade import three, so they load with the canvas after first paint, never with the page.
+const LivingBackground = lazy(() =>
+  import('../scene/background/LivingBackground').then((module) => ({ default: module.LivingBackground })),
+)
 
 export function Landing() {
   return (
@@ -13,14 +19,13 @@ export function Landing() {
           <OpeningTime className="landing-lede" />
           <p className="landing-lede">A coffee bar in Calvessa, lit from dusk until three.</p>
         </div>
-        {/* The empty group is the scene for now; later tasks draw the rain and the lamp glow here. */}
         <SceneHost
           className="landing-scene"
           still="street-dusk"
           label="A fogged hill street in Calvessa at dusk, tram rails running down it and one café window lit."
           priority
         >
-          <group />
+          <LivingBackground backdrop="street-dusk" intensity={1} />
         </SceneHost>
       </section>
 
