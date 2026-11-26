@@ -2,6 +2,7 @@ import { OPENING, lampAt } from '../../scene/journey/chapters'
 import { parseDurationMs } from '../../scene/background/uniforms'
 import { gsap, ScrollTrigger } from '../../scroll/scrollTrigger'
 import { parseCubicBezier } from './ease'
+import { SINK_SPEED, STAGGER } from './titleTiming'
 
 /*
  * Chapter 1's choreography, loaded after first paint with GSAP (never on the critical path).
@@ -14,10 +15,6 @@ import { parseCubicBezier } from './ease'
  *     own time, on the settle curve, and sink back (faster) if the visitor scrolls above it.
  */
 
-/** Seconds between one letter starting to rise and the next. */
-const STAGGER = 0.034
-/** The title sinks back this much faster than it rose. */
-const SINK_SPEED = 2.5
 /** The title only sinks once the visitor is this far back above its cue, so it never flickers. */
 const HYSTERESIS = 0.06
 
