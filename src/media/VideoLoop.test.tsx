@@ -87,6 +87,12 @@ describe('VideoLoop', () => {
     expect(play).not.toHaveBeenCalled()
   })
 
+  it('sizes the poster to the page column, not the whole viewport', () => {
+    setMatchMedia(REDUCED, true)
+    const { container } = render(<VideoLoop name="steam-loop" />)
+    expect(container.querySelector('source')).toHaveAttribute('sizes', '(min-width: 72rem) 72rem, 100vw')
+  })
+
   it('uses an empty alt for the poster when decorative', () => {
     setMatchMedia(REDUCED, true)
     const { container } = render(<VideoLoop name="steam-loop" />)

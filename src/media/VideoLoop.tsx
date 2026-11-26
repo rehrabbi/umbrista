@@ -4,6 +4,9 @@ import { Picture } from './Picture'
 import { useMaxWidth, usePrefersReducedMotion } from './usePrefersReducedMotion'
 import './VideoLoop.css'
 
+/** The loop fills the 72rem page column, so a wide screen never needs more than that. */
+const POSTER_SIZES = '(min-width: 72rem) 72rem, 100vw'
+
 /** Below this viewport width the 1280 px pair is used. */
 const SMALL_VIEWPORT = 900
 
@@ -45,7 +48,14 @@ export function VideoLoop({ name, label, className }: VideoLoopProps) {
   }, [])
 
   if (reduced) {
-    return <Picture name={loop.poster as StillName} alt={label ?? ''} className={classes} />
+    return (
+      <Picture
+        name={loop.poster as StillName}
+        alt={label ?? ''}
+        className={classes}
+        sizes={POSTER_SIZES}
+      />
+    )
   }
 
   const width = small ? Math.min(...loop.widths) : Math.max(...loop.widths)
