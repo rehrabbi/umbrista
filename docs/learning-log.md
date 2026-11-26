@@ -67,3 +67,26 @@ protection comes after this task merges rather than before.
 - Every job has a time limit, so a hung run fails in minutes instead of GitHub's six-hour default.
 - A test that proves "state resets between tests" needs two tests: one that changes the state and a
   later one that checks the defaults. A single test can't catch a missing reset.
+
+## 2026-11-26: The brand board
+
+**Decided.** From one board of options, the owner chose Logo A (a cup throwing a long shadow),
+Palette 1 (navy ink with sodium-lamp orange), Type 1 (Big Shoulders Display with Atkinson
+Hyperlegible Next) and the city of Calvessa. The invented currency, the voice rules and the motion
+principles were approved with the board. The full values are in `docs/brand.md`.
+
+**Why a board instead of one proposal.** Choosing between real options side by side, at real sizes
+and in combination, is faster and more honest than reacting to a single design. The board's mock
+first frame let each combination be seen in place; it is a flat sketch for that purpose, not the
+landing page, which is built in 3D from Task 6 on.
+
+**What to remember.**
+
+- A mark has to be judged at 16 real pixels, not scaled down in the head. The board rasterised each
+  favicon to a 16 x 16 canvas and enlarged it, pixelated, to show what a browser tab really shows.
+  The chosen mark is the quietest of the three at that size, so its favicon gets a second look in a
+  real tab before launch.
+- Contrast ratios are computed with the WCAG relative-luminance formula, never estimated by eye.
+- An invented currency, written as a word, keeps the prices from reading as a real offer.
+- The city is invented but sits on real coordinates in a real time zone, so its sunset, and the
+  café's opening time, can be computed for any day.
