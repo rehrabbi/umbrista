@@ -42,6 +42,11 @@ describe('easePointer', () => {
     expect(fast[1]).toBeCloseTo(slow[1], 10)
   })
 
+  it('resets to the target when the current position is not a number', () => {
+    expect(easePointer([Number.NaN, 0.2], [0.4, 0.6], 1 / 60)).toEqual([0.4, 0.6])
+    expect(easePointer([Infinity, 0.2], [0.4, 0.6], 1 / 60)).toEqual([0.4, 0.6])
+  })
+
   it('treats a negative or missing frame time as no time at all', () => {
     expect(easePointer([0.3, 0.3], [1, 1], -1)).toEqual([0.3, 0.3])
     expect(easePointer([0.3, 0.3], [1, 1], Number.NaN)).toEqual([0.3, 0.3])
@@ -130,6 +135,20 @@ describe('coverUv', () => {
     expect(scale[1]).toBe(1)
     expect(offset[0]).toBeCloseTo((1 - visible) / 2, 10)
     expect(offset[1]).toBe(0)
+  })
+
+  it('falls back to the uncropped photo for a size that is zero, negative or not a number', () => {
+    const identity = { scale: [1, 1], offset: [0, 0] }
+    for (const [view, image] of [
+      [0, 1.79],
+      [-1, 1.79],
+      [Number.NaN, 1.79],
+      [Infinity, 1.79],
+      [1.8, 0],
+      [1.8, Number.NaN],
+    ]) {
+      expect(coverUv(view!, image!)).toEqual(identity)
+    }
   })
 
   it('maps an image point back into the view with imageToView', () => {

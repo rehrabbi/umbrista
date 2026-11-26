@@ -24,6 +24,8 @@ export const SCENE_DURATION_FALLBACK_MS = 1200
  * equal one whole step, so the motion is the same at any frame rate.
  */
 export function easePointer(current: Vec2, target: Vec2, dtSec: number, rate = POINTER_RATE): Vec2 {
+  // A position that has gone bad (a zero-sized canvas, say) starts again from the target.
+  if (!Number.isFinite(current[0]) || !Number.isFinite(current[1])) return [target[0], target[1]]
   if (!(dtSec > 0)) return [current[0], current[1]]
   const k = 1 - Math.exp(-rate * dtSec)
   return [approach(current[0], target[0], k), approach(current[1], target[1], k)]
@@ -93,6 +95,10 @@ export interface Cover {
  * both sides. The shader uses this so the canvas lines up with the still underneath it exactly.
  */
 export function coverUv(viewAspect: number, imageAspect: number): Cover {
+  // A canvas or image without a usable size yet: draw the photo uncropped rather than NaN.
+  if (!(viewAspect > 0 && Number.isFinite(viewAspect) && imageAspect > 0 && Number.isFinite(imageAspect))) {
+    return { scale: [1, 1], offset: [0, 0] }
+  }
   if (viewAspect >= imageAspect) {
     const sy = imageAspect / viewAspect
     return { scale: [1, sy], offset: [0, (1 - sy) / 2] }
@@ -122,7 +128,10 @@ export function parallax(progress: number, intensity: number): { scale: number; 
   return { scale, shift: Math.min(PARALLAX_SHIFT * p, slack) }
 }
 
-/** How far the hero has scrolled out of view: 0 while its top is on screen, 1 once it has gone. */
+/**
+ * How far the hero has scrolled out of view: 0 while its top is on screen, 1 once it has gone.
+ * This is the hero's own progress, not the page's; it feeds `uScroll`.
+ */
 export function scrollProgress(top: number, height: number): number {
   if (height <= 0) return 0
   return Math.min(1, Math.max(0, -top / height))
