@@ -139,3 +139,51 @@ page, and the owner approved that direction.
 - A model's back and underside are guesses when it comes from one photo; check it from every angle
   before using it.
 
+## 2026-11-26: Rain on glass, over a photograph
+
+**Decided.** The landing's living background is one full-screen shader over the street photograph,
+written for Umbrista: the photo is the world outside, the shader is the window. Rain refracts the
+photo, a sodium lamp follows the pointer, the street recedes on scroll, and a grade moves between
+overcast dusk and lamp-lit night. The pure parts (easing, the night step, the tiers, the crop) live
+in `uniforms.ts` and were tested first; the first green run caught pointer easing landing a rounding
+error past its target, now clamped.
+
+**What makes rain on glass read as real.**
+
+- Drops are lenses, not decorations. Each one shows a sharp, flipped view of the street, sampled from
+  the opposite side of the drop, so it carries the photo's own colours.
+- The edge sells it: a dark rim, heaviest along the thin top, and a faint bright crescent inside the
+  bottom where focused light lands. A uniform ring makes soap bubbles instead.
+- Big drops stick, then slip in short runs along a wandering path, stretching while they move. They
+  wipe the mist in a narrow wake and leave beads at fixed places on the glass; the small droplets they
+  pass are swallowed.
+- Sizes are mostly tiny with a few full ones. Evenly sized droplets read as a polka-dot pattern.
+- Restraint matters more than detail. Heavy mist, a big bloom around the window, and orange glints on
+  every droplet each looked like a filter. What stayed: light mist that is thinnest over the lit
+  window, glints only on drops big enough to hold one, warm light that spares surfaces already
+  bright, and a hue-preserving roll-off so the window stays orange instead of clipping to white.
+- Judge the look under the page's scrim, not only on the bare canvas. An overexposed window that
+  glowed on its own turned muddy and blue-grey under the navy scrim.
+
+**The cover-crop match.** The still uses `object-fit: cover`, centred. `coverUv(viewAspect,
+imageAspect)` reproduces that crop as a UV scale and offset; the texture is the very file the still
+loaded (its `currentSrc`, so it comes from the cache); its colour space is sRGB, tone mapping is off,
+and the shader encodes its output back to sRGB. With the effect at intensity 0 the canvas and the
+still differ by about 1 level in 255 on average, at 1440 px and on a 390 px phone screen. The
+end-to-end test compares the two with each image normalised, so the grade cancels out but a shifted
+or rescaled photo does not.
+
+**Performance tiers.** Low draws the photo, the lamp and the grade, with no rain. Mid adds one size of
+sliding drop and the droplets, with a one-tap mist. High adds a second, smaller drop size and a
+four-tap mist. On a desktop GPU every tier holds 60 fps, also with the CPU throttled four times.
+Headless Chromium's software renderer (SwiftShader) is a different world: any full-screen drawing
+costs it 45 to 140 ms a frame, even a single texture lookup, while an empty canvas runs at 60 fps.
+Frame rates from CI's software WebGL say nothing about real devices.
+
+**What to remember.**
+
+- A clean build and passing unit tests say nothing about how a shader looks. Screenshot it in place,
+  crop and zoom, and compare frames over a few seconds.
+- A page whose canvas redraws only on demand can be captured with a stale frame right after a style
+  change. Playwright's `screenshot({ style })` applies the style for that one shot and waits for it.
+
