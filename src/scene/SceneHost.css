@@ -1,0 +1,37 @@
+/* The still fills the host; the canvas sits on top of it, transparent where the scene draws nothing. */
+.scene-host {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.scene-still {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* R3F wraps the canvas in a div of this class. The canvas fades in over the still. */
+.scene-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: scene-fade-in var(--dur-scene) var(--ease-settle) both;
+}
+
+@keyframes scene-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* No fade under reduced motion: the canvas is simply there. */
+@media (prefers-reduced-motion: reduce) {
+  .scene-canvas {
+    animation: none;
+  }
+}

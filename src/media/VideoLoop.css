@@ -1,0 +1,6 @@
+/* The width and height attributes reserve the space; the CSS lets the box fill its container. */
+.video-loop {
+  width: 100%;
+  height: auto;
+  background: var(--color-surface);
+}
