@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'rea
 import type { StillName } from '../media/manifest'
 import { Picture } from '../media/Picture'
 import { measureFrameTime, quality, type Quality } from './quality'
+import { SceneBoundary } from './SceneBoundary'
 import { useSceneActive } from './visibility'
 import './SceneHost.css'
 
@@ -86,11 +87,13 @@ export function SceneHost({ still, label, priority = false, className, children 
     <div ref={ref} data-scene-host="" className={['scene-host', className].filter(Boolean).join(' ')}>
       <Picture name={still} alt={label} priority={priority} className="scene-still" />
       {showCanvas && (
-        <Suspense fallback={null}>
-          <SceneCanvas frameloop={active ? 'always' : 'demand'} dpr={tier.dpr}>
-            {children}
-          </SceneCanvas>
-        </Suspense>
+        <SceneBoundary onError={() => setLost(true)}>
+          <Suspense fallback={null}>
+            <SceneCanvas frameloop={active ? 'always' : 'demand'} dpr={tier.dpr}>
+              {children}
+            </SceneCanvas>
+          </Suspense>
+        </SceneBoundary>
       )}
     </div>
   )
