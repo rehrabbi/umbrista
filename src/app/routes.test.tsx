@@ -12,8 +12,11 @@ function renderAt(path: string) {
   )
 }
 
+// A lazy page is compiled on its first import; on a busy test run that can take over a second.
+const LAZY = { timeout: 5000 }
+
 const ROUTES: ReadonlyArray<readonly [path: string, h1: string, title: string]> = [
-  ['/', 'We open when the light goes.', 'Umbrista · A coffee bar that opens at dusk'],
+  ['/', 'Umbrista We open when the light goes.', 'Umbrista · A coffee bar that opens at dusk'],
   ['/menu', 'Menu', 'Menu · Umbrista'],
   ['/brew', 'Brew your own', 'Brew your own · Umbrista'],
   ['/story', 'Story', 'Story · Umbrista'],
@@ -30,7 +33,7 @@ const ROUTES: ReadonlyArray<readonly [path: string, h1: string, title: string]> 
 describe('routes', () => {
   it.each(ROUTES)('%s has exactly one h1, the honesty note and the right title', async (path, h1, title) => {
     renderAt(path)
-    expect(await screen.findByRole('heading', { level: 1, name: h1 })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: h1 }, LAZY)).toBeInTheDocument()
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
     expect(screen.getByText('Umbrista is a design project, not a real café.')).toBeInTheDocument()
     await waitFor(() => expect(document.title).toBe(title))
@@ -65,7 +68,7 @@ describe('landing page', () => {
         <FreshApp />
       </MemoryRouter>,
     )
-    expect(screen.getByRole('heading', { level: 1, name: 'We open when the light goes.' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Umbrista We open when the light goes.' })).toBeInTheDocument()
   })
 })
 
@@ -78,7 +81,7 @@ describe('route focus', () => {
 
   it('moves focus to the new page heading after following a nav link', async () => {
     renderAt('/')
-    await screen.findByRole('heading', { level: 1, name: 'We open when the light goes.' })
+    await screen.findByRole('heading', { level: 1, name: 'Umbrista We open when the light goes.' })
     expect(document.body).toHaveFocus()
 
     await userEvent.click(screen.getByRole('link', { name: 'Story' }))
@@ -91,7 +94,7 @@ describe('route focus', () => {
     renderAt('/story')
     await screen.findByRole('heading', { level: 1, name: 'Story' })
     await userEvent.click(screen.getByRole('link', { name: 'Umbrista, home' }))
-    const heading = await screen.findByRole('heading', { level: 1, name: 'We open when the light goes.' })
+    const heading = await screen.findByRole('heading', { level: 1, name: 'Umbrista We open when the light goes.' })
     await waitFor(() => expect(heading).toHaveFocus())
   })
 })
