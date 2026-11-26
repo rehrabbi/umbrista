@@ -187,3 +187,29 @@ Frame rates from CI's software WebGL say nothing about real devices.
 - A page whose canvas redraws only on demand can be captured with a stale frame right after a style
   change. Playwright's `screenshot({ style })` applies the style for that one shot and waits for it.
 
+## 2026-11-26: Rain on glass, second pass
+
+**What changed after review.** The first pass was too timid for the owner's bar, a development-only
+bug hid the canvas on resize, and software renderers were too slow to show.
+
+**What to remember.**
+
+- At night almost every pixel is near black, so a multiplied effect vanishes. Anything meant to be
+  seen at night is added light: the lamp's halo, the light the condensation catches, the sky
+  pinpoints and crescents on the drops. Spare the pixels that are already bright, or the lit window
+  clips and turns muddy under the scrim.
+- Water reads against mist. Heavier, blurrier mist made the drops, their wakes and their refraction
+  visible; keeping it clear over the café window kept the photograph's heart sharp. A wider
+  refraction puts a tiny orange window inside every drop near it.
+- Random positions must not share random numbers with sizes: the droplets lined up in rows until
+  the position had its own hashes, and two offset grids at different pitches removed the last trace
+  of a lattice.
+- Cache by source and never delete in an effect cleanup. React's development double mount runs the
+  cleanup, so deleting the cached promise there made every later render suspend again and hid the
+  canvas. Drop a cache entry only when it fails.
+- An `<img>` element is not a safe texture source: its `width` follows the layout, not the file,
+  and the upload overflowed the texture (a black canvas). An ImageBitmap copy, flipped for WebGL,
+  has the file's own size and still needs no second download.
+- Ask for `failIfMajorPerformanceCaveat` and check the renderer name too. CI's browser has only
+  SwiftShader, so the tests opt back in through a test-only window flag.
+

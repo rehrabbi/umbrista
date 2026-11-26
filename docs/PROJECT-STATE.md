@@ -106,11 +106,16 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   pointer easing, night stepping over `--dur-scene`, tier to layer config, `coverUv` for the
   `object-fit: cover` crop, parallax, scroll progress, width picking), `rain-glass.frag.glsl` (drops,
   runnels and beads that refract the photo, light mist between them), `glow.frag.glsl` (the sodium
-  lamp and the dusk-to-night grade), and `LivingBackground` (one full-screen quad; loads the still's
-  own file as an sRGB texture with tone mapping off; suspends until it is loaded; a still frame under
-  reduced motion). Tiers: low has no rain, mid one drop size and a one-tap mist, high two sizes and a
+  lamp and the dusk-to-night grade), and `LivingBackground` (one full-screen quad; the texture is an
+  ImageBitmap copy of the still's own `<img>`, so there is no second download, in sRGB with tone
+  mapping off; textures are cached for the page and only disposed on unmount, so remounts never
+  suspend again; a still frame under reduced motion). Tiers: low has no rain, mid one drop size and a one-tap mist, high two sizes and a
   four-tap mist. `SceneHost` now shares its tier through `useSceneQuality` (`scene-quality.ts`). The
-  canvas carries `data-backdrop="ready"` and `data-tier` once drawn. End-to-end tests:
+  canvas carries `data-backdrop="ready"` and `data-tier` once drawn. `SceneHost` keeps the still and
+  mounts no canvas on a software renderer (`failIfMajorPerformanceCaveat`, plus
+  `isSoftwareRenderer` in `quality.ts` on the unmasked renderer name). Test-only window flags, set by
+  Playwright through `e2e/software-gl.ts`: `umbristaTestAllowSoftwareGL`, `umbristaTestTier` and
+  `umbristaTestIntensity`; CI's SwiftShader needs the first for every canvas test. End-to-end tests:
   `e2e/living-background.spec.ts`.
 
 Not yet: any real page content.
