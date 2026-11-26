@@ -132,11 +132,22 @@ function prepare(texture: Texture): Texture {
 const fromStill = new WeakMap<HTMLImageElement, Promise<Texture>>()
 const fromFile = new Map<string, Promise<Texture>>()
 
-/** The still's own image element, already downloaded and decoded by the browser: no second request. */
+/**
+ * The still's own image, already downloaded by the browser: no second request. It is copied into
+ * an ImageBitmap at its natural size, since the element's own width follows the layout. Bitmaps
+ * cannot be flipped on upload, so the copy is made upside down, as WebGL expects.
+ */
 function textureFromStill(still: HTMLImageElement): Promise<Texture> {
   let pending = fromStill.get(still)
   if (!pending) {
-    pending = still.decode().then(() => prepare(new Texture(still)))
+    pending = still
+      .decode()
+      .then(() => createImageBitmap(still, { imageOrientation: 'flipY', premultiplyAlpha: 'none' }))
+      .then((bitmap) => {
+        const texture = new Texture(bitmap)
+        texture.flipY = false
+        return prepare(texture)
+      })
     pending.catch(() => fromStill.delete(still))
     fromStill.set(still, pending)
   }

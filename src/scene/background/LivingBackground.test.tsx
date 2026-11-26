@@ -122,9 +122,12 @@ beforeEach(() => {
   recorded.textures.length = 0
   r3f.frame = null
   fallbacks = 0
+  // jsdom cannot decode images; a bitmap of the still's natural size stands in.
+  vi.stubGlobal('createImageBitmap', vi.fn(async () => ({ width: 1920, height: 1072, close() {} })))
 })
 
 afterEach(() => {
+  vi.unstubAllGlobals()
   resetOverride()
   vi.restoreAllMocks()
   document.body.innerHTML = ''
@@ -137,8 +140,9 @@ describe('LivingBackground', () => {
     const m = await material()
     frame(2)
     const texture = m.uniforms.uBackdrop!.value as Texture
-    // The very element the page already shows: no second download.
-    expect(texture.image).toBe(document.querySelector('[data-scene-host] img'))
+    // A copy of the very element the page already shows: no second download.
+    expect(createImageBitmap).toHaveBeenCalledWith(document.querySelector('[data-scene-host] img'), expect.anything())
+    expect(texture.image).toMatchObject({ width: 1920, height: 1072 })
     expect(recorded.urls).toEqual([])
     expect(texture.colorSpace).toBe('srgb')
     expect(m.uniforms.uIntensity!.value).toBe(0.6)
