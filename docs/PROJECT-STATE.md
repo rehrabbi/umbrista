@@ -6,10 +6,10 @@ Last updated: 2026-11-26.
 
 ## 1. Current stage
 
-**Time and the site shell.** Tasks 0 to 4 are merged into `develop`: the repository foundation, the
-app scaffold with CI, the approved brand, the brand system and the site shell (pull request #5, branch
-archived as `merged/task-4-kit-shell-routes`). Both `main` and `develop` are protected. Task 5, the
-two clocks, is built on `task/5-two-clocks` and is in review.
+**Media and 3D.** Tasks 0 to 5 are merged into `develop`: the repository foundation, the app
+scaffold with CI, the approved brand, the brand system, the site shell and the two clocks (pull
+request #6). Both `main` and `develop` are protected. The owner approved a photoreal direction after a
+look-development round (ADR 0002); the design and plan are amended for it, and Task 6 is next.
 
 ## 2. Locked decisions
 
@@ -18,7 +18,8 @@ From design section 4 (decided by the owner):
 - Invent the brand from scratch: a **night coffee bar that opens at dusk**, in a fictional city.
   Name: **Umbrista**.
 - Mood: cinematic and moody. Scope: the full café site.
-- Four 3D moments: living background, scroll journey, hero cup, brew-your-own.
+- Four 3D moments: living background, scroll journey, hero cup, brew-your-own, on a **photoreal**
+  base: generated stills, loops and a 3D cup under live WebGL effects ([ADR 0002](adr/0002-photoreal-media.md)).
 - Visitor actions: reserve a table, order ahead for pickup, join the list, just explore. Forms save
   to a real, free backend.
 - Repository: public, `rehrabbi/umbrista`, MIT licence. Hosting: Vercel. Database: Neon Postgres,
@@ -74,7 +75,7 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   motion), a stub for every page in `src/pages/`, and the not-found page. `BrowserRouter` is in
   `main.tsx`; tests wrap `App` in a `MemoryRouter`. The end-to-end smoke test now visits every route.
 
-- Task 5, in progress on `task/5-two-clocks` (not yet merged): the two clocks. `shared/hours.ts` is
+- Task 5, merged into `develop` (pull request #6): the two clocks. `shared/hours.ts` is
   pure and has no imports (the server reuses it): `CAFE`, `sunset` (NOAA solar position, null only
   for polar day or night), `cafeNight`, `openingWindow` and `isOpen`, all in café time through `Intl`.
   `src/time/useNight.ts` is the scene's clock: the visitor's dusk estimated from the time zone (no
@@ -82,13 +83,20 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   in memory in `src/time/night-store.ts`. `TimeOfDay`, mounted in `App`, sets `data-time` on `<html>`.
   `NightSwitch` is in the navigation; `OpeningTime` is on the landing and Visit pages.
 
+- Look development (not code; ADR 0002): six generated assets approved and listed in
+  `docs/brand.md`: the Calvessa street at dusk, the rain window, the crema macro, its 1080p steam loop,
+  the studio cup still and the cup's 3D model. The design and the plan are amended for the photoreal
+  direction. The masters stay in Higgsfield; the owner's local copies are in the git-ignored
+  `.superpowers/lookdev/`, and Task 6 commits the web derivatives.
+
 Not yet: any real page content.
 
 ## 4. Exact next step
 
-**Finish Task 5**: open the pull request from `task/5-two-clocks` into `develop`, merge it on
-green and rename the branch to `merged/task-5-two-clocks`. Check the 16 px favicon in a real
-browser tab. Then the next task of the plan.
+**Task 6: media and 3D foundation**, on `task/6-media-3d-foundation` from `develop`: `SceneHost`,
+`quality()`, `useSceneActive`, the `Picture` and `VideoLoop` components, and `npm run media`, which
+builds the committed web derivatives of the approved stills and the steam loop. Still open from
+earlier tasks: check the 16 px favicon in a real browser tab.
 
 ## 5. Bring-up on a new machine
 

@@ -112,3 +112,30 @@ until 06:00 local. The café's hours belong to Calvessa: sunset from the NOAA so
 - A visitor's choice that must not outlive the page lives in a small in-memory store read with
   `useSyncExternalStore`, so every component sees the same value and nothing touches storage.
 
+## 2026-11-26: Going photoreal
+
+**Decided.** The site's visuals are photoreal, at the level of the reference reels: generated
+stills, a generated steam loop and a generated 3D cup, with live WebGL effects layered over them. The
+owner chose this after seeing the first code-drawn mock-up of the landing page and saying it should
+look real. ADR 0002 records the decision; `docs/brand.md` lists every generated asset.
+
+**How it was decided.** A short look-development round, each asset on the owner's go: four
+photoreal stills, an original cup modelled in Blender, a draft and then a 1080p steam loop, and a 3D
+model of the cup made from one of the stills. A throwaway preview put them together as a landing
+page, and the owner approved that direction.
+
+**What to remember.**
+
+- Judge visuals in place, not in isolation. The preview answered in minutes what a list of options
+  could not.
+- A clip loops cleanly when the same still is both its first and last frame; check the seam by
+  comparing the first and last frames numerically.
+- Generators may deliver HEVC video, which not every browser plays. Re-encode to VP9 WebM and H.264
+  MP4, and keep a poster for reduced motion.
+- Image-to-3D failed instantly on a 4096 px, 22 MB source and succeeded on a 1024 px copy. Failed jobs
+  were not charged.
+- Hosted Blender renders have a time limit: apply changes and render in separate steps, and keep
+  preview renders small.
+- A model's back and underside are guesses when it comes from one photo; check it from every angle
+  before using it.
+

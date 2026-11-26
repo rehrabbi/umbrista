@@ -118,5 +118,23 @@ until three."; 404 "Nothing down here but the dark." with the link "Back to the 
 
 ## Generated assets
 
-None yet. Every generated asset is listed here (what it is, where it is used, the model, the date),
-and each one needs the owner's go before it is made.
+Every generated asset is listed here, and each one was made only after the owner's go. The full-size
+masters stay in Higgsfield and are found again by their job IDs; only web derivatives are committed.
+
+| Asset | Used for | Model | Job | Date |
+|---|---|---|---|---|
+| Calvessa street at dusk: a fogged hill street with tram rails, one café window lit | Landing chapter 1, Visit | Nano Banana 2, 4K still | `f952dd58` | 2026-11-26 |
+| The cup in the rain-streaked window, under one sodium pendant | The window chapter | Nano Banana 2, 4K still | `4ab908a6` | 2026-11-26 |
+| Crema macro with backlit steam | Poster for "The craft" | Nano Banana 2, 4K still | `ddba398f` | 2026-11-26 |
+| Steam loop: six silent seconds, locked camera, first frame equals last | "The craft" | Seedance 2.5, 1080p (draft `560af24b` first) | `bf93d379` | 2026-11-26 |
+| Studio cup and saucer on navy | Reference for the cup model | Nano Banana 2, 4K still | `b22ab85d` | 2026-11-26 |
+| The cup and saucer as a 3D model, PBR textures, about 30,000 triangles | Hero cup, Brew-your-own | Meshy image to 3D, from a 1024 px copy of the studio still | `404fdaa5` | 2026-11-26 |
+
+Notes:
+
+- The cup's design (a flared low body, thin rim, rounded loop handle, plain white glaze) is
+  Umbrista's own, written into the brief; nothing copies a real product.
+- The model's back and underside are inferred from one view; a small gap shows where the foot meets
+  the saucer and is fixed before use (plan Task 9).
+- The steam loop arrives as HEVC, which not every browser plays; it is always re-encoded to VP9 WebM
+  and H.264 MP4.

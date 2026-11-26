@@ -1,7 +1,7 @@
 # Umbrista: design
 
 Date: 2026-11-26
-Status: draft, waiting for the owner's approval
+Status: approved by the owner; revised the same day for the photoreal direction (section 4)
 
 ## 1. Intent
 
@@ -39,16 +39,17 @@ world is a night café.
 **Goals**
 
 - A full café website: Landing, Menu, Brew-your-own, Story, Visit, Journal, and a 404 page.
-- Four 3D moments, all of which the owner asked for:
-  1. A **living background**: steam, rain and lamp glow rendered in real time, reacting to the cursor
-     and to scroll.
-  2. A **scroll journey** on the landing page: the camera travels through the café's night in
-     chapters (for example dusk falls, the lamps come on, the pour, the last cup), with big kinetic
-     type.
-  3. A **hero object to play with**: an Umbrista cup that can be tilted, spun and made to splash with
-     cursor, touch or keyboard.
-  4. **Brew-your-own**: the visitor picks beans, roast, method and milk, and a 3D cup fills and changes
-     colour and texture to match. The result can be added to an order.
+- Four 3D moments, all of which the owner asked for, built on a **photoreal** base (section 4):
+  1. A **living background**: photoreal stills and short silent video loops of Calvessa's night, with
+     real-time WebGL layered over them (rain running down the glass, lamp glow that follows the
+     cursor, gentle depth and parallax), reacting to the cursor and to scroll.
+  2. A **scroll journey** on the landing page: chapters of the café's night (dusk falls on the
+     street, the cup under the lamp, the craft, the window, the last cup), each built from
+     art-directed photoreal media and moved by scroll, with big kinetic type.
+  3. A **hero object to play with**: the Umbrista cup as a photoreal 3D model, lit live, that can be
+     tilted, spun and made to ripple with cursor, touch or keyboard.
+  4. **Brew-your-own**: the visitor picks beans, roast, method and milk, and the same 3D cup fills and
+     its coffee changes colour and crema to match. The result can be added to an order.
 - Four visitor actions, all real: **reserve a table**, **order ahead for pickup** (cart and
   confirmation, no payment), **join the list** (opening news), or **just explore**.
 - A full brand: name, logo (mark and wordmark), favicon set, social share image, palette, type,
@@ -87,9 +88,11 @@ effects must stay fast, original and usable.
   an issue on the public repository, with a warning not to post personal details there and to ask
   for a private way to get in touch (as SentinelOps does); no personal email is published.
 - **No AI attribution** anywhere: commits, pull requests, files, docs.
-- **Original assets only.** No stock photography and no downloaded 3D models from untrusted
-  sources. Visuals come from 3D scenes and generative art made for this project; any third-party
-  asset must be CC0 or similarly free, and recorded with its licence.
+- **Original assets only.** No stock photography and no downloaded 3D models. Visuals are made for
+  this project: photoreal images, video loops and the cup model generated from briefs written for
+  Umbrista (on the owner's go, below), and the code-built effects layered over them. The designs (the
+  cup, the café, the city) are Umbrista's own; nothing copies a real brand, place or product. Any
+  third-party asset must be CC0 or similarly free, and recorded with its licence.
 - **Generated assets (Higgsfield), on the owner's go only.** The owner allows Higgsfield for images,
   video, textures and 3D models the project needs. Nothing is generated without the owner's explicit
   go for that specific asset: first the builder says what it will be, what it is for, where it is used,
@@ -104,6 +107,13 @@ effects must stay fast, original and usable.
 - Business: a café / coffee bar.
 - Mood: cinematic and moody.
 - 3D: all four moments listed above.
+- **Photoreal look** (decided after the look-development round on 2026-11-26): the site looks real,
+  at the level of the reference reels, not drawn or code-built. Photoreal stills, short silent video
+  loops and the cup's 3D model are generated with Higgsfield, each on the owner's go; real-time WebGL
+  is layered over them so the site still feels alive and interactive. The owner approved this
+  direction after seeing a working preview: the street at dusk with the 3D cup, the cup turning on
+  scroll, the steam loop in "The craft", and the rain-window still. Approved assets are listed in
+  `docs/brand.md`.
 - Concept: a night coffee bar that opens at dusk.
 - Scope: the full café site.
 - Visitor actions: reserve, order ahead, join the list, and just explore.
@@ -128,8 +138,12 @@ effects must stay fast, original and usable.
 **Stack**
 
 - Vite, React and TypeScript.
-- 3D: Three.js through React Three Fiber and drei; custom GLSL shaders for steam, rain, liquid and
-  glow.
+- 3D: Three.js through React Three Fiber and drei. The cup is the generated 3D model (glTF, PBR
+  materials, compressed), lit live in the scene; custom GLSL shaders draw the rain on glass, the lamp
+  glow, the parallax over the photoreal media, and the coffee's surface (colour, crema and ripples).
+- Photoreal media: generated stills served as responsive AVIF and WebP; generated video loops served
+  silent as VP9 WebM with an H.264 MP4 fallback and a poster still (generators deliver HEVC, which not
+  every browser plays, so loops are always re-encoded).
 - Scroll and choreography: GSAP with ScrollTrigger, and Lenis for smooth scrolling.
 - Interface motion: Motion (`motion/react`), as in SentinelOps.
 - Routing: React Router, with each page a lazily loaded route.
@@ -188,6 +202,9 @@ effects must stay fast, original and usable.
   runtime), rendering pauses when the tab is hidden or the canvas is off screen, and the frame loop
   idles when nothing moves.
 - No WebGL, or a failed context: the site falls back to the static stills and still works fully.
+- Media budgets: each video loop about 1 MB or less, loaded only near the viewport and paused off
+  screen; the cup model about 2 MB or less after compression; images sized per viewport. The first
+  frame's image is the largest-contentful-paint candidate and is preloaded.
 
 **Accessibility** (answer to "hard to use")
 
@@ -270,8 +287,8 @@ The owner looks at, and approves, these before work moves past them:
 ## 9. Left to the builder
 
 - The exact chapters of the scroll journey, their copy and their camera moves.
-- How the 3D assets are made (procedural geometry and shaders, or models built for the project),
-  within the original-assets rule.
+- How each photoreal asset is briefed and art-directed (proposed to the owner before generating), and
+  how the WebGL effects sit over the media, within the original-assets rule.
 - Menu items, names, flavour notes and journal posts.
 - The database schema, function layout and component structure.
 - Exact animation timings and easings, within the motion principles set on the brand board.
