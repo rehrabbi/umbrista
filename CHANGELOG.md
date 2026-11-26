@@ -10,3 +10,5 @@ once the whole site is built.
 ### Added
 
 - Repository foundation: design, plan, governance documents, licence and GitHub templates.
+- The Umbrista brand: the logo (a cup with a long shadow), the favicon and app icons, the link
+  preview image, the web manifest, the night and day colours, and the two self-hosted fonts.

@@ -7,8 +7,8 @@ Last updated: 2026-11-26.
 ## 1. Current stage
 
 **Design system.** The repository foundation (Task 0), the app scaffold with CI (Task 1) and the
-approved brand (Task 2) are on `develop`, and both `main` and `develop` are protected. Next are the
-design tokens (Task 3).
+approved brand (Task 2) are on `develop`, and both `main` and `develop` are protected. The brand
+system (Task 3) is in progress on `task/3-brand-system`.
 
 ## 2. Locked decisions
 
@@ -56,13 +56,22 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   by the owner: Logo A "Long shadow", Palette 1 "Sodium", Type 1 "Signage", the city of Calvessa,
   prices in crowns. The values are in `docs/brand.md`.
 
+- Task 3, in progress on `task/3-brand-system` (not yet merged): the design tokens
+  (`src/styles/tokens.css`, night on `:root`, day under `[data-time="day"]`), `base.css`, self-hosted
+  fonts (`src/styles/fonts.ts`), `src/brand/geometry.ts` and the `Logo` component (mark, wordmark,
+  lockup; the wordmark is outlined by `npm run wordmark`), every icon and the link preview image from
+  `npm run icons`, the web manifest, the favicon and social metadata in `index.html`, and the final
+  logo files in `docs/brand/`. Tests: `tokens.test.ts` (hex values and contrast), `Logo.test.tsx`,
+  `brand-assets.test.ts`.
+
 Not yet: any feature of the site.
 
 ## 4. Exact next step
 
-**Task 3: design tokens**, on `task/3-design-tokens` from `develop`, copying the values in
-`docs/brand.md` verbatim: the palette (night and day), the two font families through Fontsource, the
-motion timings, and the redrawn logo files with an outlined wordmark.
+**Finish Task 3**: open the pull request from `task/3-brand-system` into `develop`, merge it on green
+and rename the branch to `merged/task-3-brand-system`. Check the 16 px favicon in a real browser tab.
+Then the next task of the plan. Setting `data-time` on `<html>` from the visitor's clock is for a
+later task; until then the site is always night.
 
 ## 5. Bring-up on a new machine
 
