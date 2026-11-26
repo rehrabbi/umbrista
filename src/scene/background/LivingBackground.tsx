@@ -269,6 +269,24 @@ export function LivingBackground({ backdrop, intensity = 1 }: LivingBackgroundPr
   const eased = useRef<Vec2 | null>(null)
   const night = useRef(isNight ? 1 : 0)
 
+  // The canvas's box, measured when it moves or resizes rather than on every frame.
+  const box = useRef<DOMRect | null>(null)
+  useEffect(() => {
+    const measure = () => {
+      box.current = canvas.getBoundingClientRect()
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(canvas)
+    window.addEventListener('scroll', measure, { passive: true })
+    window.addEventListener('resize', measure, { passive: true })
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('scroll', measure)
+      window.removeEventListener('resize', measure)
+    }
+  }, [canvas])
+
   // Under reduced motion the frame loop runs on demand, so a new grade or intensity asks for a frame.
   const stillFrame = reduced ? `${isNight ? 'night' : 'day'}:${intensity}` : null
   useEffect(() => {
@@ -276,7 +294,7 @@ export function LivingBackground({ backdrop, intensity = 1 }: LivingBackgroundPr
   }, [stillFrame, invalidate])
 
   useFrame((state, delta) => {
-    const rect = canvas.getBoundingClientRect()
+    const rect = box.current ?? { left: 0, top: 0, width: size.width, height: size.height }
     const viewPx: Vec2 = rect.width > 0 && rect.height > 0 ? [rect.width, rect.height] : [size.width, size.height]
     const [aw, ah] = MEDIA[backdrop].aspect
     const cover = coverUv(viewPx[0] / viewPx[1], imageAspect(texture) ?? aw / ah)
