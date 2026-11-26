@@ -6,8 +6,9 @@ Last updated: 2026-11-26.
 
 ## 1. Current stage
 
-**Setup.** The design and plan are written and the repository foundation (Task 0) is committed.
-Task 1 (the app scaffold and CI) is in progress on `task/1-app-scaffold`.
+**Brand.** The repository foundation (Task 0) and the app scaffold with CI (Task 1) are on
+`develop`, and both `main` and `develop` are protected. Next is the brand board (Task 2), an owner
+checkpoint.
 
 ## 2. Locked decisions
 
@@ -39,23 +40,29 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
 - Governance: README, CHANGELOG, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, LICENSE, this file,
   the learning log, ADR 0001, GitHub issue and pull request templates, CODEOWNERS.
 
-- Task 1, in progress on `task/1-app-scaffold`: the Vite, React 19 and TypeScript app (a single
+- Task 1, merged into `develop` (pull request #1): the Vite, React 19 and TypeScript app (a single
   page with a `main` landmark), Vitest with jsdom and Testing Library (test helpers `setMatchMedia`
   and `setWebGL` in `src/test/setup.ts`), a Playwright smoke test, oxlint, and the GitHub Actions
   workflows `ci.yml` (Lint and types, Unit tests, Build, End-to-end) and `security.yml` (CodeQL,
   npm audit, gitleaks), with every action pinned by commit SHA.
+- The GitHub repository `rehrabbi/umbrista`: public, merge commits only, secret scanning with push
+  protection, private vulnerability reporting, Dependabot security updates, and the labels
+  `type: fix`, `type: feat` and `type: data-request`.
+- Branch protection on `main` and `develop`: pull requests required, the seven checks above
+  required and up to date, conversations resolved, administrators included, no force pushes or
+  deletions.
 
-Not yet: Task 1 merged into `develop`, branch protection, any feature of the site.
+Not yet: any feature of the site.
 
 ## 4. Exact next step
 
-1. The owner (or the builder, on the owner's go) creates the public repository `rehrabbi/umbrista`
-   from this local history, sets its description and topics, enables secret scanning and push
-   protection, sets merge commits only, and creates `develop` (the rest of Task 0).
-2. **Task 1: the app scaffold and CI**, on `task/1-app-scaffold` from `develop`, as one pull
-   request into `develop`. The code is written and passes locally; what remains is the pull
-   request, merging it on green, and archiving the branch as `merged/task-1-app-scaffold`.
-3. Then **branch protection** on `main`, once the required checks from Task 1 exist.
+**Task 2: the brand board**, on `task/2-brand-board` from `develop`. Explore three logo directions,
+two palettes, two type pairings, three city names and a price format; lay them out on one board
+(`docs/brand/board.html`) and open it for the owner. The owner's choices go into `docs/brand.md`
+and the learning log. Any generated mood frame needs the owner's go first, asset by asset. Task 3
+does not start until the owner approves the board.
+
+ired checks from Task 1 exist.
 
 ## 5. Bring-up on a new machine
 
