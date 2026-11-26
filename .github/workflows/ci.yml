@@ -96,8 +96,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      # Serves the build with `vite preview`, audits `/` three times on the mobile preset, and
+      # Serves the build with `vite preview`, audits `/` five times on the mobile preset, and
       # fails on the budgets in lighthouserc.json (performance, LCP and CLS, median run).
+      # The runner has no GPU and SceneHost refuses software WebGL, so this measures the landing
+      # without its canvas. A desktop with a GPU scores about 0.80 locally (see the learning log).
       - run: npx lhci autorun
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
