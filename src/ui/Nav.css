@@ -1,0 +1,113 @@
+.site-header {
+  border-bottom: 1px solid var(--color-shadow);
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-4);
+}
+
+.nav-home {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+.nav .nav-logo {
+  width: 9.5rem;
+}
+
+.nav-toggle {
+  min-height: 2.75rem;
+  padding: 0 var(--space-4);
+  border: 2px solid var(--color-shadow);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nav-toggle[aria-expanded='true'] {
+  border-color: var(--color-signal);
+}
+
+.nav-list {
+  display: none;
+  flex-basis: 100%;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-list.is-open {
+  display: flex;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  color: var(--color-text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.35em;
+}
+
+/* The current page is told by an underline as well as by aria-current. */
+.nav-link[aria-current='page'] {
+  text-decoration: underline;
+  text-decoration-color: var(--color-signal);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.35em;
+}
+
+.nav-cta {
+  padding-top: var(--space-2);
+}
+
+.nav-cta .btn {
+  width: 100%;
+}
+
+@media (min-width: 56rem) {
+  .nav {
+    flex-wrap: nowrap;
+  }
+
+  .nav .nav-logo {
+    width: 11rem;
+  }
+
+  .nav-toggle {
+    display: none;
+  }
+
+  .nav-list,
+  .nav-list.is-open {
+    display: flex;
+    flex-basis: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-5);
+  }
+
+  .nav-cta {
+    padding-top: 0;
+  }
+
+  .nav-cta .btn {
+    width: auto;
+  }
+}
