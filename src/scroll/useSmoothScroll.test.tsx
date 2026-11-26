@@ -1,8 +1,8 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { StrictMode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { setMatchMedia } from '../test/setup'
+import { changeMatchMedia, setMatchMedia } from '../test/setup'
 import { useSmoothScroll } from './useSmoothScroll'
 
 const lenis = vi.hoisted(() => ({
@@ -81,6 +81,27 @@ describe('useSmoothScroll', () => {
     render(<Probe onValue={(v) => (value = v)} />)
     expect(value).toBeNull()
     expect(lenis.options).toHaveLength(0)
+  })
+
+  it('destroys Lenis when reduced motion is turned on during the visit, and builds it again when it is turned off', () => {
+    let value: unknown = null
+    render(<Probe onValue={(v) => (value = v)} />)
+    expect(lenis.options).toHaveLength(1)
+
+    act(() => changeMatchMedia(REDUCED, true))
+    expect(lenis.destroyed).toBe(1)
+    expect(value).toBeNull()
+
+    act(() => changeMatchMedia(REDUCED, false))
+    expect(lenis.options).toHaveLength(2)
+    expect(value).not.toBeNull()
+  })
+
+  it('removes its media listener on unmount', () => {
+    const { unmount } = render(<Probe />)
+    unmount()
+    act(() => changeMatchMedia(REDUCED, false))
+    expect(lenis.options).toHaveLength(1)
   })
 
   it.each([

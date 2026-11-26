@@ -5,6 +5,7 @@ import { afterEach, beforeEach } from 'vitest'
 type MediaMatches = Record<string, boolean>
 
 let mediaMatches: MediaMatches = {}
+const mediaListeners = new Map<string, Set<(event: MediaQueryListEvent) => void>>()
 
 function installMatchMedia(): void {
   Object.defineProperty(window, 'matchMedia', {
@@ -14,8 +15,13 @@ function installMatchMedia(): void {
       matches: mediaMatches[query] ?? false,
       media: query,
       onchange: null,
-      addEventListener: () => {},
-      removeEventListener: () => {},
+      addEventListener: (type: string, listener: (event: MediaQueryListEvent) => void) => {
+        if (type !== 'change') return
+        mediaListeners.set(query, (mediaListeners.get(query) ?? new Set()).add(listener))
+      },
+      removeEventListener: (type: string, listener: (event: MediaQueryListEvent) => void) => {
+        if (type === 'change') mediaListeners.get(query)?.delete(listener)
+      },
       addListener: () => {},
       removeListener: () => {},
       dispatchEvent: () => false,
@@ -27,6 +33,14 @@ function installMatchMedia(): void {
 export function setMatchMedia(query: string, matches: boolean): void {
   mediaMatches = { ...mediaMatches, [query]: matches }
   installMatchMedia()
+}
+
+/** Like `setMatchMedia`, and also tells the listeners that subscribed to the query's `change` event. */
+export function changeMatchMedia(query: string, matches: boolean): void {
+  setMatchMedia(query, matches)
+  for (const listener of mediaListeners.get(query) ?? []) {
+    listener({ matches, media: query } as MediaQueryListEvent)
+  }
 }
 
 // jsdom has no ResizeObserver; Lenis and the 3D canvas need one to exist.
@@ -53,6 +67,7 @@ HTMLCanvasElement.prototype.getContext = function getContext(this: HTMLCanvasEle
 
 beforeEach(() => {
   mediaMatches = {}
+  mediaListeners.clear()
   installMatchMedia()
   setWebGL(true)
 })

@@ -28,19 +28,36 @@ function subscribe(listener: () => void): () => void {
  */
 export function useSmoothScroll(): Lenis | null {
   useEffect(() => {
-    if (window.matchMedia(REDUCED_MOTION).matches) return
+    const query = window.matchMedia(REDUCED_MOTION)
+    let stop: (() => void) | null = null
 
-    const lenis = new Lenis({ anchors: true })
-    let frame = requestAnimationFrame(function tick(time) {
-      lenis.raf(time)
-      frame = requestAnimationFrame(tick)
-    })
-    setCurrent(lenis)
+    const start = () => {
+      const lenis = new Lenis({ anchors: true })
+      let frame = requestAnimationFrame(function tick(time) {
+        lenis.raf(time)
+        frame = requestAnimationFrame(tick)
+      })
+      setCurrent(lenis)
+      stop = () => {
+        cancelAnimationFrame(frame)
+        lenis.destroy()
+        setCurrent(null)
+        stop = null
+      }
+    }
+
+    // The preference can change during a visit: still when it turns on, smooth when it turns off.
+    const onChange = (event: MediaQueryListEvent) => {
+      if (event.matches) stop?.()
+      else if (!stop) start()
+    }
+
+    if (!query.matches) start()
+    query.addEventListener('change', onChange)
 
     return () => {
-      cancelAnimationFrame(frame)
-      lenis.destroy()
-      setCurrent(null)
+      query.removeEventListener('change', onChange)
+      stop?.()
     }
   }, [])
 
