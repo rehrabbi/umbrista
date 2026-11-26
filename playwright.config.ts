@@ -11,7 +11,16 @@ export default defineConfig({
     baseURL: `http://localhost:${port}`,
     trace: 'on-first-retry',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'chromium',
+      // Headless Chromium has no GPU: SwiftShader gives it a software WebGL so the 3D host can mount.
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] },
+      },
+    },
+  ],
   webServer: {
     command: `npm run build && npm run preview -- --port ${port} --strictPort`,
     url: `http://localhost:${port}`,
