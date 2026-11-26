@@ -1,0 +1,51 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-5);
+  border: 2px solid var(--color-signal);
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-ui) var(--ease-settle),
+    color var(--dur-ui) var(--ease-settle),
+    opacity var(--dur-ui) var(--ease-settle);
+}
+
+.btn-primary {
+  background: var(--color-signal);
+  color: var(--color-on-signal);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-text);
+}
+
+.btn-primary:hover {
+  background: var(--color-text);
+  border-color: var(--color-text);
+}
+
+.btn-secondary:hover {
+  background: var(--color-surface);
+}
+
+/* On the signal fill the signal ring would vanish, so the ring takes the text colour. */
+.btn-primary:focus-visible {
+  outline-color: var(--color-text);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn[aria-busy='true'] {
+  cursor: progress;
+  opacity: 0.75;
+}

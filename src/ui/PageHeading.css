@@ -1,0 +1,26 @@
+.page-heading {
+  font-size: clamp(2.5rem, 9vw, 5rem);
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
+.page-heading:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 6px;
+}
+
+.page {
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-4);
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+
+.page-lede {
+  max-width: 40rem;
+  color: var(--color-text-quiet);
+  font-size: 1.125rem;
+}

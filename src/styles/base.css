@@ -87,3 +87,12 @@ textarea {
     transition-duration: 1ms !important;
   }
 }
+
+/* Lenis adds these classes to <html> when smooth scrolling is on. */
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: clip;
+}
