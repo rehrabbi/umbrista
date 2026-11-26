@@ -1,12 +1,16 @@
 import { useFrame, useThree } from '@react-three/fiber'
 import { use, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  Mesh,
   MirroredRepeatWrapping,
+  PlaneGeometry,
   ShaderMaterial,
   SRGBColorSpace,
   Texture,
   TextureLoader,
   Vector2,
+  type Camera,
+  type WebGLRenderer,
 } from 'three'
 import { MEDIA, type StillName } from '../../media/manifest'
 import { usePrefersReducedMotion } from '../../media/usePrefersReducedMotion'
@@ -121,6 +125,44 @@ function writeUniforms(material: ShaderMaterial, frame: FrameUniforms): void {
   u.uIntensity!.value = frame.intensity
   u.uQuality!.value = frame.quality
   u.uScroll!.value = frame.scroll
+}
+
+/*
+ * Compiling the shader is the slowest part of the first frame (hundreds of milliseconds on a phone,
+ * or through ANGLE on Windows). three's compileAsync hands it to the driver and waits without
+ * blocking (KHR_parallel_shader_compile where the browser has it), so the first frame only uses the
+ * finished program.
+ *
+ * The compile is keyed by the shader variant, per canvas, never by the component's own material:
+ * a first mount that suspends loses its memo, so a material-keyed promise would be new on every
+ * retry and the scene would never finish loading. three shares one program between materials with
+ * the same source and defines, so warming it with a probe material serves the real one. The probe
+ * is kept alive with the promise, so the program is not released while the canvas lives.
+ *
+ * Without the extension (Safari, software WebGL) the compile would block just the same, and three
+ * would warn about the missing extension on every visit; the first frame compiles it instead.
+ */
+const compiling = new WeakMap<HTMLCanvasElement, Map<string, Promise<unknown>>>()
+const PROBE_QUAD = new PlaneGeometry(2, 2)
+const COMPILED_IN_FRAME = Promise.resolve()
+
+function compiled(gl: WebGLRenderer, camera: Camera, dropLayers: number, fogTaps: number): Promise<unknown> {
+  if (!gl.extensions.has('KHR_parallel_shader_compile')) return COMPILED_IN_FRAME
+  let variants = compiling.get(gl.domElement)
+  if (!variants) {
+    variants = new Map()
+    compiling.set(gl.domElement, variants)
+  }
+  const key = `${dropLayers}:${fogTaps}`
+  let pending = variants.get(key)
+  if (!pending) {
+    const probe = new Mesh(PROBE_QUAD, createMaterial(dropLayers, fogTaps))
+    probe.frustumCulled = false
+    // A failure here is not fatal: the first frame then compiles the program itself.
+    pending = gl.compileAsync(probe, camera).catch(() => undefined)
+    variants.set(key, pending)
+  }
+  return pending
 }
 
 /** The photo is sRGB: three decodes it to linear for the shader, which encodes its output back. */
@@ -251,17 +293,22 @@ export function LivingBackground({ backdrop, intensity: requested = 1, lamp: lam
   const size = useThree((state) => state.size)
   const dpr = useThree((state) => state.viewport.dpr)
   const invalidate = useThree((state) => state.invalidate)
+  const gl = useThree((state) => state.gl)
+  const camera = useThree((state) => state.camera)
 
   // Rebuilt only when the tier changes what the shader compiles; the uniforms follow every frame.
   const { dropLayers, fogTaps } = layers
   const material = useMemo(() => createMaterial(dropLayers, fogTaps), [dropLayers, fogTaps])
   useEffect(() => () => material.dispose(), [material])
+  // Started now, so the shader compiles while the photograph decodes.
+  const shaderReady = compiled(gl, camera, dropLayers, fogTaps)
 
   // The backdrop texture: the still's own image, chosen once at mount. The scene
   // suspends until it has loaded, so the canvas fades in with the photograph already on it, never
   // over a blank frame.
   const [source] = useState(() => backdropSource(canvas, backdrop, size, dpr))
   const texture = use('still' in source ? textureFromStill(source.still) : textureFromFile(source.url))
+  use(shaderReady)
   useEffect(() => () => texture.dispose(), [texture])
   useEffect(() => {
     markBackdrop(canvas, tier)
@@ -291,25 +338,31 @@ export function LivingBackground({ backdrop, intensity: requested = 1, lamp: lam
   const eased = useRef<Vec2 | null>(null)
   const night = useRef(isNight ? 1 : 0)
 
-  // The canvas's box, and the still's object-position (the crop to match), measured when it moves
-  // or resizes rather than on every frame.
+  // The canvas's box and the still's object-position (the crop to match). The crop only changes
+  // with the layout, so it is read on resize. The box also moves with the page: a scroll only marks
+  // it stale, and the next frame reads it once. Reading layout inside the scroll event would force
+  // an extra style pass on every scroll frame, before the frame's own.
   const box = useRef<DOMRect | null>(null)
+  const boxStale = useRef(true)
   const position = useRef<Vec2>([0.5, 0.5])
   useEffect(() => {
     const still = canvas.closest('[data-scene-host]')?.querySelector('img')
-    const measure = () => {
-      box.current = canvas.getBoundingClientRect()
+    const relayout = () => {
+      boxStale.current = true
       if (still) position.current = parseObjectPosition(getComputedStyle(still).objectPosition)
     }
-    measure()
-    const observer = new ResizeObserver(measure)
+    const moved = () => {
+      boxStale.current = true
+    }
+    relayout()
+    const observer = new ResizeObserver(relayout)
     observer.observe(canvas)
-    window.addEventListener('scroll', measure, { passive: true })
-    window.addEventListener('resize', measure, { passive: true })
+    window.addEventListener('scroll', moved, { passive: true })
+    window.addEventListener('resize', relayout, { passive: true })
     return () => {
       observer.disconnect()
-      window.removeEventListener('scroll', measure)
-      window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', moved)
+      window.removeEventListener('resize', relayout)
     }
   }, [canvas])
 
@@ -320,6 +373,10 @@ export function LivingBackground({ backdrop, intensity: requested = 1, lamp: lam
   }, [stillFrame, invalidate])
 
   useFrame((state, delta) => {
+    if (boxStale.current) {
+      box.current = canvas.getBoundingClientRect()
+      boxStale.current = false
+    }
     const rect = box.current ?? { left: 0, top: 0, width: size.width, height: size.height }
     const viewPx: Vec2 = rect.width > 0 && rect.height > 0 ? [rect.width, rect.height] : [size.width, size.height]
     const [aw, ah] = MEDIA[backdrop].aspect
