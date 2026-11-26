@@ -62,3 +62,18 @@ test('under reduced motion the loop is its poster and there is no video element'
   await expect(page.locator('.landing-craft img')).toBeVisible()
   await expect(page.locator('video')).toHaveCount(0)
 })
+
+test('the canvas covers the still exactly and does not block clicks', async ({ page }) => {
+  await page.goto('/')
+  const canvas = page.locator('.landing-scene canvas')
+  await expect(canvas).toHaveCount(1, { timeout: 10_000 })
+  const still = await page.locator('.landing-scene img').boundingBox()
+  const box = await canvas.boundingBox()
+  expect(still).not.toBeNull()
+  expect(box).not.toBeNull()
+  for (const key of ['x', 'y', 'width', 'height'] as const) {
+    expect(Math.abs(box![key] - still![key])).toBeLessThanOrEqual(1)
+  }
+  const pointerEvents = await canvas.evaluate((el) => getComputedStyle(el.parentElement!).pointerEvents)
+  expect(pointerEvents).toBe('none')
+})

@@ -13,6 +13,9 @@ export default function SceneCanvas({ frameloop, dpr, children }: SceneCanvasPro
     <Canvas
       className="scene-canvas"
       aria-hidden="true"
+      // R3F sets its own inline position, size and pointer-events on this wrapper, which beat any class.
+      // Lay it over the still, and leave clicks and text selection to the page for now.
+      style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
       frameloop={frameloop}
       dpr={dpr}
       gl={{ alpha: true, antialias: false, powerPreference: 'high-performance' }}
