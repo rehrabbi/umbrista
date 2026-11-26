@@ -73,14 +73,21 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   motion), a stub for every page in `src/pages/`, and the not-found page. `BrowserRouter` is in
   `main.tsx`; tests wrap `App` in a `MemoryRouter`. The end-to-end smoke test now visits every route.
 
+- Task 5, in progress on `task/5-two-clocks` (not yet merged): the two clocks. `shared/hours.ts` is
+  pure and has no imports (the server reuses it): `CAFE`, `sunset` (NOAA solar position, null only
+  for polar day or night), `cafeNight`, `openingWindow` and `isOpen`, all in café time through `Intl`.
+  `src/time/useNight.ts` is the scene's clock: the visitor's dusk estimated from the time zone (no
+  location prompt); night runs from that dusk until 06:00 local. The "See it at night" override lives
+  in memory in `src/time/night-store.ts`. `TimeOfDay`, mounted in `App`, sets `data-time` on `<html>`.
+  `NightSwitch` is in the navigation; `OpeningTime` is on the landing and Visit pages.
+
 Not yet: any real page content.
 
 ## 4. Exact next step
 
-**Finish Task 4**: open the pull request from `task/4-kit-shell-routes` into `develop`, merge it on
-green and rename the branch to `merged/task-4-kit-shell-routes`. Check the 16 px favicon in a real
-browser tab. Then the next task of the plan. Setting `data-time` on `<html>` from the visitor's clock
-is for a later task; until then the site is always night.
+**Finish Task 5**: open the pull request from `task/5-two-clocks` into `develop`, merge it on
+green and rename the branch to `merged/task-5-two-clocks`. Check the 16 px favicon in a real
+browser tab. Then the next task of the plan.
 
 ## 5. Bring-up on a new machine
 
