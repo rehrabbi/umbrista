@@ -41,6 +41,15 @@ describe('SceneHost', () => {
     expect(screen.getByAltText(LABEL)).toBeInTheDocument()
   })
 
+  it('creates no WebGL context until after first paint', async () => {
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext')
+    renderHost()
+    expect(getContext).not.toHaveBeenCalled()
+    await screen.findByTestId('r3f', {}, SLOW)
+    expect(getContext).toHaveBeenCalled()
+    getContext.mockRestore()
+  })
+
   it('renders only the still when WebGL is unavailable', async () => {
     setWebGL(false)
     renderHost()

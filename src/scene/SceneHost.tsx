@@ -59,9 +59,10 @@ export function SceneHost({ still, label, priority = false, className, children 
   const active = useSceneActive(ref)
 
   useEffect(() => {
-    if (!hasWebGL()) return
     let cancelled = false
     const cancel = afterFirstPaint(() => {
+      // Probed here, not at mount, so no WebGL context is created during the LCP window.
+      if (!hasWebGL()) return
       void measureFrameTime().then((frameMs) => {
         if (!cancelled) setTier(quality(frameMs))
       })
