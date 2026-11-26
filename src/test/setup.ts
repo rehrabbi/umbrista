@@ -5,7 +5,7 @@ import { afterEach, beforeEach } from 'vitest'
 type MediaMatches = Record<string, boolean>
 
 let mediaMatches: MediaMatches = {}
-const mediaListeners = new Map<string, Set<(event: MediaQueryListEvent) => void>>()
+const mediaListeners = new Map<string, Set<EventListenerOrEventListenerObject>>()
 
 function installMatchMedia(): void {
   Object.defineProperty(window, 'matchMedia', {
@@ -15,11 +15,11 @@ function installMatchMedia(): void {
       matches: mediaMatches[query] ?? false,
       media: query,
       onchange: null,
-      addEventListener: (type: string, listener: (event: MediaQueryListEvent) => void) => {
+      addEventListener: (type: string, listener: EventListenerOrEventListenerObject) => {
         if (type !== 'change') return
         mediaListeners.set(query, (mediaListeners.get(query) ?? new Set()).add(listener))
       },
-      removeEventListener: (type: string, listener: (event: MediaQueryListEvent) => void) => {
+      removeEventListener: (type: string, listener: EventListenerOrEventListenerObject) => {
         if (type === 'change') mediaListeners.get(query)?.delete(listener)
       },
       addListener: () => {},
@@ -39,7 +39,9 @@ export function setMatchMedia(query: string, matches: boolean): void {
 export function changeMatchMedia(query: string, matches: boolean): void {
   setMatchMedia(query, matches)
   for (const listener of mediaListeners.get(query) ?? []) {
-    listener({ matches, media: query } as MediaQueryListEvent)
+    const event = { type: 'change', matches, media: query } as unknown as MediaQueryListEvent
+    if (typeof listener === 'function') listener(event)
+    else listener.handleEvent(event)
   }
 }
 
