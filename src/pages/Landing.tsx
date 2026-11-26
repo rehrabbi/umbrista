@@ -4,7 +4,7 @@ import { OpeningTime } from '../time/OpeningTime'
 import { PageHeading } from '../ui/PageHeading'
 import './Landing.css'
 
-export default function Landing() {
+export function Landing() {
   return (
     <div className="landing">
       <section className="landing-hero">

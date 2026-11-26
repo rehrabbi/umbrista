@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { App } from './App'
 
 function renderAt(path: string) {
@@ -52,6 +52,20 @@ describe('routes', () => {
     const main = screen.getByRole('main')
     expect(main).toHaveAttribute('id', 'main')
     expect(main).toHaveAttribute('tabindex', '-1')
+  })
+})
+
+describe('landing page', () => {
+  it('renders its heading synchronously, as part of the first bundle', async () => {
+    // A fresh module registry, so no earlier test has already resolved a lazy import.
+    vi.resetModules()
+    const { App: FreshApp } = await import('./App')
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <FreshApp />
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('heading', { level: 1, name: 'We open when the light goes.' })).toBeInTheDocument()
   })
 })
 

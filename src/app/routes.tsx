@@ -1,9 +1,9 @@
 import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router'
+import { Landing } from '../pages/Landing'
 
-// Every page is its own chunk, fetched when the visitor first goes there. The landing page is the
-// largest: its hero pulls in the 3D host, whose canvas (three and R3F) is a further chunk.
-const Landing = lazy(() => import('../pages/Landing'))
+// Every page except the landing page is its own chunk, fetched when the visitor first goes there.
+// The landing page ships with the first bundle; its 3D canvas (three and R3F) is a separate lazy chunk.
 const Menu = lazy(() => import('../pages/Menu'))
 const Brew = lazy(() => import('../pages/Brew'))
 const Story = lazy(() => import('../pages/Story'))
