@@ -1,4 +1,7 @@
 .night-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   min-height: 2.75rem;
   padding: 0 var(--space-4);
   border: 2px solid var(--color-shadow);
@@ -9,11 +12,29 @@
   cursor: pointer;
 }
 
-.night-switch[aria-pressed='true'] {
-  border-color: var(--color-signal);
+/* The indicator: an empty ring when off, a filled dot when on, so the state never rests on colour. */
+.night-switch-dot {
+  box-sizing: border-box;
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background: transparent;
 }
 
+/* On: a filled signal background with its own label colour, and a filled dot. */
+.night-switch[data-state='on'] {
+  border-color: var(--color-signal);
+  background: var(--color-signal);
+  color: var(--color-on-signal);
+}
+
+.night-switch[data-state='on'] .night-switch-dot {
+  background: currentColor;
+}
+
+/* The ring sits outside the border; on a filled signal button it needs a contrasting colour too. */
 .night-switch:focus-visible {
-  outline: 3px solid var(--color-signal);
+  outline: 3px solid var(--color-text);
   outline-offset: 3px;
 }

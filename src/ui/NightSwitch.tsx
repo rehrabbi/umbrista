@@ -10,8 +10,10 @@ export function NightSwitch() {
       type="button"
       className="night-switch"
       aria-pressed={pressed}
+      data-state={pressed ? 'on' : 'off'}
       onClick={() => setOverride(pressed ? null : 'night')}
     >
+      <span className="night-switch-dot" aria-hidden="true" />
       See it at night
     </button>
   )

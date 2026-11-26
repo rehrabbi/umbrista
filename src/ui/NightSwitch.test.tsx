@@ -38,6 +38,20 @@ describe('NightSwitch', () => {
     expect(container.querySelector('output')).toHaveTextContent('null')
   })
 
+  it('shows its state with more than colour: a data-state and an indicator', async () => {
+    render(<NightSwitch />)
+    const button = screen.getByRole('button', { name: 'See it at night' })
+    const dot = () => button.querySelector('.night-switch-dot')
+    expect(button).toHaveAttribute('data-state', 'off')
+    expect(dot()).not.toBeNull()
+    expect(dot()).toHaveAttribute('aria-hidden', 'true')
+    await userEvent.click(button)
+    expect(button).toHaveAttribute('data-state', 'on')
+    expect(dot()).not.toBeNull()
+    await userEvent.click(button)
+    expect(button).toHaveAttribute('data-state', 'off')
+  })
+
   it('works from the keyboard', async () => {
     render(<NightSwitch />)
     await userEvent.tab()
