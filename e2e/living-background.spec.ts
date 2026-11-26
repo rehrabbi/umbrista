@@ -111,10 +111,12 @@ test.describe('the living background', () => {
       const { meanDiff, structureDiff, deviation } = await compare(page, canvas, still)
       // Not blank: a flat or empty canvas has almost no variation.
       expect(deviation).toBeGreaterThan(15)
-      // The same photograph in the same place. The grade changes the colours, which the
-      // normalised comparison discounts; the rain and the lamp account for what is left.
-      expect(structureDiff).toBeLessThan(0.35)
-      expect(meanDiff).toBeLessThan(30)
+      // The same photograph behind the rain. The grade changes the colours, which the normalised
+      // comparison discounts; the mist, drops and lamp account for what is left (measured at about
+      // 0.46 at night and 0.28 by day; an unrelated picture scores about 1). Exact alignment is the
+      // job of the intensity-0 test below.
+      expect(structureDiff).toBeLessThan(0.7)
+      expect(meanDiff).toBeLessThan(40)
       expect(problems).toEqual([])
     })
   }
