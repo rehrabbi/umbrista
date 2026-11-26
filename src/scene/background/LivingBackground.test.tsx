@@ -1,6 +1,6 @@
 import { act, render, waitFor } from '@testing-library/react'
-import { Suspense } from 'react'
-import type { ShaderMaterial } from 'three'
+import { StrictMode, Suspense } from 'react'
+import type { ShaderMaterial, Texture } from 'three'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setMatchMedia } from '../../test/setup'
 import { resetOverride, setOverride } from '../../time/night-store'
@@ -64,22 +64,45 @@ vi.mock('three', async (importOriginal) => {
 
 const REDUCED = '(prefers-reduced-motion: reduce)'
 
-async function renderBackground(tier: Quality['tier'], intensity = 0.6) {
+interface RenderOptions {
+  /** Put the still's <img> under the canvas, as SceneHost does (the normal path). */
+  still?: boolean
+  strict?: boolean
+}
+
+let fallbacks = 0
+function Fallback() {
+  fallbacks++
+  return null
+}
+
+function tree(tier: Quality['tier'], intensity: number, strict: boolean) {
+  const scene = (
+    <SceneQualityContext value={{ tier, dpr: [1, 1] }}>
+      <Suspense fallback={<Fallback />}>
+        <LivingBackground backdrop="street-dusk" intensity={intensity} />
+      </Suspense>
+    </SceneQualityContext>
+  )
+  return strict ? <StrictMode>{scene}</StrictMode> : scene
+}
+
+async function renderBackground(tier: Quality['tier'], intensity = 0.6, { still = true, strict = false }: RenderOptions = {}) {
   const host = document.createElement('div')
   host.dataset.sceneHost = ''
+  if (still) {
+    const img = document.createElement('img')
+    Object.defineProperty(img, 'currentSrc', { value: 'http://localhost:3000/media/street-dusk-1920.avif' })
+    img.decode = () => Promise.resolve()
+    host.append(img)
+  }
   r3f.canvas = document.createElement('canvas')
   host.append(r3f.canvas)
   document.body.append(host)
   let view: ReturnType<typeof render> | undefined
   // The texture suspends the scene; an awaited act lets React finish once it has loaded.
   await act(async () => {
-    view = render(
-      <SceneQualityContext value={{ tier, dpr: [1, 1] }}>
-        <Suspense fallback={null}>
-          <LivingBackground backdrop="street-dusk" intensity={intensity} />
-        </Suspense>
-      </SceneQualityContext>,
-    )
+    view = render(tree(tier, intensity, strict))
   })
   return view!
 }
@@ -98,6 +121,7 @@ beforeEach(() => {
   recorded.urls.length = 0
   recorded.textures.length = 0
   r3f.frame = null
+  fallbacks = 0
 })
 
 afterEach(() => {
@@ -107,14 +131,16 @@ afterEach(() => {
 })
 
 describe('LivingBackground', () => {
-  it('loads the backdrop as an sRGB texture and hands the props to the uniforms', async () => {
+  it("draws the still's own image as an sRGB texture and hands the props to the uniforms", async () => {
     setOverride('night')
     await renderBackground('high', 0.6)
     const m = await material()
-    expect(recorded.urls).toEqual(['/media/street-dusk-1280.webp'])
     frame(2)
-    expect(m.uniforms.uBackdrop!.value).toBe(recorded.textures[0])
-    expect(recorded.textures[0]!.colorSpace).toBe('srgb')
+    const texture = m.uniforms.uBackdrop!.value as Texture
+    // The very element the page already shows: no second download.
+    expect(texture.image).toBe(document.querySelector('[data-scene-host] img'))
+    expect(recorded.urls).toEqual([])
+    expect(texture.colorSpace).toBe('srgb')
     expect(m.uniforms.uIntensity!.value).toBe(0.6)
     expect(m.uniforms.uNight!.value).toBe(1)
     expect(m.uniforms.uQuality!.value).toBe(2)
@@ -122,12 +148,35 @@ describe('LivingBackground', () => {
     expect(r3f.canvas?.dataset.tier).toBe('high')
   })
 
+  it('loads the smallest WebP wide enough when there is no still to reuse', async () => {
+    await renderBackground('mid', 1, { still: false })
+    const m = await material()
+    frame(1)
+    expect(recorded.urls).toEqual(['/media/street-dusk-1280.webp'])
+    expect(m.uniforms.uBackdrop!.value).toBe(recorded.textures[0])
+    expect(recorded.textures[0]!.colorSpace).toBe('srgb')
+  })
+
+  it('keeps its texture through the development double mount and later renders', async () => {
+    const { rerender } = await renderBackground('mid', 1, { strict: true })
+    const m = await material()
+    frame(1)
+    const texture = m.uniforms.uBackdrop!.value
+    const shown = fallbacks
+    // A re-render after the double mount must not suspend again (that would hide the canvas).
+    await act(async () => rerender(tree('mid', 0.5, true)))
+    await act(async () => rerender(tree('mid', 0.8, true)))
+    expect(fallbacks).toBe(shown)
+    frame(2)
+    expect(recorded.materials.at(-1)!.uniforms.uBackdrop!.value).toBe(texture)
+  })
+
   it('compiles the rain for mid and high, and leaves it out on low', async () => {
     await renderBackground('low')
     expect((await material()).defines).toMatchObject({ DROP_LAYERS: 0 })
   })
 
-  it('moves the rain with the clock, but freezes it under reduced motion', async () => {
+  it('moves the rain with the clock', async () => {
     await renderBackground('mid')
     const moving = await material()
     frame(1)
@@ -164,10 +213,12 @@ describe('LivingBackground', () => {
   it('disposes the material and the texture on unmount', async () => {
     const { unmount } = await renderBackground('high')
     const m = await material()
+    frame(1)
     const dispose = vi.spyOn(m, 'dispose')
+    const disposeTexture = vi.spyOn(m.uniforms.uBackdrop!.value as Texture, 'dispose')
     unmount()
     expect(dispose).toHaveBeenCalled()
-    expect(recorded.textures[0]!.disposed).toBe(true)
+    expect(disposeTexture).toHaveBeenCalled()
     expect(r3f.canvas?.dataset.backdrop).toBeUndefined()
   })
 })

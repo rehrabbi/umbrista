@@ -1,6 +1,13 @@
 import { useFrame, useThree } from '@react-three/fiber'
 import { use, useEffect, useMemo, useRef, useState } from 'react'
-import { ShaderMaterial, SRGBColorSpace, TextureLoader, Vector2, type Texture } from 'three'
+import {
+  MirroredRepeatWrapping,
+  ShaderMaterial,
+  SRGBColorSpace,
+  Texture,
+  TextureLoader,
+  Vector2,
+} from 'three'
 import { MEDIA, type StillName } from '../../media/manifest'
 import { usePrefersReducedMotion } from '../../media/usePrefersReducedMotion'
 import { useNight } from '../../time/useNight'
@@ -106,24 +113,78 @@ function writeUniforms(material: ShaderMaterial, frame: FrameUniforms): void {
   u.uScroll!.value = frame.scroll
 }
 
-// Loaded textures by URL, so a re-render while suspended asks for the same promise.
-const textures = new Map<string, Promise<Texture>>()
+/** The photo is sRGB: three decodes it to linear for the shader, which encodes its output back. */
+function prepare(texture: Texture): Texture {
+  texture.colorSpace = SRGBColorSpace
+  // Refraction and parallax can sample just past an edge; a mirror there reads as more street.
+  texture.wrapS = MirroredRepeatWrapping
+  texture.wrapT = MirroredRepeatWrapping
+  texture.needsUpdate = true
+  return texture
+}
 
-function loadTexture(url: string): Promise<Texture> {
-  let pending = textures.get(url)
+/*
+ * Textures live for the page, keyed by their source, so a render that suspends again, a remount, or
+ * React's development double mount always gets the same promise back. An entry is dropped only if
+ * it fails, so a later mount can try again. Unmounting disposes the GPU copy alone; three uploads it
+ * again if the texture is used after that.
+ */
+const fromStill = new WeakMap<HTMLImageElement, Promise<Texture>>()
+const fromFile = new Map<string, Promise<Texture>>()
+
+/** The still's own image element, already downloaded and decoded by the browser: no second request. */
+function textureFromStill(still: HTMLImageElement): Promise<Texture> {
+  let pending = fromStill.get(still)
   if (!pending) {
-    pending = new TextureLoader().loadAsync(url).then((texture) => {
-      // The photo is sRGB; three decodes it to linear for the shader and encodes the output back.
-      texture.colorSpace = SRGBColorSpace
-      return texture
-    })
-    textures.set(url, pending)
+    pending = still.decode().then(() => prepare(new Texture(still)))
+    pending.catch(() => fromStill.delete(still))
+    fromStill.set(still, pending)
   }
   return pending
 }
 
-function backdropUrl(name: StillName, width: number, format: 'avif' | 'webp'): string {
-  return `/media/${name}-${width}.${format}`
+function textureFromFile(url: string): Promise<Texture> {
+  let pending = fromFile.get(url)
+  if (!pending) {
+    pending = new TextureLoader().loadAsync(url).then(prepare)
+    pending.catch(() => fromFile.delete(url))
+    fromFile.set(url, pending)
+  }
+  return pending
+}
+
+function backdropUrl(name: StillName, width: number): string {
+  return `/media/${name}-${width}.webp`
+}
+
+type BackdropSource = { still: HTMLImageElement } | { url: string }
+
+/**
+ * Where the photograph comes from. Normally the still underneath, when it shows this backdrop: the
+ * browser has chosen its derivative for the screen, so the canvas matches it exactly. Otherwise the
+ * smallest WebP at least as wide as the photo is drawn.
+ */
+function backdropSource(
+  canvas: HTMLCanvasElement,
+  name: StillName,
+  size: { width: number; height: number },
+  dpr: number,
+): BackdropSource {
+  const still = canvas.closest('[data-scene-host]')?.querySelector('img')
+  const current = still?.currentSrc ? new URL(still.currentSrc).pathname : ''
+  if (still && current.startsWith(`/media/${name}-`) && /\.(avif|webp)$/.test(current)) return { still }
+  const [aw, ah] = MEDIA[name].aspect
+  // Under a cover crop the photo is drawn at least as wide as the canvas, and wider on tall screens.
+  const drawn = Math.max(size.width, size.height * (aw / ah)) * dpr
+  return { url: backdropUrl(name, pickWidth(MEDIA[name].widths, drawn)) }
+}
+
+/** The pixel size of a texture's image, whatever kind of image it is. */
+function imageAspect(texture: Texture): number | undefined {
+  const image = texture.image as { naturalWidth?: number; naturalHeight?: number; width: number; height: number }
+  const width = image.naturalWidth || image.width
+  const height = image.naturalHeight || image.height
+  return width > 0 && height > 0 ? width / height : undefined
 }
 
 /**
@@ -138,26 +199,6 @@ function markBackdrop(canvas: HTMLCanvasElement, tier: Tier | null): void {
     delete canvas.dataset.backdrop
     delete canvas.dataset.tier
   }
-}
-
-/**
- * The file the still underneath is showing, if it is this backdrop: the browser has already chosen
- * it for the screen and downloaded it, so the canvas reuses it from the cache and matches it
- * exactly. Otherwise the smallest WebP at least as wide as the photo is drawn on the canvas.
- */
-function backdropSource(
-  canvas: HTMLCanvasElement,
-  name: StillName,
-  size: { width: number; height: number },
-  dpr: number,
-): string {
-  const still = canvas.closest('[data-scene-host]')?.querySelector('img')
-  const current = still?.currentSrc ? new URL(still.currentSrc).pathname : ''
-  if (current.startsWith(`/media/${name}-`) && /\.(avif|webp)$/.test(current)) return current
-  const [aw, ah] = MEDIA[name].aspect
-  // Under a cover crop the photo is drawn at least as wide as the canvas, and wider on tall screens.
-  const drawn = Math.max(size.width, size.height * (aw / ah)) * dpr
-  return backdropUrl(name, pickWidth(MEDIA[name].widths, drawn), 'webp')
 }
 
 /**
@@ -183,18 +224,12 @@ export function LivingBackground({ backdrop, intensity = 1 }: LivingBackgroundPr
   const material = useMemo(() => createMaterial(dropLayers, fogTaps), [dropLayers, fogTaps])
   useEffect(() => () => material.dispose(), [material])
 
-  // The backdrop texture: the same derivative as the still, chosen once at mount. The scene
+  // The backdrop texture: the still's own image, chosen once at mount. The scene
   // suspends until it has loaded, so the canvas fades in with the photograph already on it, never
   // over a blank frame.
-  const [url] = useState(() => backdropSource(canvas, backdrop, size, dpr))
-  const texture = use(loadTexture(url))
-  useEffect(
-    () => () => {
-      textures.delete(url)
-      texture.dispose()
-    },
-    [url, texture],
-  )
+  const [source] = useState(() => backdropSource(canvas, backdrop, size, dpr))
+  const texture = use('still' in source ? textureFromStill(source.still) : textureFromFile(source.url))
+  useEffect(() => () => texture.dispose(), [texture])
   useEffect(() => {
     markBackdrop(canvas, tier)
     return () => markBackdrop(canvas, null)
@@ -232,9 +267,8 @@ export function LivingBackground({ backdrop, intensity = 1 }: LivingBackgroundPr
   useFrame((state, delta) => {
     const rect = canvas.getBoundingClientRect()
     const viewPx: Vec2 = rect.width > 0 && rect.height > 0 ? [rect.width, rect.height] : [size.width, size.height]
-    const image = texture.image as { width: number; height: number } | undefined
     const [aw, ah] = MEDIA[backdrop].aspect
-    const cover = coverUv(viewPx[0] / viewPx[1], image ? image.width / image.height : aw / ah)
+    const cover = coverUv(viewPx[0] / viewPx[1], imageAspect(texture) ?? aw / ah)
 
     const animate = !reduced && state.frameloop === 'always'
     const time = reduced ? STILL_TIME : STILL_TIME + state.clock.elapsedTime
