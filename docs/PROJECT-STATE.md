@@ -96,8 +96,7 @@ Not yet: any real page content.
 **Task 6: media and 3D foundation**, on `task/6-media-3d-foundation` from `develop`: `SceneHost`,
 `quality()`, `useSceneActive`, the `Picture` and `VideoLoop` components, and `npm run media`, which
 builds the committed web derivatives of the approved stills and the steam loop. Still open from
-earlier tasks: check the 16 px favicon in a real browser tab, and the owner's answer on
-`@gltf-transform/cli` before Task 9.
+earlier tasks: check the 16 px favicon in a real browser tab.
 
 ## 5. Bring-up on a new machine
 
