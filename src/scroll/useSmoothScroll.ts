@@ -8,7 +8,8 @@ const listeners = new Set<() => void>()
 
 /**
  * What calls Lenis once a frame. Starts the loop with a step that takes a timestamp in
- * milliseconds, and returns a function that stops it.
+ * milliseconds on the page's clock (`performance.now()`, as rAF passes), and returns a function
+ * that stops it.
  */
 export type FrameDriver = (step: (timeMs: number) => void) => () => void
 
@@ -24,10 +25,23 @@ export const animationFrames: FrameDriver = (step) => {
 let driver: FrameDriver = animationFrames
 let stopLoop: (() => void) | null = null
 const scrollListeners = new Set<() => void>()
+/** The last time Lenis was given, so a new driver can never take it backwards. */
+let lastTime = Number.NEGATIVE_INFINITY
 
+/**
+ * Lenis smooths by the time between calls, so it must stay on one clock. A driver whose clock
+ * starts lower (GSAP's ticker counts from when GSAP loaded) would give it a large negative step,
+ * and a smooth scroll in flight would jump back to the top. Drivers are asked for the page's clock;
+ * as a second guard, a new driver's first time is lined up with the last one given.
+ */
 function runLoop(lenis: Lenis): void {
   stopLoop?.()
-  stopLoop = driver((time) => lenis.raf(time))
+  let offset: number | null = null
+  stopLoop = driver((time) => {
+    offset ??= lastTime > time ? lastTime - time : 0
+    lastTime = time + offset
+    lenis.raf(lastTime)
+  })
 }
 
 /**
@@ -83,6 +97,7 @@ export function useSmoothScroll(): Lenis | null {
       stop = () => {
         stopLoop?.()
         stopLoop = null
+        lastTime = Number.NEGATIVE_INFINITY
         lenis.destroy()
         setCurrent(null)
         stop = null

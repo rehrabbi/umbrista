@@ -104,3 +104,34 @@ test('under reduced motion chapter 1 is one still screen: no pin, the title whol
   // No script sets the lamps: the photograph is shown as it is.
   await expect(page.locator('.landing-scene img')).toHaveCSS('filter', 'none')
 })
+
+test('the scroll never jumps back when the first wheel loads the choreography mid-scroll', async ({ page }) => {
+  // A busy page never goes idle, so the visitor's first wheel is what loads GSAP, while Lenis is
+  // already smoothing that same scroll: the moment the loop changes hands.
+  await page.addInitScript(() => {
+    window.requestIdleCallback = () => 0
+  })
+  await page.goto('/')
+  await page.mouse.move(700, 400)
+  // Let the page run on the browser's loop for a while first, so the two clocks are far apart.
+  await page.waitForTimeout(1500)
+  await page.evaluate(() => {
+    const log: number[] = []
+    ;(window as Window & { scrollLog?: number[] }).scrollLog = log
+    const tick = () => {
+      log.push(scrollY)
+      if (log.length < 240) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  })
+  for (let i = 0; i < 3; i++) {
+    await page.mouse.wheel(0, 50)
+    await page.waitForTimeout(40)
+  }
+  await expect.poll(() => page.evaluate(() => (window as Window & { scrollLog?: number[] }).scrollLog!.length)).toBe(240)
+  const log = await page.evaluate(() => (window as Window & { scrollLog?: number[] }).scrollLog!)
+  // The choreography did load, part way through.
+  await expect(page.locator('.landing-scene')).toHaveAttribute('style', /--lamp/)
+  for (let i = 1; i < log.length; i++) expect(log[i], `frame ${i}`).toBeGreaterThanOrEqual(log[i - 1]!)
+  expect(log.at(-1)!).toBeGreaterThan(100)
+})

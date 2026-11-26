@@ -17,9 +17,11 @@ import { driveWith, onSmoothScroll } from './useSmoothScroll'
 gsap.registerPlugin(ScrollTrigger)
 gsap.ticker.lagSmoothing(0)
 
+// Leaving Lenis on GSAP's ticker after the visitor leaves the landing is deliberate: it is still one loop.
 driveWith((step) => {
-  // The ticker's time is in seconds; Lenis takes milliseconds.
-  const tick = (time: number) => step(time * 1000)
+  // The ticker's own time counts from when GSAP loaded, not from the page's start; Lenis keeps the
+  // page's clock, the one the browser's loop gave it, so its steps never run backwards.
+  const tick = () => step(performance.now())
   gsap.ticker.add(tick)
   return () => gsap.ticker.remove(tick)
 })
