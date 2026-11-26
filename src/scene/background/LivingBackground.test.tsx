@@ -68,6 +68,7 @@ interface RenderOptions {
   /** Put the still's <img> under the canvas, as SceneHost does (the normal path). */
   still?: boolean
   strict?: boolean
+  lamp?: number
 }
 
 let fallbacks = 0
@@ -76,18 +77,22 @@ function Fallback() {
   return null
 }
 
-function tree(tier: Quality['tier'], intensity: number, strict: boolean) {
+function tree(tier: Quality['tier'], intensity: number, strict: boolean, lamp?: number) {
   const scene = (
     <SceneQualityContext value={{ tier, dpr: [1, 1] }}>
       <Suspense fallback={<Fallback />}>
-        <LivingBackground backdrop="street-dusk" intensity={intensity} />
+        <LivingBackground backdrop="street-dusk" intensity={intensity} lamp={lamp} />
       </Suspense>
     </SceneQualityContext>
   )
   return strict ? <StrictMode>{scene}</StrictMode> : scene
 }
 
-async function renderBackground(tier: Quality['tier'], intensity = 0.6, { still = true, strict = false }: RenderOptions = {}) {
+async function renderBackground(
+  tier: Quality['tier'],
+  intensity = 0.6,
+  { still = true, strict = false, lamp }: RenderOptions = {},
+) {
   const host = document.createElement('div')
   host.dataset.sceneHost = ''
   if (still) {
@@ -102,7 +107,7 @@ async function renderBackground(tier: Quality['tier'], intensity = 0.6, { still 
   let view: ReturnType<typeof render> | undefined
   // The texture suspends the scene; an awaited act lets React finish once it has loaded.
   await act(async () => {
-    view = render(tree(tier, intensity, strict))
+    view = render(tree(tier, intensity, strict, lamp))
   })
   return view!
 }
@@ -224,5 +229,42 @@ describe('LivingBackground', () => {
     expect(dispose).toHaveBeenCalled()
     expect(disposeTexture).toHaveBeenCalled()
     expect(r3f.canvas?.dataset.backdrop).toBeUndefined()
+  })
+
+  it('has the lamps on unless told otherwise, as the scene looked before chapters', async () => {
+    await renderBackground('mid')
+    const m = await material()
+    frame(1)
+    expect(m.uniforms.uLamp!.value).toBe(1)
+  })
+
+  it('hands the lamp to uLamp, clamped, and leaves the night clock alone', async () => {
+    setOverride('day')
+    const { rerender } = await renderBackground('mid', 1, { lamp: 0 })
+    const m = await material()
+    frame(1)
+    expect(m.uniforms.uLamp!.value).toBe(0)
+    expect(m.uniforms.uNight!.value).toBe(0)
+
+    await act(async () => rerender(tree('mid', 1, false, 0.4)))
+    frame(2)
+    expect(m.uniforms.uLamp!.value).toBeCloseTo(0.4)
+    expect(m.uniforms.uNight!.value).toBe(0)
+
+    await act(async () => rerender(tree('mid', 1, false, 7)))
+    frame(3)
+    expect(m.uniforms.uLamp!.value).toBe(1)
+  })
+
+  it('asks for a new still frame when the lamp changes under reduced motion', async () => {
+    setMatchMedia(REDUCED, true)
+    const invalidate = vi.fn()
+    r3f.invalidate = invalidate
+    const { rerender } = await renderBackground('mid', 1, { lamp: 1 })
+    await material()
+    invalidate.mockClear()
+    await act(async () => rerender(tree('mid', 1, false, 0.5)))
+    expect(invalidate).toHaveBeenCalled()
+    r3f.invalidate = () => {}
   })
 })

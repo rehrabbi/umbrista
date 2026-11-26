@@ -21,6 +21,7 @@ uniform vec2 uPointer;      // eased lamp position, view UV
 uniform vec2 uFocus;        // the lit café window, view UV
 uniform float uTime;        // seconds
 uniform float uNight;       // 0 overcast dusk .. 1 lamp-lit night
+uniform float uLamp;        // 0 the lamps not yet lit .. 1 lit (chapter progress, not a clock)
 uniform float uIntensity;   // 0 the plain photograph .. 1 the full effect
 uniform float uQuality;     // 0 low, 1 mid, 2 high: high adds finer detail to the mist
 
@@ -235,7 +236,7 @@ void main() {
   vec3 veil = mix(vec3(0.008, 0.011, 0.018), vec3(0.05, 0.06, 0.075), 1.0 - uNight);
   vec3 misted = mix(soft, soft * 0.9 + veil, 0.5);
   // The condensation itself catches the lamp: night is near black, so this has to be added light.
-  float lampStrength = mix(0.45, 1.0, uNight) * (1.0 - 0.4 * uScroll);
+  float lampStrength = mix(0.45, 1.0, uNight) * (1.0 - 0.4 * uScroll) * glowOn(uLamp);
   misted += SODIUM * lampFalloff(toLamp).y * 0.08 * lampStrength;
   colour = mix(photo, misted, mist);
 
@@ -258,7 +259,7 @@ void main() {
     vec2 lampFall = lampFalloff(toLamp);
     // A pale warm point, only on drops big enough to hold one.
     float glint = fall(0.2, 0.0, length(g.slope - toward * 0.72)) * smoothstep(0.004, 0.014, g.size);
-    float strength = mix(0.35, 1.0, uNight);
+    float strength = mix(0.35, 1.0, uNight) * glowOn(uLamp);
     through += mix(SODIUM, vec3(1.0, 0.85, 0.6), 0.45) * glint * (0.9 * lampFall.x + 0.6 * lampFall.y) * strength;
     through += vec3(0.09, 0.10, 0.12) * fall(0.22, 0.0, length(g.slope - vec2(-0.3, 0.45)));
     // Water carries the lamp as the mist does, so drops in its light never read as holes.
@@ -267,9 +268,10 @@ void main() {
   }
 #endif
 
+  colour = lampsOff(colour, uLamp);
   colour = gradeScene(colour, uNight);
   // The lamp dims a little as the hero scrolls away, so the moment recedes with it.
-  colour = applyLamp(colour, toLamp, mist, mix(0.45, 1.0, uNight) * (1.0 - 0.4 * uScroll) * uIntensity);
+  colour = applyLamp(colour, toLamp, mist, mix(0.45, 1.0, uNight) * (1.0 - 0.4 * uScroll) * glowOn(uLamp) * uIntensity);
   colour = mix(photo, colour, uIntensity);
 
   gl_FragColor = vec4(shoulder(colour), 1.0);

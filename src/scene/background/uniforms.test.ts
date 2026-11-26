@@ -4,6 +4,7 @@ import {
   coverUv,
   easePointer,
   imageToView,
+  parseObjectPosition,
   layersFor,
   parallax,
   parseDurationMs,
@@ -149,6 +150,24 @@ describe('coverUv', () => {
     ]) {
       expect(coverUv(view!, image!)).toEqual(identity)
     }
+  })
+
+  it('follows object-position: the crop slides towards the named side, x from the left and y from the top', () => {
+    const narrow = coverUv(390 / 744, 43 / 24, [0.35, 0.5])
+    const visible = 390 / 744 / (43 / 24)
+    expect(narrow.offset[0]).toBeCloseTo((1 - visible) * 0.35, 10)
+    expect(narrow.offset[1]).toBe(0)
+    // GLSL's v runs bottom up, CSS's y top down: 0% (the top) keeps the top of the photo.
+    const wide = coverUv(2, 1, [0.5, 0])
+    expect(wide.offset[1]).toBeCloseTo(0.5, 10)
+    expect(coverUv(2, 1, [0.5, 1]).offset[1]).toBeCloseTo(0, 10)
+  })
+
+  it('parses a computed object-position into fractions, centred when it cannot', () => {
+    expect(parseObjectPosition('35% 50%')).toEqual([0.35, 0.5])
+    expect(parseObjectPosition('0% 100%')).toEqual([0, 1])
+    expect(parseObjectPosition('12px 50%')).toEqual([0.5, 0.5])
+    expect(parseObjectPosition('')).toEqual([0.5, 0.5])
   })
 
   it('maps an image point back into the view with imageToView', () => {

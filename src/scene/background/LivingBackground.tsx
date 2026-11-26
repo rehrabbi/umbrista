@@ -23,6 +23,7 @@ import {
   layersFor,
   parallax,
   parseDurationMs,
+  parseObjectPosition,
   pickWidth,
   scrollProgress,
   stepNight,
@@ -38,6 +39,12 @@ export interface LivingBackgroundProps {
   backdrop: StillName
   /** 0 draws the plain photograph, 1 the full rain, lamp and grade. */
   intensity?: number
+  /**
+   * How far the lamps are on, 0..1: the café window's light and the glow's strength. A chapter's
+   * progress, not a clock: the night grade (`uNight`) stays the visitor's clock or the switch.
+   * At 1, the default, the scene is lit as it always was.
+   */
+  lamp?: number
 }
 
 // A full-screen triangle pair. The camera is ignored: the quad always covers the canvas.
@@ -73,6 +80,7 @@ function createMaterial(dropLayers: number, fogTaps: number): ShaderMaterial {
       uFocus: { value: new Vector2(0.5, 0.5) },
       uTime: { value: STILL_TIME },
       uNight: { value: 0 },
+      uLamp: { value: 1 },
       uIntensity: { value: 0 },
       uQuality: { value: 1 },
     },
@@ -91,6 +99,7 @@ interface FrameUniforms {
   focus: Vec2
   time: number
   night: number
+  lamp: number
   intensity: number
   quality: number
   scroll: number
@@ -108,6 +117,7 @@ function writeUniforms(material: ShaderMaterial, frame: FrameUniforms): void {
   ;(u.uParallax!.value as Vector2).set(frame.depth.scale, frame.depth.shift)
   u.uTime!.value = frame.time
   u.uNight!.value = frame.night
+  u.uLamp!.value = frame.lamp
   u.uIntensity!.value = frame.intensity
   u.uQuality!.value = frame.quality
   u.uScroll!.value = frame.scroll
@@ -228,9 +238,10 @@ function markBackdrop(canvas: HTMLCanvasElement, tier: Tier | null): void {
  * while hidden, off screen or under reduced motion). Under reduced motion it is a still: a static
  * grade with the rain frozen and the lamp at rest on the café window.
  */
-export function LivingBackground({ backdrop, intensity: requested = 1 }: LivingBackgroundProps) {
+export function LivingBackground({ backdrop, intensity: requested = 1, lamp: lampProp = 1 }: LivingBackgroundProps) {
   const [forced] = useState(testIntensity)
   const intensity = forced ?? requested
+  const lamp = Number.isFinite(lampProp) ? Math.min(1, Math.max(0, lampProp)) : 1
   const quality = useSceneQuality()
   const tier = quality?.tier ?? 'mid'
   const layers = layersFor(tier)
@@ -280,11 +291,15 @@ export function LivingBackground({ backdrop, intensity: requested = 1 }: LivingB
   const eased = useRef<Vec2 | null>(null)
   const night = useRef(isNight ? 1 : 0)
 
-  // The canvas's box, measured when it moves or resizes rather than on every frame.
+  // The canvas's box, and the still's object-position (the crop to match), measured when it moves
+  // or resizes rather than on every frame.
   const box = useRef<DOMRect | null>(null)
+  const position = useRef<Vec2>([0.5, 0.5])
   useEffect(() => {
+    const still = canvas.closest('[data-scene-host]')?.querySelector('img')
     const measure = () => {
       box.current = canvas.getBoundingClientRect()
+      if (still) position.current = parseObjectPosition(getComputedStyle(still).objectPosition)
     }
     measure()
     const observer = new ResizeObserver(measure)
@@ -298,8 +313,8 @@ export function LivingBackground({ backdrop, intensity: requested = 1 }: LivingB
     }
   }, [canvas])
 
-  // Under reduced motion the frame loop runs on demand, so a new grade or intensity asks for a frame.
-  const stillFrame = reduced ? `${isNight ? 'night' : 'day'}:${intensity}` : null
+  // Under reduced motion the frame loop runs on demand, so a new grade, intensity or lamp asks for a frame.
+  const stillFrame = reduced ? `${isNight ? 'night' : 'day'}:${intensity}:${lamp}` : null
   useEffect(() => {
     if (stillFrame !== null) invalidate()
   }, [stillFrame, invalidate])
@@ -308,7 +323,7 @@ export function LivingBackground({ backdrop, intensity: requested = 1 }: LivingB
     const rect = box.current ?? { left: 0, top: 0, width: size.width, height: size.height }
     const viewPx: Vec2 = rect.width > 0 && rect.height > 0 ? [rect.width, rect.height] : [size.width, size.height]
     const [aw, ah] = MEDIA[backdrop].aspect
-    const cover = coverUv(viewPx[0] / viewPx[1], imageAspect(texture) ?? aw / ah)
+    const cover = coverUv(viewPx[0] / viewPx[1], imageAspect(texture) ?? aw / ah, position.current)
 
     const animate = !reduced && state.frameloop === 'always'
     const time = reduced ? STILL_TIME : STILL_TIME + state.clock.elapsedTime
@@ -338,6 +353,7 @@ export function LivingBackground({ backdrop, intensity: requested = 1 }: LivingB
       focus: rest,
       time,
       night: night.current,
+      lamp,
       intensity,
       quality: layers.quality,
       scroll,
