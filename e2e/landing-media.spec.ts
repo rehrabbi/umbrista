@@ -78,7 +78,8 @@ test('under reduced motion the loop is its poster and there is no video element'
 test('the canvas covers the still exactly and does not block clicks', async ({ page }) => {
   await allowSoftwareGL(page)
   await page.goto('/')
-  const canvas = page.locator('.landing-scene canvas')
+  // The canvas is in the page while its scene loads, but hidden until the photograph is on it.
+  const canvas = page.locator('.landing-scene canvas[data-backdrop="ready"]')
   await expect(canvas).toHaveCount(1, { timeout: 10_000 })
   const still = await page.locator('.landing-scene img').boundingBox()
   const box = await canvas.boundingBox()
