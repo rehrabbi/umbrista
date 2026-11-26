@@ -1,0 +1,39 @@
+name: Data request
+description: Ask to see or delete data Umbrista has stored about you
+title: "data: "
+labels: ["type: data-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not put your name, email address, phone number or any other personal detail in this issue.** Issues on this repository are public.
+
+        Umbrista is a design project, not a real café, but its forms do save real data. Say below what you want done. A private way to get in touch will be arranged with you after you open the issue, and the request is handled there.
+  - type: dropdown
+    id: request
+    attributes:
+      label: What do you want
+      options:
+        - See the data stored about me
+        - Delete the data stored about me
+        - Both
+    validations:
+      required: true
+  - type: dropdown
+    id: form
+    attributes:
+      label: Which form did you use
+      description: Only pick the form. Do not describe what you entered.
+      multiple: true
+      options:
+        - Reservation
+        - Order ahead
+        - Join the list
+        - I am not sure
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Before you submit
+      options:
+        - label: I have not put any personal details in this issue, and I understand a private contact route will be arranged.
+          required: true

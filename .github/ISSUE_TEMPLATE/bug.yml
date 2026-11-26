@@ -1,0 +1,36 @@
+name: Bug report
+description: Something behaves incorrectly
+title: "fix: "
+labels: ["type: fix"]
+body:
+  - type: textarea
+    id: what-happens
+    attributes:
+      label: What happens
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should happen
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser and version, device, operating system, and whether WebGL worked. For example "Firefox 130, Android 14, 3D stayed on the still image".
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste personal details, session cookies, tokens or passwords. For a security problem, use the private report on the Security tab instead.

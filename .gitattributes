@@ -1,0 +1,18 @@
+# Store and check out text as LF everywhere, so Windows, Linux and CI agree.
+* text=auto eol=lf
+
+# Binary files: never converted.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.avif binary
+*.ico  binary
+*.pdf  binary
+*.woff  binary
+*.woff2 binary
+*.glb  binary
+*.ktx2 binary
+*.mp4  binary
+*.webm binary
