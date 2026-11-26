@@ -1,6 +1,7 @@
 # ADR 0001: Stack and 3D approach
 
-Status: Accepted
+Status: Accepted; the 3D asset approach is superseded by
+[ADR 0002](0002-photoreal-media.md)
 Date: 2026-11-26
 
 ## Context
