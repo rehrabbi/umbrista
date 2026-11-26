@@ -39,17 +39,24 @@ world is a night café.
 **Goals**
 
 - A full café website: Landing, Menu, Brew-your-own, Story, Visit, Journal, and a 404 page.
-- Four 3D moments, all of which the owner asked for, built on a **photoreal** base (section 4):
+- Five 3D moments, all of which the owner asked for, built on a **photoreal** base (section 4):
   1. A **living background**: photoreal stills and short silent video loops of Calvessa's night, with
      real-time WebGL layered over them (rain running down the glass, lamp glow that follows the
      cursor, gentle depth and parallax), reacting to the cursor and to scroll.
   2. A **scroll journey** on the landing page: chapters of the café's night (dusk falls on the
      street, the cup under the lamp, the craft, the window, the last cup), each built from
-     art-directed photoreal media and moved by scroll, with big kinetic type.
+     art-directed photoreal media and moved by scroll, with big kinetic type. The hero cup travels
+     with the visitor and **transforms** as the chapters pass: an espresso, then milk pours and latte
+     art blooms, then it cools to the last cup, while the page moves around it.
   3. A **hero object to play with**: the Umbrista cup as a photoreal 3D model, lit live, that can be
      tilted, spun and made to ripple with cursor, touch or keyboard.
   4. **Brew-your-own**: the visitor picks beans, roast, method and milk, and the same 3D cup fills and
      its coffee changes colour and crema to match. The result can be added to an order.
+  5. A **3D menu**: every drink on the menu is its own photoreal 3D model. The Menu page is a scroll
+     journey through the bar (each drink rises into view, turns, and pours or fills as the visitor
+     scrolls, with its name and price in kinetic type, one drink per screen) with a **3D counter** at
+     the top: every drink standing under the lamp, browsed by dragging or swiping, and tapped to jump
+     to that drink. Each drink can be turned by drag, touch or keyboard and added to an order.
 - Four visitor actions, all real: **reserve a table**, **order ahead for pickup** (cart and
   confirmation, no payment), **join the list** (opening news), or **just explore**.
 - A full brand: name, logo (mark and wordmark), favicon set, social share image, palette, type,
@@ -114,6 +121,10 @@ effects must stay fast, original and usable.
   direction after seeing a working preview: the street at dusk with the 3D cup, the cup turning on
   scroll, the steam loop in "The craft", and the rain-window still. Approved assets are listed in
   `docs/brand.md`.
+- **3D menu and drinks** (2026-11-26): the menu is 3D and interactive, both as a scroll-through bar
+  and as a 3D counter overview; every drink is its own generated 3D model (each on the owner's go);
+  on the landing page the hero cup transforms as the visitor scrolls (espresso, milk and latte art,
+  the last cup).
 - Concept: a night coffee bar that opens at dusk.
 - Scope: the full café site.
 - Visitor actions: reserve, order ahead, join the list, and just explore.
@@ -203,7 +214,8 @@ effects must stay fast, original and usable.
   idles when nothing moves.
 - No WebGL, or a failed context: the site falls back to the static stills and still works fully.
 - Media budgets: each video loop about 1 MB or less, loaded only near the viewport and paused off
-  screen; the cup model about 2 MB or less after compression; images sized per viewport. The first
+  screen; the cup model about 2 MB or less after compression; each drink model about 1.5 MB or less,
+  only the drink on screen and its neighbours loaded, and the counter drawn with light versions; images sized per viewport. The first
   frame's image is the largest-contentful-paint candidate and is preloaded.
 
 **Accessibility** (answer to "hard to use")
@@ -227,8 +239,10 @@ effects must stay fast, original and usable.
 
 - **Landing**: the scroll journey and living background; the hero cup; tonight's opening time; links
   to Menu, Brew-your-own, Reserve, and the list sign-up.
-- **Menu**: the drinks and a few night snacks, readable as text, each with a small visual; add to an
-  order-ahead cart.
+- **Menu**: the 3D counter, then the scroll-through bar, one drink per screen, each with its name,
+  notes and price as text and an "Add to order" button; the night snacks as photoreal stills (the
+  builder's call, the owner can override); add to an order-ahead cart. The whole menu stays readable
+  and orderable as plain text without the 3D.
 - **Brew-your-own**: the configurator with the 3D cup; the finished drink can be named and added to
   the cart.
 - **Story**: why a café that opens at dusk; the people (fictional) and the craft.
