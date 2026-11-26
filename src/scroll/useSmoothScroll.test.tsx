@@ -1,14 +1,15 @@
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { StrictMode } from 'react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { changeMatchMedia, setMatchMedia } from '../test/setup'
-import { useSmoothScroll } from './useSmoothScroll'
+import { animationFrames, driveWith, onSmoothScroll, useSmoothScroll, type FrameDriver } from './useSmoothScroll'
 
 const lenis = vi.hoisted(() => ({
   options: [] as unknown[],
   destroyed: 0,
   frames: 0,
+  scrollHandlers: [] as (() => void)[],
 }))
 
 vi.mock('lenis', () => ({
@@ -18,6 +19,12 @@ vi.mock('lenis', () => ({
     }
     raf() {
       lenis.frames += 1
+    }
+    on(event: string, handler: () => void) {
+      if (event === 'scroll') lenis.scrollHandlers.push(handler)
+      return () => {
+        lenis.scrollHandlers = lenis.scrollHandlers.filter((h) => h !== handler)
+      }
     }
     destroy() {
       lenis.destroyed += 1
@@ -44,6 +51,11 @@ beforeEach(() => {
   lenis.options.length = 0
   lenis.destroyed = 0
   lenis.frames = 0
+  lenis.scrollHandlers = []
+})
+
+afterEach(() => {
+  driveWith(animationFrames)
 })
 
 describe('useSmoothScroll', () => {
@@ -118,5 +130,51 @@ describe('useSmoothScroll', () => {
     expect(window.location.hash).toBe('#target')
     expect(document.getElementById('target')).toBeInTheDocument()
     if (!reduced) expect(lenis.options[0]).toMatchObject({ anchors: true })
+  })
+
+  it('hands its frame loop to another driver, so only one loop ever runs', async () => {
+    render(<Probe />)
+    await vi.waitFor(() => expect(lenis.frames).toBeGreaterThan(0))
+
+    const steps: ((time: number) => void)[] = []
+    const driver: FrameDriver = (step) => {
+      steps.push(step)
+      return () => {}
+    }
+    driveWith(driver)
+    expect(steps).toHaveLength(1)
+
+    // The browser's own loop has stopped: no frames arrive unless the new driver steps.
+    const before = lenis.frames
+    await new Promise((resolve) => setTimeout(resolve, 80))
+    expect(lenis.frames).toBe(before)
+    steps[0]!(1000)
+    expect(lenis.frames).toBe(before + 1)
+  })
+
+  it('uses the chosen driver for a Lenis built later, and stops it on unmount', () => {
+    let started = 0
+    let stopped = 0
+    driveWith(() => {
+      started += 1
+      return () => {
+        stopped += 1
+      }
+    })
+    const { unmount } = render(<Probe />)
+    expect(started).toBe(1)
+    unmount()
+    expect(stopped).toBe(1)
+  })
+
+  it('tells scroll listeners every time Lenis scrolls, until they unsubscribe', () => {
+    const listener = vi.fn()
+    const off = onSmoothScroll(listener)
+    render(<Probe />)
+    for (const handler of lenis.scrollHandlers) handler()
+    expect(listener).toHaveBeenCalledTimes(1)
+    off()
+    for (const handler of lenis.scrollHandlers) handler()
+    expect(listener).toHaveBeenCalledTimes(1)
   })
 })
