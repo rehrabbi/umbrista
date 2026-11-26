@@ -213,3 +213,21 @@ bug hid the canvas on resize, and software renderers were too slow to show.
 - Ask for `failIfMajorPerformanceCaveat` and check the renderer name too. CI's browser has only
   SwiftShader, so the tests opt back in through a test-only window flag.
 
+## 2026-11-26: A menu you can hold
+
+**Decided.** The menu becomes a 3D experience: a counter of drinks under the lamp to browse by
+dragging, then a scroll-through bar where each drink rises into view, turns, and pours as the visitor
+scrolls. Every drink is its own generated 3D model, made one by one on the owner's go. On the landing
+page the hero cup now transforms as the visitor scrolls, from espresso to latte art to the last cup.
+
+**Why.** The reference reels move the product with the scroll; a café's product is its drinks, so
+the menu is where that motion belongs. Separate models give each drink its own vessel and character.
+
+**What to remember.**
+
+- Many models on one page only stay fast if just the drink on screen and its neighbours are loaded,
+  with light versions for the overview.
+- Generate the drinks as a family: the same studio set, light and angle for every still, so the models
+  sit together on the counter.
+- The menu must still work as plain text, for screen readers, reduced motion and devices without WebGL.
+
