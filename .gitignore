@@ -10,3 +10,6 @@ dist/
 /blob-report/
 /playwright/.cache/
 /media-src/
+
+# Lighthouse CI output
+/.lighthouseci/
