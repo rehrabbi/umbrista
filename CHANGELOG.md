@@ -9,6 +9,20 @@ once the whole site is built.
 
 ### Added
 
+- The landing's first chapter. The street at dusk holds still while the visitor scrolls through it,
+  the café window and the lamp's glow come on, then "We open when the light goes." rises letter by
+  letter under the café's name. The opening time and the line beneath stay readable throughout. With
+  reduced motion it is one still screen with the lamps on and the title whole, and the sections
+  below fade in. The scroll is smooth and the animation follows it in the same frame.
+- A Lighthouse budget in CI for the landing on a phone profile: performance at least 90, the largest
+  image painted within 2.5 seconds, and layout shift below 0.05.
+
+### Changed
+
+- The landing loads faster: the fonts every page needs arrive with the first script, the steam
+  loop's poster waits until it is near the screen, the scroll choreography loads once the page is
+  idle, and the rain's shader compiles without freezing the first frame where the browser allows it.
+
 - The landing photograph comes alive: rain runs down the glass in front of the Calvessa street and
   bends the view through each drop, a sodium lamp glow follows the pointer and rests on the lit café
   window, the street recedes a little as the page scrolls, and the scene grades from overcast dusk
