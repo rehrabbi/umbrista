@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { allowSoftwareGL } from './software-gl'
 
 // The clock decides night or day, so pin it: 22:00 and 13:00 in London are night and day.
 test.use({ timezoneId: 'Europe/London', viewport: { width: 1440, height: 900 } })
@@ -100,6 +101,7 @@ test.describe('the living background', () => {
   ] as const) {
     test(`draws the street photograph on the canvas at ${name}, lined up with the still`, async ({ page }) => {
       const problems = collectProblems(page)
+      await allowSoftwareGL(page)
       await page.emulateMedia({ reducedMotion: 'reduce' })
       await page.clock.setFixedTime(time)
       await page.goto('/')
@@ -118,22 +120,14 @@ test.describe('the living background', () => {
   }
 
   // Each tier compiles a different shader (no rain, one size of drop, two sizes and a finer mist).
-  for (const [tier, cores] of [
-    ['low', 2],
-    ['mid', 4],
-    ['high', 16],
-  ] as const) {
+  for (const tier of ['low', 'mid', 'high'] as const) {
     test(`compiles and runs the ${tier} tier without shader errors`, async ({ page }) => {
       const problems = collectProblems(page)
-      await page.addInitScript((count) => {
-        Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => count })
-      }, cores)
+      await allowSoftwareGL(page, tier)
       await page.goto('/')
       const canvas = page.locator(READY)
       await expect(canvas).toHaveCount(1, { timeout: 20_000 })
-      // The probe can rate a slow machine lower than its cores suggest, never higher.
-      const drawn = await canvas.getAttribute('data-tier')
-      expect(['low', 'mid', 'high'].indexOf(drawn ?? '')).toBeLessThanOrEqual(['low', 'mid', 'high'].indexOf(tier))
+      await expect(canvas).toHaveAttribute('data-tier', tier)
       await page.mouse.move(700, 300)
       await page.waitForTimeout(500)
       expect(problems).toEqual([])

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dprFor, measureFrameTime, quality, tierFrom } from './quality'
+import { dprFor, isSoftwareRenderer, measureFrameTime, quality, tierFrom } from './quality'
 
 const strong = { cores: 12, memory: 8, frameMs: 16.7, reducedMotion: false }
 
@@ -28,6 +28,29 @@ describe('tierFrom', () => {
   it('never goes above mid under reduced motion', () => {
     expect(tierFrom({ ...strong, reducedMotion: true })).toBe('mid')
     expect(tierFrom({ ...strong, cores: 2, reducedMotion: true })).toBe('low')
+  })
+})
+
+describe('isSoftwareRenderer', () => {
+  it.each([
+    'ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)',
+    'Google SwiftShader',
+    'llvmpipe (LLVM 15.0.7, 256 bits)',
+    'Mesa softpipe',
+    'ANGLE (Microsoft, Microsoft Basic Render Driver Direct3D11 vs_5_0 ps_5_0, D3D11)',
+  ])('recognises %s as software', (renderer) => {
+    expect(isSoftwareRenderer(renderer)).toBe(true)
+  })
+
+  it.each([
+    'ANGLE (NVIDIA, NVIDIA GeForce RTX 2060 SUPER (0x00001F06) Direct3D11 vs_5_0 ps_5_0, D3D11)',
+    'Apple M2',
+    'Adreno (TM) 730',
+    'Mali-G78',
+    'WebKit WebGL',
+    '',
+  ])('treats %s as a real GPU', (renderer) => {
+    expect(isSoftwareRenderer(renderer)).toBe(false)
   })
 })
 
