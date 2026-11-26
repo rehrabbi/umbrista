@@ -13,10 +13,15 @@ const LINKS = [
 ] as const
 
 export function Nav() {
-  // The menu is open for one path only, so following a link closes it without an effect.
-  const [openOn, setOpenOn] = useState<string | null>(null)
-  const { pathname } = useLocation()
-  const open = openOn === pathname
+  const [open, setOpen] = useState(false)
+  const location = useLocation()
+  // Any change of location (a link, Back or Forward) closes the menu. Adjusting state while
+  // rendering, rather than in an effect, avoids a frame with the menu still open.
+  const [shownAt, setShownAt] = useState(location)
+  if (shownAt !== location) {
+    setShownAt(location)
+    setOpen(false)
+  }
   const listId = useId()
   const toggle = useRef<HTMLButtonElement>(null)
 
@@ -24,7 +29,7 @@ export function Nav() {
     if (!open) return
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
-      setOpenOn(null)
+      setOpen(false)
       toggle.current?.focus()
     }
     document.addEventListener('keydown', onKeyDown)
@@ -44,7 +49,7 @@ export function Nav() {
           className="nav-toggle"
           aria-expanded={open}
           aria-controls={listId}
-          onClick={() => setOpenOn(open ? null : pathname)}
+          onClick={() => setOpen(!open)}
         >
           Menu
         </button>

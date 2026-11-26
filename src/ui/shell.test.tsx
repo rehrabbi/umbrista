@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router'
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { Footer } from './Footer'
 import { Nav } from './Nav'
@@ -14,6 +14,15 @@ function renderNav(path = '/') {
         <Route path="*" element={<p>page</p>} />
       </Routes>
     </MemoryRouter>,
+  )
+}
+
+function BackButton() {
+  const navigate = useNavigate()
+  return (
+    <button type="button" onClick={() => navigate(-1)}>
+      Go back
+    </button>
   )
 }
 
@@ -68,6 +77,22 @@ describe('Nav', () => {
     await userEvent.keyboard('{Escape}')
     expect(button).toHaveAttribute('aria-expanded', 'false')
     expect(button).toHaveFocus()
+  })
+
+  it('stays closed after navigating back to the page it was opened on', async () => {
+    render(
+      <MemoryRouter initialEntries={['/menu']}>
+        <Nav />
+        <BackButton />
+      </MemoryRouter>,
+    )
+    const toggle = screen.getByRole('button', { name: 'Menu' })
+    await userEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    await userEvent.click(screen.getByRole('link', { name: 'Story' }))
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    await userEvent.click(screen.getByRole('button', { name: 'Go back' }))
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('closes when a link is followed', async () => {
