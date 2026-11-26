@@ -1,0 +1,13 @@
+{
+  "name": "Umbrista",
+  "short_name": "Umbrista",
+  "description": "An invented night coffee bar that opens when the light goes. A design project, not a real café.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#0D1524",
+  "background_color": "#0D1524",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
