@@ -18,17 +18,21 @@ float luma(vec3 c) {
 vec2 lampFalloff(vec2 d) {
   float r2 = dot(d, d);
   float pool = exp(-r2 * 22.0);
-  float halo = exp(-r2 * 6.0);
+  float halo = exp(-r2 * 4.5);
   return vec2(pool, halo);
 }
 
 // Light the photograph with the lamp. The pool multiplies the photo, so it warms surfaces without
-// lifting the black; the halo is added, and grows where the glass is misted. `strength` is 0..1.
+// lifting the black. At night almost every pixel is near black and a multiplied light vanishes, so
+// the lamp is mostly added: a warm core, and a halo that grows where the glass is misted.
+// `strength` is 0..1.
 vec3 applyLamp(vec3 photo, vec2 d, float mist, float strength) {
   vec2 f = lampFalloff(d) * strength;
-  // Surfaces already bright (the window itself) have no headroom left, so the pool spares them.
-  vec3 lit = photo + photo * SODIUM * f.x * 2.4 * (1.0 - smoothstep(0.08, 0.5, luma(photo)));
-  lit += SODIUM * (f.x * 0.06 + f.y * (0.025 + 0.03 * mist));
+  // Surfaces already bright (the window itself) have no headroom left, so the light spares them
+  // and the panes keep their own colour.
+  float headroom = 1.0 - smoothstep(0.08, 0.5, luma(photo));
+  vec3 lit = photo + photo * SODIUM * f.x * 2.4 * headroom;
+  lit += SODIUM * (f.x * 0.10 * headroom + f.y * (0.03 + 0.06 * mist));
   return lit;
 }
 
@@ -52,10 +56,10 @@ vec3 gradeScene(vec3 c, float night) {
   float y = luma(c);
   float warm = warmth(c);
 
-  // Overcast dusk: the lamps are not lit yet. A little cooler, a little lighter, the warm light
-  // drained towards grey.
-  vec3 day = mix(c, vec3(y), 0.18 + 0.25 * warm);
-  day = day * vec3(0.94, 1.0, 1.08) * 1.12 + vec3(0.004, 0.006, 0.009);
+  // Overcast dusk: a little cooler and lighter, the colour eased back. The lit window keeps its
+  // warmth and is spared the cool tint, so it stays amber rather than turning pale pink.
+  vec3 day = mix(c, vec3(y), 0.10 + 0.10 * warm);
+  day = day * mix(vec3(0.94, 1.0, 1.08), vec3(1.0), warm) * 1.06 + vec3(0.004, 0.006, 0.009);
 
   // Lamp-lit night: the shadows sink towards ink and the sodium pools come up.
   vec3 deep = c * mix(vec3(0.88, 0.92, 1.0), vec3(1.0), warm);

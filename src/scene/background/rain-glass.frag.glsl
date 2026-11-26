@@ -22,7 +22,7 @@ uniform vec2 uFocus;        // the lit café window, view UV
 uniform float uTime;        // seconds
 uniform float uNight;       // 0 overcast dusk .. 1 lamp-lit night
 uniform float uIntensity;   // 0 the plain photograph .. 1 the full effect
-uniform float uQuality;     // 0 low, 1 mid, 2 high (the layer counts themselves are defines)
+uniform float uQuality;     // 0 low, 1 mid, 2 high: high adds finer detail to the mist
 
 varying vec2 vUv;
 
@@ -83,8 +83,9 @@ void addLens(inout Glass g, vec3 l, float r) {
   g.drop = l.x;
   g.size = r;
   g.slope = l.yz;
-  // Through a drop the street is seen flipped and from wider: sample on the opposite side.
-  g.bend = -l.yz * r * 2.6;
+  // Through a drop the street is seen flipped and from much wider: sample well beyond the opposite
+  // side, so each drop near the window holds its own tiny orange window.
+  g.bend = -l.yz * r * 4.5;
 }
 
 // The path a sliding drop follows down its column, in cell widths: it wanders around snags.
@@ -109,10 +110,13 @@ void slidingDrops(inout Glass g, vec2 p, float t, float size, float seed, float 
   float aa = fwidth(cell.x) * 1.5;
 
   // One cycle carries the drop from the top of its cell to the bottom, in five stick-and-slip runs.
-  float phase = fract(t * (0.035 + 0.035 * rB) + rA);
-  float runs = phase * 5.0;
+  // About one drop in eight is a runnel: heavier, it runs three times as fast with only two stops.
+  bool runnel = rB > 0.88;
+  float stops = runnel ? 2.0 : 5.0;
+  float phase = fract(t * (0.035 + 0.035 * rB) * (runnel ? 3.0 : 1.0) + rA);
+  float runs = phase * stops;
   float slip = fract(runs);
-  float travelled = (floor(runs) + smoothstep(0.62, 1.0, slip)) / 5.0;
+  float travelled = (floor(runs) + smoothstep(0.62, 1.0, slip)) / stops;
   // While it slips the drop pulls out into a taller teardrop.
   float moving = smoothstep(0.62, 0.72, slip) * fall(1.0, 0.92, slip);
   float y = mix(0.93, 0.07, travelled);
@@ -160,11 +164,15 @@ void stillDroplets(inout Glass g, vec2 p, float t, float size, float amount) {
   float life = fract(t * 0.02 + rA);
   // Mostly tiny beads, a few fuller ones.
   float grown = rB / max(amount, 0.01);
-  float r = (0.07 + 0.25 * grown * grown * grown) * smoothstep(0.0, 0.4, life) * fall(1.0, 0.94, life);
-  if (r < 1e-3) return;
-  vec2 centre = (vec2(rA, rB) - 0.5) * (0.9 - 2.0 * r);
+  // A droplet swells from most of its size and fades in, rather than growing from a dot, so even the
+  // smallest is a few pixels across: big enough to read as a lens, not a speck.
+  float swell = smoothstep(0.0, 0.4, life) * fall(1.0, 0.94, life);
+  float r = (0.11 + 0.22 * grown * grown * grown) * (0.6 + 0.4 * swell);
+  // The position draws on its own random numbers: tied to the size, the droplets lined up in rows.
+  vec2 centre = (vec2(hash21(id + 13.9), hash21(id + 29.3)) - 0.5) * (0.98 - 2.0 * r);
   float aa = fwidth(cell.x) * 1.5;
   vec3 l = lens(f - centre, r, aa);
+  l.x *= smoothstep(0.0, 0.2, swell);
   // A passing drop swallows the droplets in its wake.
   l.x *= 1.0 - g.wiped;
   addLens(g, l, r * size);
@@ -198,30 +206,37 @@ void main() {
 #if DROP_LAYERS > 0
   Glass g = Glass(vec2(0.0), 0.0, 0.0, 0.0, vec2(0.0));
   float t = uTime;
-  slidingDrops(g, p, t, 0.16, 1.0, 0.55 * rain + 0.15);
+  slidingDrops(g, p, t, 0.16, 1.0, 0.8 * rain + 0.15);
 #if DROP_LAYERS > 2
-  slidingDrops(g, p + vec2(0.37, 0.0), t * 1.2, 0.085, 7.0, 0.5 * rain);
+  slidingDrops(g, p + vec2(0.37, 0.0), t * 1.2, 0.085, 7.0, 0.75 * rain);
 #endif
-  stillDroplets(g, p, t, 0.028, 0.32 + 0.3 * rain);
+  // Two offset grids of droplets at different pitches, so no rows or columns show through.
+  stillDroplets(g, p, t, 0.031, 0.3 + 0.25 * rain);
+  stillDroplets(g, p + vec2(0.413, 0.271), t * 1.3, 0.022, 0.25 + 0.2 * rain);
 
   // The mist: uneven, drifting very slowly, and thickest away from the lit café window, so the
   // heart of the photograph stays clear.
-  float clearing = smoothstep(0.12, 0.75, length((view - uFocus) * vec2(glassPerUv.x / glassPerUv.y, 1.0)));
-  mist = (0.15 + 0.3 * noise(p * 2.2 + vec2(0.0, t * 0.01))) * (0.35 + 0.65 * clearing);
+  float clearing = smoothstep(0.06, 0.45, length((view - uFocus) * vec2(glassPerUv.x / glassPerUv.y, 1.0)));
+  float grain = noise(p * 2.2 + vec2(0.0, t * 0.01));
+  if (uQuality > 1.5) grain = mix(grain, noise(p * 7.3 - vec2(t * 0.004, 0.0)), 0.3);
+  mist = (0.3 + 0.35 * grain) * (0.15 + 0.85 * clearing);
   mist *= (1.0 - g.wiped) * uIntensity;
 
   // Misted glass: the street softened (a coarser mip) and lightly veiled.
 #if FOG_TAPS > 1
-  vec2 spread = 1.5 / uViewPx * uCoverScale;
-  vec3 soft = 0.25 * (sampleLinear(uv + spread * vec2(1.0, 0.4), 1.2) +
-                      sampleLinear(uv - spread * vec2(1.0, 0.4), 1.2) +
-                      sampleLinear(uv + spread * vec2(-0.4, 1.0), 1.2) +
-                      sampleLinear(uv - spread * vec2(-0.4, 1.0), 1.2));
+  vec2 spread = 3.0 / uViewPx * uCoverScale;
+  vec3 soft = 0.25 * (sampleLinear(uv + spread * vec2(1.0, 0.4), 2.6) +
+                      sampleLinear(uv - spread * vec2(1.0, 0.4), 2.6) +
+                      sampleLinear(uv + spread * vec2(-0.4, 1.0), 2.6) +
+                      sampleLinear(uv - spread * vec2(-0.4, 1.0), 2.6));
 #else
-  vec3 soft = sampleLinear(uv, 1.5);
+  vec3 soft = sampleLinear(uv, 2.8);
 #endif
   vec3 veil = mix(vec3(0.008, 0.011, 0.018), vec3(0.05, 0.06, 0.075), 1.0 - uNight);
-  vec3 misted = mix(soft, soft * 0.9 + veil, 0.35);
+  vec3 misted = mix(soft, soft * 0.9 + veil, 0.5);
+  // The condensation itself catches the lamp: night is near black, so this has to be added light.
+  float lampStrength = mix(0.45, 1.0, uNight) * (1.0 - 0.4 * uScroll);
+  misted += SODIUM * lampFalloff(toLamp).y * 0.08 * lampStrength;
   colour = mix(photo, misted, mist);
 
   // Through the water: a sharp, flipped view of the street, a dark rim, and a glint of lamp.
@@ -230,17 +245,24 @@ void main() {
     vec3 through = sampleLinear(uv + bendUv, 0.0);
     // Water bends the light away at its edge, so a drop is outlined dark, most of all along its thin
     // top. Light focused through the drop pools in a bright crescent just inside its lower edge.
+    // A drop only a few pixels wide would be all rim, a ring rather than a lens, so small drops
+    // keep their rim faint.
     float edge = length(g.slope);
-    through *= mix(1.0, 0.25, smoothstep(0.55, 1.0, edge) * (0.65 + 0.35 * g.slope.y));
-    through *= 1.0 + 0.5 * smoothstep(0.45, 0.85, edge) * smoothstep(0.3, 0.9, -g.slope.y);
+    float rimmed = smoothstep(2.0, 6.0, g.size * GLASS_PX);
+    through *= mix(1.0, 0.25, smoothstep(0.55, 1.0, edge) * (0.65 + 0.35 * g.slope.y) * rimmed);
+    float crescent = smoothstep(0.45, 0.85, edge) * smoothstep(0.3, 0.9, -g.slope.y);
+    through *= 1.0 + 0.3 * crescent;
+    through += vec3(0.03, 0.035, 0.045) * crescent;
     // The lamp catches the side of the drop facing it; a pinpoint of sky sits near the top.
     vec2 toward = normalize(-toLamp + vec2(1e-4));
     vec2 lampFall = lampFalloff(toLamp);
     // A pale warm point, only on drops big enough to hold one.
     float glint = fall(0.2, 0.0, length(g.slope - toward * 0.72)) * smoothstep(0.004, 0.014, g.size);
     float strength = mix(0.35, 1.0, uNight);
-    through += mix(SODIUM, vec3(1.0, 0.85, 0.6), 0.45) * glint * (0.9 * lampFall.x + 0.2 * lampFall.y) * strength;
-    through += vec3(0.04, 0.05, 0.065) * fall(0.14, 0.0, length(g.slope - vec2(-0.3, 0.45)));
+    through += mix(SODIUM, vec3(1.0, 0.85, 0.6), 0.45) * glint * (0.9 * lampFall.x + 0.6 * lampFall.y) * strength;
+    through += vec3(0.09, 0.10, 0.12) * fall(0.22, 0.0, length(g.slope - vec2(-0.3, 0.45)));
+    // Water carries the lamp as the mist does, so drops in its light never read as holes.
+    through += SODIUM * lampFall.y * 0.1 * lampStrength;
     colour = mix(colour, through, g.drop * uIntensity);
   }
 #endif
@@ -252,4 +274,8 @@ void main() {
 
   gl_FragColor = vec4(shoulder(colour), 1.0);
   #include <colorspace_fragment>
+  // Half a level of noise breaks up banding in the dark, smooth gradients of the night sky. The
+  // threshold steps through the plastic-number (R2) sequence per pixel, which never forms rows.
+  vec2 px = floor(gl_FragCoord.xy);
+  gl_FragColor.rgb += (fract(0.5 + px.x * 0.7548776662 + px.y * 0.5698402910) - 0.5) / 255.0;
 }
