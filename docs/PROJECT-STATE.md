@@ -59,8 +59,9 @@ Not yet: Task 1 merged into `develop`, branch protection, any feature of the sit
 
 ## 5. Bring-up on a new machine
 
-`npm ci`, then the scripts in the README. Nothing else to run yet. When the backend exists (plan Tasks 4 onward) this section will explain the
-local database, environment variables and how staff accounts are created from the command line.
+`npm ci`, then the scripts in the README. Nothing else to run yet. When the backend exists (plan
+Tasks 4 onward) this section will explain the local database, environment variables and how staff
+accounts are created from the command line.
 
 ## 6. Owner checkpoints still ahead
 
