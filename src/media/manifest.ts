@@ -19,6 +19,7 @@ export const MEDIA = {
   'street-dusk': { kind: 'still', aspect: [43, 24], widths: [640, 1280, 1920, 2560] },
   'rain-window': { kind: 'still', aspect: [43, 24], widths: [640, 1280, 1920, 2560] },
   'crema-macro': { kind: 'still', aspect: [43, 24], widths: [640, 1280, 1920, 2560] },
+  'cup-still': { kind: 'still', aspect: [1, 1], widths: [640, 1280, 1920] },
   'steam-loop-poster': { kind: 'still', aspect: [16, 9], widths: [640, 1280, 1920] },
   'steam-loop': { kind: 'loop', aspect: [16, 9], widths: [1920, 1280], poster: 'steam-loop-poster' },
 } as const satisfies Record<string, StillEntry | LoopEntry>

@@ -28,6 +28,9 @@ const VP9_CRF = 30
 const H264_CRF = 22
 
 const STILLS = ['street-dusk', 'rain-window', 'crema-macro']
+// Stills with a transparent background, kept transparent in both formats: the hero cup, rendered
+// from its own model by `npm run cup-still`, which the live cup replaces in place.
+const ALPHA_STILLS = ['cup-still']
 const LOOPS = [{ name: 'steam-loop', file: 'steam-loop.mp4' }]
 
 const BITEXACT = ['-map_metadata', '-1', '-fflags', '+bitexact', '-flags:v', '+bitexact']
@@ -88,16 +91,20 @@ function build(outName, make) {
   console.log(`  ${outName}  ${(statSync(path).size / 1024).toFixed(0)} KB`)
 }
 
-function stillSet(input, name, aspect, sourceWidth, extraInput = []) {
+function stillSet(input, name, aspect, sourceWidth, extraInput = [], alpha = false) {
   const widths = IMAGE_WIDTHS.filter((w) => w <= sourceWidth)
   for (const w of widths) {
     const scale = `scale=${w}:${heightFor(w, aspect)}:flags=lanczos`
+    // AVIF carries transparency as a second, greyscale image beside the colour one.
+    const avifPicture = alpha
+      ? ['-filter_complex', `[0]${scale},format=yuva420p,split[c][a];[a]alphaextract[a]`, '-map', '[c]', '-map', '[a]']
+      : ['-vf', `${scale},format=yuv420p`]
     build(`${name}-${w}.avif`, (out) =>
-      run('ffmpeg', ['-v', 'error', '-y', ...extraInput, '-i', input, '-vf', `${scale},format=yuv420p`, ...BITEXACT,
+      run('ffmpeg', ['-v', 'error', '-y', ...extraInput, '-i', input, ...avifPicture, ...BITEXACT,
         '-c:v', 'libaom-av1', '-crf', String(AVIF_CRF), '-b:v', '0', '-cpu-used', '4', '-row-mt', '0', '-threads', '1',
         '-still-picture', '1', '-frames:v', '1', out]))
     build(`${name}-${w}.webp`, (out) =>
-      run('ffmpeg', ['-v', 'error', '-y', ...extraInput, '-i', input, '-vf', scale, ...BITEXACT,
+      run('ffmpeg', ['-v', 'error', '-y', ...extraInput, '-i', input, '-vf', alpha ? `${scale},format=yuva420p` : scale, ...BITEXACT,
         '-c:v', 'libwebp', '-quality', String(WEBP_QUALITY), '-compression_level', '6', '-frames:v', '1', out]))
   }
   return widths
@@ -116,6 +123,14 @@ for (const name of STILLS) {
   const size = dimensions(input)
   const aspect = aspectOf(size)
   entries[name] = { kind: 'still', aspect, widths: stillSet(input, name, aspect, size.width) }
+}
+
+for (const name of ALPHA_STILLS) {
+  console.log(name)
+  const input = requireMaster(`${name}.png`)
+  const size = dimensions(input)
+  const aspect = aspectOf(size)
+  entries[name] = { kind: 'still', aspect, widths: stillSet(input, name, aspect, size.width, [], true) }
 }
 
 for (const loop of LOOPS) {
