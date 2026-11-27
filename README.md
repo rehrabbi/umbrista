@@ -21,11 +21,12 @@ brand and the site shell (navigation, footer, a page for every route) are done. 
 visitor's dusk with a "See it at night" switch, and the café's hours in café time) are built and in
 review. The media and 3D foundation is done: responsive photographs, silent video loops and a WebGL
 host that falls back to the photograph, and the landing's living background (rain on the glass, a
-lamp that follows the pointer, a night grade). The landing's scroll journey is built (Task 9, in
-review): the crema film as a full-screen hero with the promise rising letter by letter, then the 3D
-hero cup, which stays on screen through the cup, street, window and last-cup chapters while its
-coffee turns from espresso to latte art to the last cup. Pages other than the landing are mostly
-stubs: there is no live site yet. Next is the drink models for the menu (Task 9b, with the owner).
+lamp that follows the pointer, a night grade). The landing's scroll journey is built (Task 9): the
+crema film as a full-screen hero with the promise rising letter by letter, then the 3D hero cup,
+which stays on screen through the cup, street, window and last-cup chapters while its coffee turns
+from espresso to latte art to the last cup. The eight menu drinks are compressed as web 3D models,
+a full and a light version each (Task 9b, in review). Pages other than the landing are mostly
+stubs: there is no live site yet. Next is the 3D menu (Task 10).
 
 ## Running it
 
@@ -58,7 +59,9 @@ with `npm run media -- --force`. The output is deterministic, so a rebuild leave
 
 The cup's 3D model works the same way: its master stays in `media-src/cup.glb`, and `npm run
 models` writes the compressed copy to `public/models/cup.glb` (one list entry per model in
-`scripts/models.mjs`). The cup's still is rendered from that model by `npm run cup-still`, then
+`scripts/models.mjs`). The drinks' masters stay in `media-src/drinks/`, and each becomes
+`public/models/drinks/<id>.glb` and a light `<id>-lite.glb`; `npm run models -- fog-line lantern`
+builds only those. The cup's still is rendered from that model by `npm run cup-still`, then
 made into web copies by `npm run media`.
 
 ## Planned stack

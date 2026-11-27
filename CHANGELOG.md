@@ -24,6 +24,10 @@ once the whole site is built.
   is a still rendered from the same model in the same pose.
 - `npm run models` compresses the 3D models (meshopt geometry, WebP textures; the cup is 0.82 MB),
   and `npm run cup-still` renders the cup's still from the model.
+- The eight menu drinks as web 3D models, each in two versions: a full model for the bar (0.71 to
+  1.39 MB) and a light one for the counter, where all eight show at once (0.30 to 0.39 MB, 512 px
+  textures, simplified geometry). `npm run models` builds them one at a time on one image thread, and
+  takes model names to build only some.
 - In the street chapter the visitor scrolls through dusk while the street holds still and the café
   window and the lamps come on. The scroll is smooth, and the scene follows it in the same frame.
 - A Lighthouse budget for the landing on a phone profile, a required check on `main` and

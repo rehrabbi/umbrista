@@ -129,6 +129,15 @@ masters stay in Higgsfield and are found again by their job IDs; only web deriva
 | Steam loop: six silent seconds, locked camera, first frame equals last | "The craft" | Seedance 2.5, 1080p (draft `560af24b` first) | `bf93d379` | 2026-11-26 |
 | Studio cup and saucer on navy | Reference for the cup model | Nano Banana 2, 4K still | `b22ab85d` | 2026-11-26 |
 | The cup and saucer as a 3D model, PBR textures, about 30,000 triangles | Hero cup, Brew-your-own | Meshy image to 3D, from a 1024 px copy of the studio still | `404fdaa5` | 2026-11-26 |
+| Fog Line, a cortado in a ribbed glass, as a 3D model | The 3D menu (bar and counter) | Meshy image to 3D, from its studio still (Nano Banana 2, 4K, `4e47911f`) | `b7778784` | 2026-11-26 |
+| Lantern, a flat white with a rosetta in a wide ceramic cup, as a 3D model | The 3D menu (bar and counter) | Meshy image to 3D, from its studio still (Nano Banana 2, 4K, `acc984ef`) | `e412534b` | 2026-11-26 |
+| Sodium, a honey and orange-zest latte in a glass mug, as a 3D model | The 3D menu (bar and counter) | Meshy image to 3D, from its studio still (Nano Banana 2, 4K, `9725fba7`) | `a5574b1f` | 2026-11-26 |
+| Night Ferry, a cold brew on an ice block in a tumbler, as a 3D model | The 3D menu (bar and counter) | Meshy image to 3D, from its studio still (Nano Banana 2, 4K, `3bbd818e`) | `323d60e2` | 2026-11-26 |
+| Low Tide, an espresso tonic in a highball, as a 3D model | The 3D menu (bar and counter) | Meshy image to 3D, from its studio still (Nano Banana 2, 4K, `0b9ff5c5`) | `3592da41` | 2026-11-26 |
+| Umbra, a dark mocha in a matte charcoal cup, as a 3D model | The 3D menu (bar and counter) | Meshy image to 3D, from its studio still (Nano Banana 2, 4K, `601704a2`) | `f24c4c58` | 2026-11-26 |
+| Wet Cobble, an iced latte with a swirl in a tall glass, as a 3D model | The 3D menu (bar and counter) | Meshy image to 3D, from its studio still (Nano Banana 2, 4K, `cc923592`) | `a91a8a2c` | 2026-11-26 |
+| Three O'Clock, an affogato in a ceramic bowl, as a 3D model | The 3D menu (bar and counter) | Meshy image to 3D, from its studio still (Nano Banana 2, 4K, `b24bd4ac`) | `7f2c3835` | 2026-11-26 |
+| Three O'Clock in a glass bowl, still and 3D model | Not used: the model came out an opaque ceramic, so the owner had it remade in ceramic | Nano Banana 2, 4K still (`6cf76b9e`); Meshy image to 3D | `495a93b2` | 2026-11-26 |
 | Coffee surface 1, from above: the espresso's crema | The cup's coffee surface (the cup chapter) | Nano Banana 2, 4K still | `aee4a370` | 2026-11-27 |
 | Coffee surface 2, from above: the milk blooming up through the crema | The cup's coffee surface (dusk on the street) | Nano Banana 2, 4K still | `5db64658` | 2026-11-27 |
 | Coffee surface 3, from above: a wide rosetta with a foam "lamp cord" and a round dot | The cup's coffee surface (the window, and aged for the last cup) | Nano Banana 2, 4K still | `8389ae19` | 2026-11-27 |
@@ -166,5 +175,31 @@ Notes:
   live ageing over surface 4: as the last chapter begins, the rosetta's edges soften, its sheen
   flattens and its colour mutes, in the shader: the browns duller and a touch darker, the foam
   towards ivory, never grey or rosy under the lamp.
-- Planned: one 3D model per menu drink (plan Task 9b), each listed here once the owner approves and it
-  is made.
+- The drinks (plan Task 9b; the owner approved the list, each still and each model). Drink 1, Last
+  Tram, a double espresso, is the approved cup and has no model of its own. Every other drink has a
+  studio still, and its model, about 30,000 triangles with PBR textures, was made from a 1024 px
+  copy of that still. The masters (about 10 to 12 MB each) are in
+  the git-ignored `media-src/drinks/`.
+- Night Ferry and Low Tide are glass drinks, and image to 3D bakes no transmission: their textures
+  read frosted and opaque. The menu (plan Task 10) may give their glass a glass material.
+- Web copies of the drinks, by `npm run models`, the same steps as the cup's (meshopt, WebP at
+  quality 86, normal map 94). Each drink has two: `public/models/drinks/<id>.glb`, the full model
+  for the bar (budget 1.5 MB, every triangle of the master, textures at 2048 px unless that is over
+  budget, then 1024), and `public/models/drinks/<id>-lite.glb` for the counter, where all eight
+  show at once and small (budget 400 KB, textures at 512 px, geometry cut by meshoptimizer's
+  simplifier with a target of a quarter of the vertices and an error bound of 0.001 of the model's
+  size; the bound stops it first, at a third to a half of the triangles). Three O'Clock's light
+  version needed an error bound of 0.002 to fit. The light versions keep the full model's
+  outline (its height-by-height profile within about 1%), stay one piece and open no new holes in
+  the mesh.
+
+  | Drink | Full | Full textures | Full sha256 | Light | Light triangles | Light sha256 |
+  |---|---|---|---|---|---|---|
+  | `fog-line` | 1.39 MB | 2048 px | `9532451bbc2e2089e3f4972d064f23f225331a7d970c8ff4daf5123fa9d4df47` | 0.30 MB | 13,203 of 30,621 | `92e3014428ce81eadd5771d7de8349cad8701fb0105c44fb55de68ece66baaa2` |
+  | `lantern` | 0.81 MB | 1024 px | `8f59e06c4b3ca4320fada2f73e4f4952a73b28607d419342fab0fb82fdc77141` | 0.34 MB | 12,326 of 29,657 | `0e30709f553957c5b07b821011bde1708556e1af0b4cda02a06a9a57178e9339` |
+  | `sodium` | 0.71 MB | 1024 px | `e889be0b757cbe4669b6ee34e60279cf931ed659b448ffc3a2c2be00bb0dca1b` | 0.32 MB | 13,175 of 30,813 | `75cce585b101a8d31ffbaf52d96110eec90c6db0fbf62ae9f5fb6d62a4308af6` |
+  | `night-ferry` | 0.85 MB | 1024 px | `5cc1d0fe8e73df16e7b752f824ff821e495b44442b48fb400d8e33181c6e380f` | 0.33 MB | 12,628 of 29,801 | `ae1366ab1b4b0ad94e9e26397074e789c68b45d73b24fa411932dbbcecb057e9` |
+  | `low-tide` | 0.78 MB | 1024 px | `34721e8ff0a0a26b9469adcc9e25b9b4f85d98796d40803124309e6c994307b6` | 0.30 MB | 10,644 of 30,941 | `eb1a70789705c9f60bfcfe7c007adc1ea03d900c24be81c18558e046e5b92784` |
+  | `umbra` | 0.87 MB | 1024 px | `8359c4a5e736f60d75d26d54601b5c0d2cefe24de11633d643f50863bf3f8c1d` | 0.37 MB | 15,420 of 30,668 | `eb962888c2a020be78d1f4069218f447b6876c473451801b3c001c1ecc634889` |
+  | `wet-cobble` | 0.80 MB | 1024 px | `cfd8eb7289a227f2b2a34b80e2bd33be71008d1e9d22d267318936f36f9464a2` | 0.33 MB | 12,100 of 29,791 | `01f1a1a29752805db43af581325e207d6b460acea5e5af88ec1f6af7f6913678` |
+  | `three-oclock` | 0.84 MB | 1024 px | `2f1b6f9dc1033131833cc4d1260d30c3dad5bdd6aa18e521f319da46589fe406` | 0.39 MB | 14,406 of 30,933 | `6542c2d00ca26d9a626b0ab7d8b1c2e1a64d59bac466b0e3ae96863b5db7c459` |
