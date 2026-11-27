@@ -1,0 +1,42 @@
+/* The cup's controls: four quiet pills in a row that wraps on a narrow screen. */
+.cup-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.cup-control {
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-text) 35%, transparent);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-bg) 55%, transparent);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-ui) var(--ease-settle),
+    background-color var(--dur-ui) var(--ease-settle);
+}
+
+.cup-control:hover {
+  border-color: var(--color-signal);
+}
+
+.cup-control:active {
+  background: color-mix(in srgb, var(--color-signal) 18%, var(--color-bg));
+}
+
+/* The drag surface covers the cup. It is invisible; the cursor says it can be turned. */
+.cup-drag {
+  position: absolute;
+  inset: 0;
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.cup-drag:active {
+  cursor: grabbing;
+}
