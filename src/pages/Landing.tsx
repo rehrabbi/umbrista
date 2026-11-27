@@ -191,6 +191,8 @@ export function Landing() {
   const failed = useJourneyScroll(reduced, root)
   const still = reduced || failed
   useStillJourney(still, root)
+  // Nothing below the first screen is asked for before the page has loaded, so the hero's poster
+  // has the network to itself; after that each picture still waits for its place on screen.
   const loaded = usePageLoaded()
 
   return (
@@ -248,6 +250,7 @@ export function Landing() {
               still="street-dusk"
               label="A fogged hill street in Calvessa at dusk, tram rails running down it and one café window lit."
               near="100% 0px"
+              deferStill
             >
               <LiveStreet still={still} />
             </SceneHost>
@@ -260,11 +263,13 @@ export function Landing() {
 
         <Chapter id={WINDOW.id} className="chapter-window">
           <div className="chapter-media">
-            <Picture
-              name="rain-window"
-              alt="Rain on the café window at night, a lamp over the table and the wet street outside."
-              className="chapter-photo"
-            />
+            {loaded && (
+              <Picture
+                name="rain-window"
+                alt="Rain on the café window at night, a lamp over the table and the wet street outside."
+                className="chapter-photo"
+              />
+            )}
           </div>
           <div className="chapter-copy">
             <ChapterMark index={3} title={WINDOW.title} />
