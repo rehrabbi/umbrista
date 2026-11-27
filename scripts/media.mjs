@@ -36,6 +36,8 @@ const ALPHA_STILLS = ['cup-still']
 // most one screen, so 640 and 1280 px are enough. Drink 1, Last Tram, is the cup and uses cup-still.
 const DRINK_STILLS = ['fog-line', 'lantern', 'sodium', 'night-ferry', 'low-tide', 'umbra', 'wet-cobble', 'three-oclock']
 const DRINK_WIDTHS = [640, 1280]
+// The night snacks, from their approved studio stills (docs/brand.md), on the menu's snack cards.
+const SNACK_STILLS = ['burnt-custard-tart', 'olive-oil-orange-cake', 'dark-chocolate-sea-salt']
 const LOOPS = [{ name: 'steam-loop', file: 'steam-loop.mp4' }]
 // Textures for the 3D scenes: square WebP only (a WebGL texture loads through a plain image, with no
 // <picture> to fall back from AVIF), at 768 px and 512 px for the low quality tier. The hero cup's
@@ -155,6 +157,15 @@ for (const drink of DRINK_STILLS) {
   const name = `drink-${drink}`
   console.log(name)
   const input = requireMaster(`drinks/${drink}.png`)
+  const size = dimensions(input)
+  const aspect = aspectOf(size)
+  entries[name] = { kind: 'still', aspect, widths: stillSet(input, name, aspect, size.width, [], false, DRINK_WIDTHS) }
+}
+
+for (const snack of SNACK_STILLS) {
+  const name = `snack-${snack}`
+  console.log(name)
+  const input = requireMaster(`snacks/${snack}.png`)
   const size = dimensions(input)
   const aspect = aspectOf(size)
   entries[name] = { kind: 'still', aspect, widths: stillSet(input, name, aspect, size.width, [], false, DRINK_WIDTHS) }
