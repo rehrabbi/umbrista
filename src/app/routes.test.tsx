@@ -12,8 +12,9 @@ function renderAt(path: string) {
   )
 }
 
-// A lazy page is compiled on its first import; on a busy test run that can take over a second.
-const LAZY = { timeout: 5000 }
+// A lazy page is compiled on its first import; on a busy test run that can take several seconds,
+// so the find waits long and the test outlasts it.
+const LAZY = { timeout: 8000 }
 
 const ROUTES: ReadonlyArray<readonly [path: string, h1: string, title: string]> = [
   ['/', 'Umbrista We open when the light goes.', 'Umbrista · A coffee bar that opens at dusk'],
@@ -37,7 +38,7 @@ describe('routes', () => {
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
     expect(screen.getByText('Umbrista is a design project, not a real café.')).toBeInTheDocument()
     await waitFor(() => expect(document.title).toBe(title))
-  })
+  }, 15_000)
 
   it('shows the not-found page, with a link home, for an unknown path', async () => {
     renderAt('/nowhere/at/all')

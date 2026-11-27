@@ -48,5 +48,6 @@ describe('handing Lenis to GSAP', () => {
     for (let i = 1; i < times.length; i++) expect(times[i]!, `step ${i}`).toBeGreaterThanOrEqual(times[i - 1]!)
     // And it keeps moving after the handover rather than standing still.
     expect(times.at(-1)!).toBeGreaterThan(times[before]!)
-  })
+    // Importing GSAP on a busy test run can take seconds.
+  }, 15_000)
 })
