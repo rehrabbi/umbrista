@@ -1,7 +1,8 @@
 /*
  * The bar: one screen per drink. Each section holds the drink's copy and, in the drink's box, its
- * still. The bar's canvas is one screen tall and sticky for the length of the bar, laid over the
- * sections (the negative margin gives its height back), with the same box: on a phone held upright,
+ * still. The bar's canvas is one screen tall and sticky inside a track that covers the bar exactly
+ * (so it stops at the bar's last screen and never reaches the night snacks; a negative margin would
+ * let it run a screen past), laid over the sections, with the same box: on a phone held upright,
  * the upper part of the screen; on a wide screen, or a phone turned sideways, the right half. Only
  * the buttons take pointer input; the canvas lets everything through.
  */
@@ -14,13 +15,17 @@
   position: relative;
 }
 
+.bar-track {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
 .bar-stage {
   position: sticky;
   top: 0;
-  z-index: 1;
   height: 100svh;
-  margin-bottom: -100svh;
-  pointer-events: none;
 }
 
 .bar-scene {
@@ -61,8 +66,8 @@
   object-fit: contain;
 }
 
-/* Once the live drink has faded in over it, the still steps aside. */
-.bar[data-live] .drink-still {
+/* Once this drink's own live model has drawn and faded in over it, its still steps aside. */
+.drink[data-live] .drink-still {
   visibility: hidden;
   transition: visibility 0s linear var(--dur-scene);
 }

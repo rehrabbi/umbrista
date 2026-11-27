@@ -111,7 +111,8 @@ export function barProgressAt(centre: number, tops: ArrayLike<number>, heights: 
 
 /**
  * Follow the scroll through the bar: measures the sections when the page lays out (not on every
- * frame) and writes the progress on each scroll, at most once a frame. Returns the cleanup.
+ * frame: on a resize, or when anything on the page changes size, which can move the bar) and writes
+ * the progress on each scroll, at most once a frame. Returns the cleanup.
  */
 export function followBar(sections: readonly HTMLElement[]): () => void {
   const tops = new Float64Array(sections.length)
@@ -143,6 +144,8 @@ export function followBar(sections: readonly HTMLElement[]): () => void {
   window.addEventListener('resize', onResize)
   const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(onResize)
   for (const section of sections) observer?.observe(section)
+  // Anything above the bar that grows or shrinks moves it: the page's own size changes with it.
+  observer?.observe(document.body)
 
   return () => {
     window.removeEventListener('scroll', onScroll)
@@ -185,29 +188,42 @@ export function resetDrinkTurns(): void {
 }
 
 /*
- * Whether the bar's live 3D is on screen: set by its scene once a drink has drawn, cleared when it
- * goes. The page then hides the stills and offers the turn buttons, which a still cannot answer.
+ * Which drinks the bar's scene has drawn: each drink's own model is added once its first frame is
+ * drawn, and removed when it leaves the scene. A drink's section hides its still and offers its turn
+ * buttons only then, so a still never gives way to a drink that is not there yet.
  */
-let barLive = false
-const liveListeners = new Set<Listener>()
+const drawn = new Set<string>()
+const drawnListeners = new Set<Listener>()
 
-export function setBarLive(next: boolean): void {
-  if (next === barLive) return
-  barLive = next
-  for (const listener of liveListeners) listener()
+function emitDrawn(): void {
+  for (const listener of drawnListeners) listener()
 }
 
-function subscribeLive(listener: Listener): () => void {
-  liveListeners.add(listener)
+export function setDrinkDrawn(id: string, isDrawn: boolean): void {
+  if (drawn.has(id) === isDrawn) return
+  if (isDrawn) drawn.add(id)
+  else drawn.delete(id)
+  emitDrawn()
+}
+
+/** Forget every drawn drink (the bar's canvas has gone). */
+export function clearDrawnDrinks(): void {
+  if (drawn.size === 0) return
+  drawn.clear()
+  emitDrawn()
+}
+
+function subscribeDrawn(listener: Listener): () => void {
+  drawnListeners.add(listener)
   return () => {
-    liveListeners.delete(listener)
+    drawnListeners.delete(listener)
   }
 }
 
-const getBarLive = () => barLive
-
-export function useBarLive(): boolean {
-  return useSyncExternalStore(subscribeLive, getBarLive, getBarLive)
+/** Has this drink's live model been drawn in the bar? */
+export function useDrinkLive(id: string): boolean {
+  const read = () => drawn.has(id)
+  return useSyncExternalStore(subscribeDrawn, read, read)
 }
 
 /*

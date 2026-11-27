@@ -14,8 +14,9 @@ import {
   drinkPose,
   drinkTurn,
   liveDrinks,
+  clearDrawnDrinks,
   resetDrinkTurns,
-  setBarLive,
+  setDrinkDrawn,
   type DrinkPose,
 } from './barProgress'
 import { DrinkStage } from './DrinkStage'
@@ -33,7 +34,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  setBarLive(false)
+  clearDrawnDrinks()
   resetSceneGate()
 })
 
@@ -76,11 +77,22 @@ describe('DrinkStage', () => {
     expect(getToasts().at(-1)).toMatchObject({ message: 'Fog Line is in your order.', kind: 'success' })
   })
 
-  it('offers "Turn left" and "Turn right" once the live drink is there, and they turn its model', () => {
-    renderStage()
+  it('offers "Turn left" and "Turn right" once its own drink is drawn, and they turn its model', () => {
+    const { container } = renderStage()
+    // The row is held from the first paint, hidden and out of reach, so nothing moves when it appears.
+    const row = container.querySelector('.drink-turn')!
+    expect(row).not.toBeNull()
+    expect(row).toHaveAttribute('inert')
     expect(screen.queryByRole('button', { name: 'Turn right' })).toBeNull()
-    act(() => setBarLive(true))
-    expect(screen.getByRole('group', { name: 'Turn Fog Line' })).toBeInTheDocument()
+    // Another drink drawing changes nothing here.
+    act(() => setDrinkDrawn('lantern', true))
+    expect(screen.queryByRole('button', { name: 'Turn right' })).toBeNull()
+    expect(container.querySelector('section')).not.toHaveAttribute('data-live')
+    act(() => setDrinkDrawn('fog-line', true))
+    expect(screen.getByRole('group', { name: 'Turn Fog Line' })).toBe(row)
+    expect(row).not.toHaveAttribute('inert')
+    // Its still steps aside (by CSS) only now.
+    expect(container.querySelector('section')).toHaveAttribute('data-live')
 
     const pose: DrinkPose = { y: 0, angle: 0, visible: false }
     const before = drinkPose(1.5, 1, drinkTurn('fog-line'), pose).angle
@@ -98,9 +110,10 @@ describe('DrinkStage', () => {
     setMatchMedia(REDUCED, true)
     const { container } = renderStage()
     intent()
-    act(() => setBarLive(true))
+    act(() => setDrinkDrawn('fog-line', true))
     expect(container.querySelector('img[src*="/media/drink-fog-line-"]')).not.toBeNull()
-    expect(screen.queryByRole('button', { name: 'Turn right' })).toBeNull()
+    expect(container.querySelector('section')).not.toHaveAttribute('data-live')
+    expect(container.querySelector('.drink-turn')).toBeNull()
     // The name and price are simply there: nothing rises.
     for (const kinetic of container.querySelectorAll('[data-kinetic]')) expect(kinetic).toHaveAttribute('data-state', 'shown')
   })

@@ -8,7 +8,7 @@ import { KineticTitle } from '../pages/landing/KineticTitle'
 import { useScenesMayStart } from '../scene/gate'
 import { SceneHost } from '../scene/SceneHost'
 import { Button } from '../ui/Button'
-import { turnDrink, useBarLive } from './barProgress'
+import { turnDrink, useDrinkLive } from './barProgress'
 import { stillOf } from './stills'
 import './DrinkStage.css'
 
@@ -43,15 +43,17 @@ export interface DrinkStageProps {
 
 /**
  * One drink's screen in the bar: its name and price in kinetic type (rising into place as the
- * section arrives), its notes, "Add to order", and, while the live drink is there, buttons to
- * turn it. The live drink itself is drawn by the bar's one canvas (BarStage), which stays on
- * screen while the sections scroll past; this section's still stands in for it until then, and for
- * good under reduced motion or without WebGL. Everything that matters is text.
+ * section arrives), its notes, "Add to order", and, once its live model has drawn, buttons to turn
+ * it. Their row is there from the first paint, hidden, so nothing moves when they appear. The live
+ * drink is drawn by the bar's one canvas (BarStage), which stays on screen while the sections scroll
+ * past; this section's still stands in for it until that drink has drawn, and for good under
+ * reduced motion or without WebGL. Everything that matters is text.
  */
 export function DrinkStage({ item, index }: DrinkStageProps) {
   const reduced = usePrefersReducedMotion()
   const mayLoad = useScenesMayStart()
-  const live = useBarLive()
+  // This drink's own model has drawn in the bar: only then does its still step aside.
+  const live = useDrinkLive(item.id) && !reduced
   const addToOrder = useAddToOrder()
   const ref = useRef<HTMLElement>(null)
   const arrived = useArrived(ref)
@@ -65,6 +67,7 @@ export function DrinkStage({ item, index }: DrinkStageProps) {
       id={`drink-${item.id}`}
       data-drink={index}
       data-arrived={arrived ? '' : undefined}
+      data-live={live ? '' : undefined}
       aria-labelledby={headingId}
       className="drink"
     >
@@ -87,8 +90,16 @@ export function DrinkStage({ item, index }: DrinkStageProps) {
           <Button onClick={() => addToOrder(item)}>
             Add to order<span className="visually-hidden">: {item.name}</span>
           </Button>
-          {live && !reduced && (
-            <div role="group" aria-label={`Turn ${item.name}`} className="drink-turn">
+          {!reduced && (
+            <div
+              role="group"
+              aria-label={`Turn ${item.name}`}
+              className="drink-turn"
+              // Held in place but hidden, unreachable and unread until the drink is there to turn.
+              aria-hidden={!live || undefined}
+              inert={!live}
+              style={live ? undefined : { visibility: 'hidden' }}
+            >
               <Button variant="secondary" onClick={() => turnDrink(item.id, -1)}>
                 Turn left
               </Button>
@@ -106,14 +117,17 @@ export function DrinkStage({ item, index }: DrinkStageProps) {
 /**
  * The bar's one canvas: sticky for the length of the bar, laid over the drinks' sections in the
  * place where each section shows its still, so each drink rises into the same spot its photograph
- * holds. Only while motion is allowed; the page leaves it out under reduced motion.
+ * holds. Its track covers the bar exactly, so the canvas stops at the bar's end and never reaches
+ * the night snacks below. Only while motion is allowed; the page leaves it out under reduced motion.
  */
 export function BarStage() {
   return (
-    <div className="bar-stage">
-      <SceneHost className="bar-scene" near="100% 0px" onDemand antialias>
-        <BarScene />
-      </SceneHost>
+    <div className="bar-track">
+      <div className="bar-stage">
+        <SceneHost className="bar-scene" near="100% 0px" onDemand antialias>
+          <BarScene />
+        </SceneHost>
+      </div>
     </div>
   )
 }

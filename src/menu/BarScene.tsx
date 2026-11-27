@@ -1,68 +1,94 @@
 import { useFrame, useThree } from '@react-three/fiber'
-import { Suspense, useCallback, useEffect, useRef } from 'react'
-import type { Group, PerspectiveCamera, SpotLight } from 'three'
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { Group, type PerspectiveCamera, type SpotLight } from 'three'
 import { DRINKS, type MenuItem } from '../../shared/menu'
 import { useSceneReady } from '../scene/scene-ready'
 import {
   barProgress,
+  clearDrawnDrinks,
   drinkPose,
   drinkTurn,
   liveDrinks,
   onDrinkTurn,
-  setBarLive,
+  setDrinkDrawn,
   useDrinkOnScreen,
   type DrinkPose,
 } from './barProgress'
-import { ReadyAfterFrame, smooth, uploadTextures, useNightRoom } from './sceneParts'
+import { MENU_LIGHT, ReadyAfterFrame, smooth, uploadTextures, useNightRoom } from './sceneParts'
 import { useDrinkModel } from './useDrinkModel'
 
 /*
  * The bar's scene: the drink on screen, and its neighbours ready on either side, each its full
  * model. As the visitor scrolls, each drink rises into view, turns, settles under the lamp (which
  * comes up as it does) and leaves upwards. The page writes the scroll into `barProgress`; the
- * drinks read it every frame, so a scroll frame re-renders nothing. React renders again only when
- * another drink comes on screen, to change which models are loaded. It draws only when the scroll
- * or a turn moves something.
+ * drinks read it every frame, so a scroll frame re-renders nothing. Which models are loaded changes
+ * only once the visitor has settled on a drink for SETTLE_MS, so a flick down the bar, or a jump
+ * from the counter, loads only where it lands, not every drink it passes. It draws only when the
+ * scroll or a turn moves something.
+ *
+ * There is no pour (owner ruling, 2026-11-27, on the hero cup: no visible milk "stick"); a drink
+ * rising, turning and warming under the lamp stands in for "pours or fills".
  */
 
 /** A long, quiet lens, as for the hero cup. */
-const FOV = 26
-/** What the camera must fit around a drink (at most one unit on its largest side), in scene units. */
-const FRAME_HEIGHT = 1.4
+export const FOV = 26
+/**
+ * The camera looks down at 27 degrees, so the coffee's surface shows (Last Tram's crema, Lantern's
+ * rosetta) while a tall glass still stands, not foreshortened into a disc.
+ */
+export const ELEVATION = (27 * Math.PI) / 180
+/**
+ * What the camera must fit around a drink (at most one unit on its largest side), in scene units,
+ * seen from above: a unit-tall glass shows cos(27°) + its depth × sin(27°) tall, about 1.2 for the
+ * tallest, and the widest bowl about one unit across.
+ */
+const FRAME_HEIGHT = 1.45
 const FRAME_WIDTH = 1.25
+/** The point the camera looks at: a little under half a unit-tall drink, as it is seen from above. */
+const TARGET_Y = 0.42
 /** How quickly a drink catches up with its angle (per second; higher is quicker). */
 const TURN_EASE = 7
 /** The lamp over the bar: its strength with no drink settled, and what a settled drink adds. */
-const LAMP_LOW = 14
-const LAMP_FULL = 48
+const LAMP_LOW = 20
+const LAMP_FULL = 56
+/** How long the visitor must stay on a drink before the models around it change. */
+export const SETTLE_MS = 150
 
 function BarDrink({ item, index }: { item: MenuItem; index: number }) {
   const model = useDrinkModel(item.model!, 'full')
   const get = useThree((state) => state.get)
   const pose = useRef<DrinkPose>({ y: 0, angle: 0, visible: false })
   const angle = useRef<number | null>(null)
-  const holder = useRef<Group>(null)
+  // The group the scroll and the turns move: the drink's own model sits inside it untouched.
+  const [holder] = useState(() => new Group())
 
   // Up to the GPU now, while it waits beside the screen, not on the frame it rises into view.
   useEffect(() => uploadTextures(get().gl, model), [get, model])
+  // Its section shows its still again once it leaves the scene.
+  useEffect(() => () => setDrinkDrawn(item.id, false), [item.id])
+
+  // Moving three objects outside React, in effects and every frame, is the point of the frame loop;
+  // the group is made once and never read during render.
+  /* oxlint-disable react/immutability */
+  useEffect(() => {
+    holder.add(model)
+    return () => {
+      holder.remove(model)
+    }
+  }, [holder, model])
 
   useFrame((frame, delta) => {
-    const group = holder.current
-    if (!group) return
     const { y, angle: goal, visible } = drinkPose(barProgress.get(), index, drinkTurn(item.id), pose.current)
     const current = angle.current === null ? goal : angle.current + (goal - angle.current) * (1 - Math.exp(-delta * TURN_EASE))
     angle.current = current
-    group.position.y = y
-    group.rotation.y = current
-    group.visible = visible
+    holder.position.y = y
+    holder.rotation.y = current
+    holder.visible = visible
     if (visible && Math.abs(goal - current) > 1e-3) frame.invalidate()
   })
+  /* oxlint-enable react/immutability */
 
-  return (
-    <group ref={holder}>
-      <primitive object={model} />
-    </group>
-  )
+  return <primitive object={holder} />
 }
 
 /** The lamp over the bar comes up as a drink settles in the middle of the screen. */
@@ -75,19 +101,31 @@ function Lamp() {
     const settled = 1 - smooth(Math.abs(progress - Math.floor(progress) - 0.5) / 0.5)
     light.intensity = LAMP_LOW + (LAMP_FULL - LAMP_LOW) * settled
   })
-  return <spotLight ref={lamp} position={[-1.2, 3.4, 1.6]} color="#ffb062" angle={0.5} penumbra={0.85} decay={2} />
+  return <spotLight ref={lamp} position={[-1.2, 3.4, 1.6]} color={MENU_LIGHT.key} angle={0.5} penumbra={0.85} decay={2} />
+}
+
+/** The drink on screen once the visitor has stayed on it for SETTLE_MS. */
+function useSettledDrink(): number {
+  const onScreen = useDrinkOnScreen(DRINKS.length)
+  const [settled, setSettled] = useState(onScreen)
+  useEffect(() => {
+    if (onScreen === settled) return
+    const timer = setTimeout(() => setSettled(onScreen), SETTLE_MS)
+    return () => clearTimeout(timer)
+  }, [onScreen, settled])
+  return settled
 }
 
 export default function BarScene() {
   const ready = useSceneReady()
-  const onScreen = useDrinkOnScreen(DRINKS.length)
+  const settled = useSettledDrink()
   const get = useThree((state) => state.get)
   const size = useThree((state) => state.size)
   const invalidate = useThree((state) => state.invalidate)
 
-  useNightRoom(0.8)
+  useNightRoom(MENU_LIGHT.room)
 
-  // Frame one drink, standing at the origin, whatever the canvas's shape.
+  // Frame one drink, standing at the origin, from above, whatever the canvas's shape.
   useEffect(() => {
     const camera = get().camera as PerspectiveCamera
     const aspect = size.width / Math.max(1, size.height)
@@ -96,8 +134,8 @@ export default function BarScene() {
     camera.fov = FOV
     camera.near = 0.05
     camera.far = distance * 6
-    camera.position.set(0, 0.62, distance)
-    camera.lookAt(0, 0.5, 0)
+    camera.position.set(0, TARGET_Y + distance * Math.sin(ELEVATION), distance * Math.cos(ELEVATION))
+    camera.lookAt(0, TARGET_Y, 0)
     camera.updateProjectionMatrix()
     invalidate()
   }, [get, size.width, size.height, invalidate])
@@ -105,28 +143,32 @@ export default function BarScene() {
   // Scrolling and turning wake the scene; otherwise it stays still and draws nothing.
   useEffect(() => barProgress.subscribe(invalidate), [invalidate])
   useEffect(() => onDrinkTurn(invalidate), [invalidate])
-  useEffect(() => () => setBarLive(false), [])
-
-  const drawn = useCallback(() => {
-    ready()
-    setBarLive(true)
-  }, [ready])
+  useEffect(() => () => clearDrawnDrinks(), [])
 
   return (
     <>
-      <hemisphereLight args={['#9fb2dc', '#0d1524', 0.5]} />
-      <directionalLight position={[2.6, 1.2, -1.6]} color="#c9d6ee" intensity={0.6} />
-      <directionalLight position={[0.3, 2, -3]} color="#9fb2dc" intensity={0.9} />
+      <hemisphereLight args={[MENU_LIGHT.sky, MENU_LIGHT.ground, MENU_LIGHT.ambient]} />
+      <directionalLight position={[2.6, 1.2, -1.6]} color={MENU_LIGHT.fill} intensity={MENU_LIGHT.fillIntensity} />
+      <directionalLight position={[0.3, 2, -3]} color={MENU_LIGHT.rim} intensity={MENU_LIGHT.rimIntensity} />
       <Lamp />
-      {liveDrinks(onScreen + 0.5, DRINKS.length).map((index) => {
+      {liveDrinks(settled + 0.5, DRINKS.length).map((index) => {
         const drink = DRINKS[index]!
         return (
           <Suspense key={drink.id} fallback={null}>
             <BarDrink item={drink} index={index} />
-            {index === onScreen && <ReadyAfterFrame onReady={drawn} />}
+            <DrawnSignal id={drink.id} onFirst={ready} />
           </Suspense>
         )
       })}
     </>
   )
+}
+
+/** Marks a drink drawn after its first frame (and tells the host, which fades the canvas in once). */
+function DrawnSignal({ id, onFirst }: { id: string; onFirst: () => void }) {
+  const onReady = useCallback(() => {
+    onFirst()
+    setDrinkDrawn(id, true)
+  }, [id, onFirst])
+  return <ReadyAfterFrame onReady={onReady} />
 }

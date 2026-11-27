@@ -6,7 +6,7 @@ import { useAddToOrder, useCart } from '../cart/CartProvider'
 import { cartCount, cartTotal } from '../cart/cartStore'
 import { Picture } from '../media/Picture'
 import { usePrefersReducedMotion } from '../media/usePrefersReducedMotion'
-import { followBar, useBarLive } from '../menu/barProgress'
+import { followBar } from '../menu/barProgress'
 import { BarStage, DrinkStage } from '../menu/DrinkStage'
 import { MenuCounter } from '../menu/MenuCounter'
 import { stillOf } from '../menu/stills'
@@ -82,7 +82,6 @@ function useBarScroll(reduced: boolean, bar: RefObject<HTMLElement | null>): voi
 export default function Menu() {
   const reduced = usePrefersReducedMotion()
   const mayLoad = useScenesMayStart()
-  const live = useBarLive()
   const bar = useRef<HTMLElement>(null)
   const barTitle = useId()
   const snacksTitle = useId()
@@ -94,7 +93,8 @@ export default function Menu() {
       const section = document.getElementById(`drink-${id}`)
       if (!section) return
       const lenis = smoothScroller()
-      if (lenis && !reduced) lenis.scrollTo(section)
+      // At once, not smoothly: a smooth run down the bar would pass, and load, every drink between.
+      if (lenis && !reduced) lenis.scrollTo(section, { immediate: true })
       else section.scrollIntoView?.({ block: 'start' })
       section.querySelector<HTMLElement>('h3')?.focus({ preventScroll: true })
     },
@@ -112,7 +112,7 @@ export default function Menu() {
 
       <MenuCounter onPick={goTo} />
 
-      <section ref={bar} aria-labelledby={barTitle} className="bar" data-live={live && !reduced ? '' : undefined}>
+      <section ref={bar} aria-labelledby={barTitle} className="bar">
         <h2 id={barTitle} className="visually-hidden">
           Coffee
         </h2>

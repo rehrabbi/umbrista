@@ -1,15 +1,17 @@
-import type { ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
+import { afterEach } from 'vitest'
 
 /*
  * A stand-in for @react-three/fiber in jsdom, where a real Canvas cannot run. The Canvas draws a
- * plain canvas and passes its children through; the hooks serve a fixed root state. Frame callbacks
- * are collected so a test can run a frame. Use it from a test file:
+ * plain canvas and passes its children through; the hooks serve a fixed root state. A component's
+ * frame callback is registered while it is mounted, as in R3F, so a test can run a frame
+ * (`runFrame`). Use it from a test file:
  *
  *   vi.mock('@react-three/fiber', async () => (await import('../test/r3f')).fiberStandIn)
  */
 type FrameCallback = (state: unknown, delta: number) => void
 
-export const frames = new Set<FrameCallback>()
+const frames = new Set<FrameCallback>()
 
 const state = {
   gl: { initTexture: () => {}, toneMappingExposure: 1 },
@@ -20,9 +22,31 @@ const state = {
   get: () => state,
 }
 
-/** Run one frame of every scene that asked for frames. */
+/** The root state every scene sees: its size is the canvas's, in CSS pixels. */
+export const rootState = state
+
+/** Run one frame of every mounted scene that asked for frames. */
 export function runFrame(delta = 1 / 60): void {
   for (const callback of frames) callback(state, delta)
+}
+
+// No frame callback outlives its test.
+afterEach(() => {
+  frames.clear()
+})
+
+function useFrame(callback: FrameCallback): void {
+  const latest = useRef(callback)
+  useLayoutEffect(() => {
+    latest.current = callback
+  })
+  useEffect(() => {
+    const run: FrameCallback = (root, delta) => latest.current(root, delta)
+    frames.add(run)
+    return () => {
+      frames.delete(run)
+    }
+  }, [])
 }
 
 export const fiberStandIn = {
@@ -32,8 +56,6 @@ export const fiberStandIn = {
       {children}
     </div>
   ),
-  useFrame: (callback: FrameCallback) => {
-    frames.add(callback)
-  },
+  useFrame,
   useThree: (select?: (root: typeof state) => unknown) => (select ? select(state) : state),
 }

@@ -4,7 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DRINKS, MENU } from '../../shared/menu'
 import { formatPrice } from '../../shared/money'
 import { CartProvider } from '../cart/CartProvider'
-import { barProgress, resetDrinkTurns, setBarLive } from '../menu/barProgress'
+import type { Group } from 'three'
+import { SETTLE_MS } from '../menu/BarScene'
+import { TURN_STEP, barProgress, clearDrawnDrinks, counterView, drinkPose, resetDrinkTurns, updateCounterView } from '../menu/barProgress'
+import { runFrame, rootState } from '../test/r3f'
 import { resetSceneGate } from '../scene/gate'
 import { setIntersecting, useFakeIntersectionObserver } from '../test/intersection'
 import { setMatchMedia, setWebGL } from '../test/setup'
@@ -13,14 +16,21 @@ import Menu from './Menu'
 
 vi.mock('@react-three/fiber', async () => (await import('../test/r3f')).fiberStandIn)
 
-// Counts every model the scenes ask for, by name and detail.
+// Counts every model the scenes ask for, by name and detail; each is one Group, kept to inspect.
 const requests = vi.hoisted(() => [] as [string, string][])
+const models = vi.hoisted(() => new Map<string, unknown>())
 vi.mock('../menu/useDrinkModel', async () => {
   const { Group } = await import('three')
+  const { useEffect } = await import('react')
   return {
     useDrinkModel: (model: string, detail: string) => {
-      requests.push([model, detail])
-      return new Group()
+      // A request is a scene taking the model up (a mount), not each render of it.
+      useEffect(() => {
+        requests.push([model, detail])
+      }, [model, detail])
+      const key = `${model}:${detail}`
+      if (!models.has(key)) models.set(key, new Group())
+      return models.get(key)
     },
     preloadDrinkModel: () => {},
   }
@@ -37,12 +47,13 @@ beforeEach(() => {
   resetSceneGate()
   resetDrinkTurns()
   requests.length = 0
+  models.clear()
   sessionStorage.clear()
   clearToasts()
 })
 
 afterEach(() => {
-  setBarLive(false)
+  clearDrawnDrinks()
   barProgress.set(-1)
   resetSceneGate()
 })
@@ -70,6 +81,31 @@ async function settle(ms = 400) {
 }
 
 const fullModels = () => new Set(requests.filter(([, detail]) => detail === 'full').map(([model]) => model))
+const model = (name: string, detail = 'full') => models.get(`${name}:${detail}`) as Group | undefined
+
+/** Mount the menu with its two canvases live, the bar settled on the drink at `progress`. */
+/** Run frames until a drink's turn has eased all the way. */
+function settleTurn() {
+  act(() => {
+    for (let frame = 0; frame < 40; frame++) runFrame(0.1)
+  })
+}
+
+async function renderLive(progress: number) {
+  const view = renderMenu()
+  intent(view.container)
+  await waitFor(() => expect(screen.getAllByTestId('r3f')).toHaveLength(2), SLOW)
+  // Count from here: before this, the bar stood where jsdom's empty layout put it.
+  requests.length = 0
+  act(() => barProgress.set(progress))
+  await settle(SETTLE_MS + 100)
+  // Two frames: the drinks draw, and say so.
+  act(() => {
+    runFrame()
+    runFrame()
+  })
+  return view
+}
 
 describe('Menu', () => {
   it('has one h1 and the key to the prices', () => {
@@ -153,6 +189,50 @@ describe('Menu', () => {
     }
     // The counter draws every drink, from the light models.
     expect(DRINKS.every((drink) => drink.model)).toBe(true)
+  }, 20_000)
+
+  it('loads only where a flick down the bar lands, not every drink it passes', async () => {
+    await renderLive(0.5)
+    expect(fullModels()).toEqual(new Set(['cup', 'fog-line']))
+    requests.length = 0
+    act(() => {
+      for (let progress = 0.5; progress <= 8.5; progress += 0.25) barProgress.set(progress)
+    })
+    await settle(SETTLE_MS + 150)
+    expect(fullModels()).toEqual(new Set(['wet-cobble', 'three-oclock']))
+  }, 20_000)
+
+  it('turns the drink on screen with its "Turn right" button, in the scene’s frame loop', async () => {
+    const { container } = await renderLive(1.5)
+    const holder = model('fog-line')!.parent!
+    settleTurn()
+    const pose = { y: 0, angle: 0, visible: false }
+    expect(holder.rotation.y).toBeCloseTo(drinkPose(1.5, 1, 0, pose).angle, 3)
+    expect(holder.visible).toBe(true)
+
+    // Only the drawn drink is live: its section, not its neighbours' beyond the scene.
+    expect(container.querySelector('#drink-fog-line')).toHaveAttribute('data-live')
+    expect(container.querySelector('#drink-umbra')).not.toHaveAttribute('data-live')
+
+    fireEvent.click(within(container.querySelector<HTMLElement>('#drink-fog-line')!).getByRole('button', { name: 'Turn right' }))
+    settleTurn()
+    expect(holder.rotation.y).toBeCloseTo(drinkPose(1.5, 1, TURN_STEP, pose).angle, 3)
+  }, 20_000)
+
+  it('stands each drink on the counter under its place', async () => {
+    await renderLive(0.5)
+    act(() => {
+      updateCounterView({ first: 100, pitch: 150, scroll: 30, width: 800 })
+      runFrame()
+    })
+    const { height } = rootState.size
+    DRINKS.forEach((drink, index) => {
+      const place = model(drink.model!, 'lite')!.parent!.parent!
+      expect(place.position.x).toBeCloseTo(100 + index * 150 - 30 - 400)
+      expect(place.position.y).toBeCloseTo(-height / 2 + 0.3 * height)
+      expect(place.scale.x).toBeCloseTo(Math.min(150 * 0.74, height * 0.6))
+    })
+    expect(counterView.active).toBe(0)
   }, 20_000)
 
   it('under reduced motion shows every drink as its still, draws nothing and scrubs nothing', async () => {
