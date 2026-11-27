@@ -199,9 +199,8 @@ accounts are created from the command line.
 
 ## 6. Owner checkpoints still ahead
 
-1. The drink models (plan Task 9b): the list, then each drink on its own go.
-2. Each pull request.
-3. The launch: the release from `develop` to `main` and the production deploy.
+1. Each pull request.
+2. The launch: the release from `develop` to `main` and the production deploy.
 
-The design, the plan and the brand board were the first three checkpoints; they are approved and
+The design, the plan, the brand board and the drink models (the list, then each drink on its own go) were the first four checkpoints; they are approved and
 stay open to the owner's review.
