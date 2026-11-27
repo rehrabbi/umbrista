@@ -203,26 +203,30 @@ const vec3 LQ_LUMA = vec3(0.2126, 0.7152, 0.0722);
  * the cup rim at its corners, and turned with the handle so the rosetta's dot points away from the
  * drinker.
  *
- * Grade: the milk-bloom photograph is more golden than the others. Its browns are brought to halfway
- * between the espresso's and the rosetta's (gains measured on the masters' mid tones, in linear
- * light), leaving its whites white, so the cross-fades show no colour jump.
+ * Grade: each photograph's browns get a gain, faded out on its whites so the milk and the art stay
+ * white. Measured on the masters' mid tones in linear light (the inner quartiles of the disc's
+ * browns), the espresso's crema is (0.387, 0.107, 0.012), green 0.28 of red, and the rosetta's
+ * (0.538, 0.178, 0.052), green 0.33 of red: under the sodium lamp, which already carries far more red
+ * than green, both read rust-orange. Both are turned to the hazel of the code-drawn crema (green 0.42
+ * of red, blue 0.10) at the same luminance: the espresso to (0.306, 0.129, 0.031), the rosetta to
+ * (0.473, 0.197, 0.047). The milk-bloom photograph, (0.364, 0.123, 0.018), is brought to halfway
+ * between the two, (0.390, 0.163, 0.039), so the cross-fades show no colour jump.
  *
  * Ageing (the last cup, uCool): the photograph is sampled from blurrier mip levels, so the art's edges
  * soften, and its colour is muted and a little darkened. The sheen flattens in the roughness below.
  */
+vec3 lqGrade(vec3 c, vec3 gain) {
+  return c * mix(gain, vec3(1.0), smoothstep(0.35, 0.8, dot(c, LQ_LUMA)));
+}
+
 vec3 lqPhoto(vec2 p) {
   vec2 q = mat2(cos(uArtAngle), sin(uArtAngle), -sin(uArtAngle), cos(uArtAngle)) * p;
   vec2 uv = 0.5 + q * 0.44;
   float soften = uCool * 1.8;
   vec3 colour = vec3(0.0);
-  if (uSurface.x > 0.001) colour += uSurface.x * texture2D(uSurfaceEspresso, uv, soften).rgb;
-  if (uSurface.y > 0.001) {
-    vec3 bloom = texture2D(uSurfaceBloom, uv, soften).rgb;
-    float light = dot(bloom, LQ_LUMA);
-    bloom *= mix(vec3(1.27, 1.11, 1.5), vec3(1.0), smoothstep(0.35, 0.8, light));
-    colour += uSurface.y * bloom;
-  }
-  if (uSurface.z > 0.001) colour += uSurface.z * texture2D(uSurfaceRosetta, uv, soften).rgb;
+  if (uSurface.x > 0.001) colour += uSurface.x * lqGrade(texture2D(uSurfaceEspresso, uv, soften).rgb, vec3(0.79, 1.21, 2.55));
+  if (uSurface.y > 0.001) colour += uSurface.y * lqGrade(texture2D(uSurfaceBloom, uv, soften).rgb, vec3(1.07, 1.33, 2.15));
+  if (uSurface.z > 0.001) colour += uSurface.z * lqGrade(texture2D(uSurfaceRosetta, uv, soften).rgb, vec3(0.88, 1.11, 0.91));
   float grey = dot(colour, LQ_LUMA);
   colour = mix(colour, vec3(grey) * vec3(1.04, 0.98, 0.92), uCool * 0.25) * (1.0 - 0.08 * uCool);
   return colour;

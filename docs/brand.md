@@ -158,7 +158,9 @@ Notes:
   Their masters are in the git-ignored `media-src/surfaces/`; `npm run media` makes square WebP
   textures at 1024 px (used on the high tier: 306, 255 and 167 KB) and 512 px (other tiers: 78, 64
   and 48 KB), loaded only with the cup's scene. The rosetta took four tries: `e6ea6e4a`,
-  `512456b1` and `38d8d10f` were rejected before `8389ae19`. For the last cup the owner chose
+  `512456b1` and `38d8d10f` were rejected before `8389ae19`. The shader grades all three
+  photographs' browns to one hazel crema (owner review 2026-11-27: the photographs' own crema read
+  rust-orange under the sodium lamp), leaving the milk and the art white. For the last cup the owner chose
   live ageing over surface 4: as the last chapter begins, the rosetta's edges soften, its sheen
   flattens and its colour mutes, in the shader.
 - Planned: one 3D model per menu drink (plan Task 9b), each listed here once the owner approves and it
