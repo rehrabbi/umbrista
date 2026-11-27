@@ -21,11 +21,11 @@ brand and the site shell (navigation, footer, a page for every route) are done. 
 visitor's dusk with a "See it at night" switch, and the café's hours in café time) are built and in
 review. The media and 3D foundation is done: responsive photographs, silent video loops and a WebGL
 host that falls back to the photograph, and the landing's living background (rain on the glass, a
-lamp that follows the pointer, a night grade). The landing prototype, its first scroll chapter, is
-built and waiting for the owner's review: the street at dusk holds while the visitor scrolls, the
-lamps come on, then "We open when the light goes." rises letter by letter. Pages are mostly stubs:
-there is no live site yet. Next is the owner's verdict on that feel, then the rest of the journey and
-the hero cup.
+lamp that follows the pointer, a night grade). The landing's scroll journey is built (Task 9, in
+review): the crema film as a full-screen hero with the promise rising letter by letter, then the 3D
+hero cup, which stays on screen through the cup, street, window and last-cup chapters while its
+coffee turns from espresso to latte art to the last cup. Pages other than the landing are mostly
+stubs: there is no live site yet. Next is the drink models for the menu (Task 9b, with the owner).
 
 ## Running it
 
@@ -39,6 +39,8 @@ npm run preview                   # serve the built site locally
 npm test                          # unit tests (Vitest)
 npm run lint                      # oxlint
 npm run media                     # rebuild public/media/ and src/media/manifest.ts from the local masters (needs ffmpeg)
+npm run models                    # compress the 3D models in media-src/ into public/models/ (meshopt, WebP)
+npm run cup-still                 # render the hero cup's still from its model into media-src/ (needs a GPU)
 npm run typecheck                 # tsc -b
 npx playwright install chromium   # once, then:
 npm run e2e                       # end-to-end smoke test (Playwright)
@@ -53,6 +55,11 @@ poster) and described by the generated `src/media/manifest.ts`. The full-size ma
 repository: keep local copies in `media-src/` (git-ignored) and run `npm run media` to rebuild the
 derivatives. It needs `ffmpeg` on your PATH, skips files that already exist, and rebuilds everything
 with `npm run media -- --force`. The output is deterministic, so a rebuild leaves `git status` clean.
+
+The cup's 3D model works the same way: its master stays in `media-src/cup.glb`, and `npm run
+models` writes the compressed copy to `public/models/cup.glb` (one list entry per model in
+`scripts/models.mjs`). The cup's still is rendered from that model by `npm run cup-still`, then
+made into web copies by `npm run media`.
 
 ## Planned stack
 
