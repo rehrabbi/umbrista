@@ -231,3 +231,76 @@ the menu is where that motion belongs. Separate models give each drink its own v
   sit together on the counter.
 - The menu must still work as plain text, for screen readers, reduced motion and devices without WebGL.
 
+
+## 2026-11-26: Scroll-told chapters with Lenis and ScrollTrigger
+
+**Built.** The landing's first chapter: a tall section whose stage sticks to the screen while the
+visitor scrolls through it. Dusk holds, the lamps come on with the scroll, then the promise rises
+letter by letter. Waiting for the owner's verdict on the feel.
+
+**Decided, and why.**
+
+- **The pin is CSS, the progress is ScrollTrigger.** `position: sticky` inside a section 2.25
+  screens tall pins the stage from the first paint, so nothing moves or shifts when the script
+  arrives. ScrollTrigger only reads the progress. Its own `pin` would wrap the stage in a spacer
+  after load, which is a layout shift, and it would reparent the canvas.
+- **One smooth scroll, one loop.** Lenis is driven from GSAP's ticker once GSAP loads, and every
+  Lenis scroll calls `ScrollTrigger.update`, so the page and the animation move in the same frame.
+  `useSmoothScroll` hands its loop over (`driveWith`) rather than running a second one, and lag
+  smoothing is off so the two clocks never drift apart.
+- **Two clocks stay apart.** "The lamps come on" is chapter progress (`uLamp`); the night grade
+  (`uNight`) is still the visitor's clock or the switch.
+- **The lamps scrub; the title is a cue.** Tied directly to the scroll, the letters would crawl or
+  jump with the visitor's hand. Instead, crossing a point plays them in their own time (about
+  1.15 s from the first letter starting to the last at rest), on the settle curve read from the
+  CSS token, and scrolling back sinks them 1.8 times faster (about 0.64 s), both inside the motion
+  band of 0.6 to 1.2 s.
+- **Composition before effect.** The lit window sat behind the title and under the heaviest scrim,
+  so the chapter's one moving idea was hidden. On wide screens the copy is now a low band with the
+  opening time beside the title, and the scrim stops lower; on phones the crop is shifted
+  (`object-position: 35% 50%`, followed by the canvas) to keep the window on screen.
+
+**What to remember.**
+
+- GSAP reads a CSS `translateY(105%)` as a pixel `y`. Animating `yPercent` on top of it left the
+  letters 146 px low and invisible; set `y: 0` in both ends of the tween.
+- Give Lenis one clock. Before the handover it had rAF timestamps (since the page started); GSAP's
+  ticker time counts from when GSAP loaded, seconds lower. The first step after the handover was
+  negative, the damping overshot by tens of thousands of pixels, and a smooth scroll in flight
+  jumped to the top, which is the usual case, since the visitor's first wheel loads GSAP. The
+  ticker now passes `performance.now()`, and a new driver is lined up with the last time given.
+- GSAP's ticker runs on `Date.now`. A test clock that freezes the date (Playwright's
+  `setFixedTime`) freezes Lenis too; use `setSystemTime`, which lets time flow.
+- A custom property set on a container restyles everything inside it. Writing `--lamp` on the stage
+  every scroll frame restyled every letter; it now goes only on the two elements that read it, and
+  only when its value changes.
+- Reading layout in a scroll handler (`getBoundingClientRect`, `getComputedStyle`) forces an extra
+  style pass per scroll frame. Mark it stale and read once in the frame.
+- A component that suspends on its first mount loses its memo. A compile promise keyed by the
+  component's material was new on every retry, and the scene never finished loading. Key it by the
+  shader variant instead; three shares one program between identical shaders.
+
+## 2026-11-26: Finding the LCP and TBT
+
+**Measured.** Lighthouse, mobile preset, on `vite preview`. Before this chapter the landing scored
+about 0.69 on this machine, with a total blocking time near 3 s.
+
+**What the traces showed, and what fixed it.**
+
+- **The steam loop's poster** (58 kB) downloaded with the hero photograph and took half its
+  bandwidth. A `<video poster>` loads at once whatever `preload` says; the poster is now set only
+  when the loop nears the screen.
+- **GSAP** stays off the first screen: its chunk loads when the page is idle or at the first sign
+  of a scroll, and the title waits below its baseline until then.
+- **Web fonts swapping in** re-wrapped the large title (CLS 0.055). The three first-screen font
+  files are now preloaded from the HTML, by a small Vite plugin that knows their hashed names.
+- **The first frame of the rain** took about 370 ms at 4x CPU, almost all shader compilation.
+  `compileAsync` with `KHR_parallel_shader_compile` brought it to about 50 ms.
+
+**Where it stands.** With the GPU off, as on CI's runner, the landing scores 0.96 to 0.99 (LCP about
+2.3 s, CLS 0, TBT under 150 ms). With this machine's GPU the canvas mounts during the audit and the
+score is about 0.80: the first WebGL context in a page costs 300 to 380 ms of main-thread time here
+(the GPU process starting up), and Lighthouse multiplies main-thread time by four.
+
+**Question to revisit.** Whether the canvas should wait longer (for the first interaction, or a
+longer idle) on phones, trading a later rain for a quieter first few seconds.

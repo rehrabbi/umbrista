@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { MEDIA, type LoopName, type StillName } from './manifest'
 import { Picture } from './Picture'
 import { useMaxWidth, usePrefersReducedMotion } from './usePrefersReducedMotion'
@@ -6,6 +6,9 @@ import './VideoLoop.css'
 
 /** The loop fills the 72rem page column, so a wide screen never needs more than that. */
 const POSTER_SIZES = '(min-width: 72rem) 72rem, 100vw'
+
+/** The poster is asked for once the loop is within this distance of the screen. */
+const NEAR = '100% 0px'
 
 /** Below this viewport width the 1280 px pair is used. */
 const SMALL_VIEWPORT = 900
@@ -18,18 +21,29 @@ export interface VideoLoopProps {
 }
 
 /**
- * A silent looping video. It loads nothing until it is on screen, plays only while on screen, and
- * under reduced motion is just its poster (no video element at all).
+ * A silent looping video. It loads nothing until it is near the screen (not even its poster, which
+ * would otherwise compete with the first screen's image), plays only while on screen, and under
+ * reduced motion is just its poster (no video element at all).
  */
 export function VideoLoop({ name, label, className }: VideoLoopProps) {
   const reduced = usePrefersReducedMotion()
   const small = useMaxWidth(SMALL_VIEWPORT)
   const loop = MEDIA[name]
   const classes = ['video-loop', className].filter(Boolean).join(' ')
+  const [near, setNear] = useState(false)
 
   // A callback ref, so the observer follows the element when it is replaced (viewport size change).
   const watch = useCallback((video: HTMLVideoElement | null) => {
     if (!video || typeof IntersectionObserver === 'undefined') return
+    const nearby = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return
+        setNear(true)
+        nearby.disconnect()
+      },
+      { rootMargin: NEAR },
+    )
+    nearby.observe(video)
     const observer = new IntersectionObserver(([entry]) => {
       if (!entry) return
       if (entry.isIntersecting) {
@@ -44,7 +58,10 @@ export function VideoLoop({ name, label, className }: VideoLoopProps) {
       }
     })
     observer.observe(video)
-    return () => observer.disconnect()
+    return () => {
+      nearby.disconnect()
+      observer.disconnect()
+    }
   }, [])
 
   if (reduced) {
@@ -69,7 +86,7 @@ export function VideoLoop({ name, label, className }: VideoLoopProps) {
       className={classes}
       width={width}
       height={height}
-      poster={`/media/${loop.poster}-${width}.webp`}
+      poster={near ? `/media/${loop.poster}-${width}.webp` : undefined}
       muted
       loop
       playsInline

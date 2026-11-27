@@ -20,9 +20,12 @@ The site sets out to show three things at once:
 brand and the site shell (navigation, footer, a page for every route) are done. The two clocks (the
 visitor's dusk with a "See it at night" switch, and the café's hours in café time) are built and in
 review. The media and 3D foundation is done: responsive photographs, silent video loops and a WebGL
-host that falls back to the photograph. The landing's living background (rain on the glass, a lamp
-that follows the pointer, a night grade) is in progress. Pages are mostly stubs: there is no live site
-yet. Next is the landing prototype checkpoint.
+host that falls back to the photograph, and the landing's living background (rain on the glass, a
+lamp that follows the pointer, a night grade). The landing prototype, its first scroll chapter, is
+built and waiting for the owner's review: the street at dusk holds while the visitor scrolls, the
+lamps come on, then "We open when the light goes." rises letter by letter. Pages are mostly stubs:
+there is no live site yet. Next is the owner's verdict on that feel, then the rest of the journey and
+the hero cup.
 
 ## Running it
 
@@ -39,6 +42,7 @@ npm run media                     # rebuild public/media/ and src/media/manifest
 npm run typecheck                 # tsc -b
 npx playwright install chromium   # once, then:
 npm run e2e                       # end-to-end smoke test (Playwright)
+npm run build && npx lhci autorun # Lighthouse budget on / (mobile): performance, LCP and CLS
 ```
 
 ## Media

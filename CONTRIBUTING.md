@@ -57,6 +57,7 @@ npm run typecheck   # tsc -b
 npm test            # Vitest unit tests
 npm run build       # type check, then the production build
 npm run e2e         # Playwright smoke test against the built site
+npx lhci autorun    # Lighthouse budget on / (after npm run build): performance >= 0.9, LCP < 2.5 s, CLS < 0.05
 ```
 
 A clean build only proves the code compiles, so also open the page and use what you changed.

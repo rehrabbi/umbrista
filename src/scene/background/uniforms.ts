@@ -90,21 +90,33 @@ export interface Cover {
 }
 
 /**
- * The crop CSS `object-fit: cover` makes, centred (the default `object-position`), as a UV transform.
- * The photograph is scaled until it fills the view, and the overflow on one axis is cut equally from
- * both sides. The shader uses this so the canvas lines up with the still underneath it exactly.
+ * The crop CSS `object-fit: cover` makes, as a UV transform. The photograph is scaled until it
+ * fills the view, and the overflow on one axis is cut according to `position`, the still's
+ * `object-position` as fractions (x from the left, y from the top; centred by default). The shader
+ * uses this so the canvas lines up with the still underneath it exactly.
  */
-export function coverUv(viewAspect: number, imageAspect: number): Cover {
+export function coverUv(viewAspect: number, imageAspect: number, position: Vec2 = [0.5, 0.5]): Cover {
   // A canvas or image without a usable size yet: draw the photo uncropped rather than NaN.
   if (!(viewAspect > 0 && Number.isFinite(viewAspect) && imageAspect > 0 && Number.isFinite(imageAspect))) {
     return { scale: [1, 1], offset: [0, 0] }
   }
   if (viewAspect >= imageAspect) {
     const sy = imageAspect / viewAspect
-    return { scale: [1, sy], offset: [0, (1 - sy) / 2] }
+    // UV v runs bottom up, CSS y top down: the slack left below the view is the share (1 - y).
+    return { scale: [1, sy], offset: [0, (1 - sy) * (1 - position[1])] }
   }
   const sx = viewAspect / imageAspect
-  return { scale: [sx, 1], offset: [(1 - sx) / 2, 0] }
+  return { scale: [sx, 1], offset: [(1 - sx) * position[0], 0] }
+}
+
+/**
+ * A computed `object-position` ("35% 50%") as fractions. Browsers report percentages for keywords;
+ * anything else (lengths) falls back to the centre, as the canvas cannot follow it.
+ */
+export function parseObjectPosition(value: string): Vec2 {
+  const match = /^(-?[\d.]+)%\s+(-?[\d.]+)%$/.exec(value.trim())
+  if (!match) return [0.5, 0.5]
+  return [Number(match[1]) / 100, Number(match[2]) / 100]
 }
 
 /** Where an image UV appears in the view under a cover crop (may fall outside 0..1). */

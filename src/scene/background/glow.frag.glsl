@@ -51,6 +51,22 @@ float warmth(vec3 c) {
   return smoothstep(0.004, 0.05, c.r - c.b) * smoothstep(0.004, 0.03, luma(c));
 }
 
+// Before the lamps come on (lamp 0): the café window and the warm light it spills drain to dim,
+// cool glass reflecting the dusk. As `lamp` rises they come back the way a sodium lamp strikes:
+// red first, then the orange as it warms. At lamp 1 the photograph is untouched.
+vec3 lampsOff(vec3 c, float lamp) {
+  float warm = warmth(c);
+  if (warm <= 0.0 || lamp >= 1.0) return c;
+  vec3 glass = vec3(luma(c)) * vec3(0.30, 0.34, 0.42);
+  vec3 on = vec3(smoothstep(0.0, 0.75, lamp), smoothstep(0.1, 0.9, lamp), smoothstep(0.2, 1.0, lamp));
+  return mix(c, mix(glass, c, on), warm);
+}
+
+// How strongly the glow shines at a given lamp: it follows the window, blooming once it is lit.
+float glowOn(float lamp) {
+  return smoothstep(0.25, 1.0, lamp);
+}
+
 // The two grades, blended by `night`. Both start from the same dusk photograph.
 vec3 gradeScene(vec3 c, float night) {
   float y = luma(c);

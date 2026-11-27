@@ -6,10 +6,11 @@ Last updated: 2026-11-26.
 
 ## 1. Current stage
 
-**Media and 3D.** Task 7, the living background, is in progress on `task/7-living-background` (see
-section 3). Tasks 0 to 6 are merged into `develop`: the repository foundation, the app scaffold with
-CI, the approved brand, the brand system, the site shell, the two clocks (pull request #6) and the
-media and 3D foundation (pull request #8). Both `main` and `develop` are protected. The owner approved a photoreal direction after a
+**Landing prototype, an owner checkpoint.** Task 8 is built on `task/8-landing-prototype`
+(committed locally, not pushed, no pull request yet; see section 3) and waits for the owner to judge
+the feel. Tasks 0 to 7 are merged into `develop`: the repository foundation, the app scaffold with
+CI, the approved brand, the brand system, the site shell, the two clocks (pull request #6), the media
+and 3D foundation (pull request #8) and the living background (pull request #10). Both `main` and `develop` are protected. The owner approved a photoreal direction after a
 look-development round (ADR 0002); the design and plan are amended for it.
 
 ## 2. Locked decisions
@@ -103,8 +104,7 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   landing page is now a lazy route with the street hero (empty scene) and a decorative steam loop.
   The unit-test helper `src/test/intersection.ts` fakes IntersectionObserver.
 
-- Task 7, in progress on `task/7-living-background` (committed locally, no pull request yet): the
-  living background on the landing hero. `src/scene/background/`: `uniforms.ts` (pure and tested:
+- Task 7, merged into `develop` (pull request #10): the living background on the landing hero. `src/scene/background/`: `uniforms.ts` (pure and tested:
   pointer easing, night stepping over `--dur-scene`, tier to layer config, `coverUv` for the
   `object-fit: cover` crop, parallax, scroll progress, width picking), `rain-glass.frag.glsl` (drops,
   runnels and beads that refract the photo, light mist between them), `glow.frag.glsl` (the sodium
@@ -120,14 +120,58 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   `umbristaTestIntensity`; CI's SwiftShader needs the first for every canvas test. End-to-end tests:
   `e2e/living-background.spec.ts`.
 
-Not yet: any real page content.
+- Task 8, on `task/8-landing-prototype` (local commits only): the landing's first scroll chapter.
+  - `src/scene/journey/chapters.ts`: `Chapter` and `CHAPTERS` (dusk, cup, craft, window, last cup,
+    with titles and lines in the voice). Only chapter 1 is rendered; the cup's and the last cup's
+    stills are placeholders, and every `camera` is a placeholder until Task 9. Journey progress counts
+    chapters (`chapterAt`); `OPENING` holds chapter 1's beats and `lampAt` the lamps' rise.
+  - `src/scene/journey/progress.ts`: the journey progress, a small store outside React, so a scroll
+    frame re-renders only the scene inside the canvas. `Journey({ progress })` draws the living
+    background with the lamp for that progress.
+  - `LivingBackground` takes `lamp` (0..1, default 1) for the new `uLamp` uniform: the café window's
+    light (red first, then orange, as sodium strikes) and the glow's strength. It is a chapter's
+    progress, never a clock; `uNight` is untouched. At 1 the scene is exactly as before. The cover
+    crop now follows the still's `object-position` (the landing uses `35% 50%`, so the café window
+    stays on a phone screen). The shader compiles in the background (three's `compileAsync`, only
+    where `KHR_parallel_shader_compile` exists), keyed by shader variant per canvas.
+  - The landing (`src/pages/Landing.tsx`): chapter 1 is a tall section whose stage is CSS-sticky
+    (the pin); one ScrollTrigger reads its progress (`src/pages/landing/openingScroll.ts`, loaded
+    on idle or on the first scroll intent, never on the critical path). The lamps follow the scroll
+    exactly; the title is a cue: past `OPENING.titleAt` its letters rise one by one on
+    `--ease-settle` over `--dur-chapter`, 25 ms apart (about 1.15 s in all), and sink back 1.8
+    times faster (about 0.64 s) above it (`titleTiming.ts`). If the choreography cannot load, the
+    chapter ends as under reduced motion: title shown, lamps on, photograph undimmed. `--lamp` is set on the scene
+    host and the scroll cue only, and dims the still underneath while there is no canvas.
+    `KineticTitle` (`src/pages/landing/`) keeps the phrase as visually hidden text and the letters
+    `aria-hidden`. The h1 is "Umbrista" plus the promise. Under reduced motion there is no pin, no
+    ScrollTrigger and no GSAP: the title is whole, the lamps are on, and later chapters fade in.
+  - `src/scroll/useSmoothScroll.ts` has a frame driver (`driveWith`) and scroll listeners
+    (`onSmoothScroll`); `src/scroll/scrollTrigger.ts` hands Lenis to GSAP's ticker and updates
+    ScrollTrigger on every Lenis scroll. One Lenis, one loop, on one clock: the ticker passes
+    `performance.now()`, and a new driver's first time is lined up with the last, because a
+    backward step made a smooth scroll in flight jump to the top.
+  - `VideoLoop` asks for its poster only near the screen. `vite.config.ts` preloads the three
+    first-screen font files (the swap had shifted the large title).
+  - `lighthouserc.json` and the CI job "Lighthouse budget" (`npx lhci autorun` against
+    `vite preview`, mobile preset, `/`): performance at least 0.9, LCP at most 2.5 s, CLS at most
+    0.05, median of five runs. The new job is not yet a required check on `develop`.
+  - **What that budget measures.** CI's runner has no GPU and `SceneHost` refuses software WebGL,
+    so the job audits the landing without its canvas (it scores 0.96 to 0.99 there). On a desktop
+    with a GPU the canvas mounts during the audit and the score is about 0.80 locally: the page's
+    first WebGL context and evaluating three.js block the main thread. Whether the canvas should
+    mount later on phones is the owner's call at the checkpoint.
+  - End-to-end: `e2e/landing-chapter.spec.ts`.
+
+Not yet: the rest of the journey, the hero cup, and any real page content beyond the landing.
 
 ## 4. Exact next step
 
-**Finish Task 7**: push `task/7-living-background`, open the pull request into `develop`, merge on
-green and archive the branch as `merged/task-7-living-background`. Then Task 8, the landing prototype
-checkpoint with the owner. Still open from earlier tasks: check the 16 px favicon in a real browser
-tab.
+**Show the owner Task 8** in the browser pane (desktop and phone size, day and night, and once with
+reduced motion), record the verdict on the feel in the learning log, and change what they ask for.
+Only after their approval: push `task/8-landing-prototype`, open the pull request into `develop`,
+merge on green, archive the branch as `merged/task-8-landing-prototype`, and add "Lighthouse budget"
+to `develop`'s required checks (a repository setting, the owner's call). Do not start Task 9 before
+the approval. Still open from earlier tasks: check the 16 px favicon in a real browser tab.
 
 ## 5. Bring-up on a new machine
 
@@ -138,7 +182,7 @@ accounts are created from the command line.
 
 ## 6. Owner checkpoints still ahead
 
-1. The landing prototype (plan Task 8).
+1. The landing prototype (plan Task 8): built, waiting for the owner's verdict.
 2. Each pull request.
 3. The launch: the release from `develop` to `main` and the production deploy.
 

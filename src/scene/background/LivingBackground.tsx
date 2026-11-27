@@ -1,12 +1,16 @@
 import { useFrame, useThree } from '@react-three/fiber'
 import { use, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  Mesh,
   MirroredRepeatWrapping,
+  PlaneGeometry,
   ShaderMaterial,
   SRGBColorSpace,
   Texture,
   TextureLoader,
   Vector2,
+  type Camera,
+  type WebGLRenderer,
 } from 'three'
 import { MEDIA, type StillName } from '../../media/manifest'
 import { usePrefersReducedMotion } from '../../media/usePrefersReducedMotion'
@@ -23,6 +27,7 @@ import {
   layersFor,
   parallax,
   parseDurationMs,
+  parseObjectPosition,
   pickWidth,
   scrollProgress,
   stepNight,
@@ -38,6 +43,12 @@ export interface LivingBackgroundProps {
   backdrop: StillName
   /** 0 draws the plain photograph, 1 the full rain, lamp and grade. */
   intensity?: number
+  /**
+   * How far the lamps are on, 0..1: the café window's light and the glow's strength. A chapter's
+   * progress, not a clock: the night grade (`uNight`) stays the visitor's clock or the switch.
+   * At 1, the default, the scene is lit as it always was.
+   */
+  lamp?: number
 }
 
 // A full-screen triangle pair. The camera is ignored: the quad always covers the canvas.
@@ -73,6 +84,7 @@ function createMaterial(dropLayers: number, fogTaps: number): ShaderMaterial {
       uFocus: { value: new Vector2(0.5, 0.5) },
       uTime: { value: STILL_TIME },
       uNight: { value: 0 },
+      uLamp: { value: 1 },
       uIntensity: { value: 0 },
       uQuality: { value: 1 },
     },
@@ -91,6 +103,7 @@ interface FrameUniforms {
   focus: Vec2
   time: number
   night: number
+  lamp: number
   intensity: number
   quality: number
   scroll: number
@@ -108,9 +121,48 @@ function writeUniforms(material: ShaderMaterial, frame: FrameUniforms): void {
   ;(u.uParallax!.value as Vector2).set(frame.depth.scale, frame.depth.shift)
   u.uTime!.value = frame.time
   u.uNight!.value = frame.night
+  u.uLamp!.value = frame.lamp
   u.uIntensity!.value = frame.intensity
   u.uQuality!.value = frame.quality
   u.uScroll!.value = frame.scroll
+}
+
+/*
+ * Compiling the shader is the slowest part of the first frame (hundreds of milliseconds on a phone,
+ * or through ANGLE on Windows). three's compileAsync hands it to the driver and waits without
+ * blocking (KHR_parallel_shader_compile where the browser has it), so the first frame only uses the
+ * finished program.
+ *
+ * The compile is keyed by the shader variant, per canvas, never by the component's own material:
+ * a first mount that suspends loses its memo, so a material-keyed promise would be new on every
+ * retry and the scene would never finish loading. three shares one program between materials with
+ * the same source and defines, so warming it with a probe material serves the real one. The probe
+ * is kept alive with the promise, so the program is not released while the canvas lives.
+ *
+ * Without the extension (Safari, software WebGL) the compile would block just the same, and three
+ * would warn about the missing extension on every visit; the first frame compiles it instead.
+ */
+const compiling = new WeakMap<HTMLCanvasElement, Map<string, Promise<unknown>>>()
+const PROBE_QUAD = new PlaneGeometry(2, 2)
+const COMPILED_IN_FRAME = Promise.resolve()
+
+function compiled(gl: WebGLRenderer, camera: Camera, dropLayers: number, fogTaps: number): Promise<unknown> {
+  if (!gl.extensions.has('KHR_parallel_shader_compile')) return COMPILED_IN_FRAME
+  let variants = compiling.get(gl.domElement)
+  if (!variants) {
+    variants = new Map()
+    compiling.set(gl.domElement, variants)
+  }
+  const key = `${dropLayers}:${fogTaps}`
+  let pending = variants.get(key)
+  if (!pending) {
+    const probe = new Mesh(PROBE_QUAD, createMaterial(dropLayers, fogTaps))
+    probe.frustumCulled = false
+    // A failure here is not fatal: the first frame then compiles the program itself.
+    pending = gl.compileAsync(probe, camera).catch(() => undefined)
+    variants.set(key, pending)
+  }
+  return pending
 }
 
 /** The photo is sRGB: three decodes it to linear for the shader, which encodes its output back. */
@@ -228,9 +280,10 @@ function markBackdrop(canvas: HTMLCanvasElement, tier: Tier | null): void {
  * while hidden, off screen or under reduced motion). Under reduced motion it is a still: a static
  * grade with the rain frozen and the lamp at rest on the café window.
  */
-export function LivingBackground({ backdrop, intensity: requested = 1 }: LivingBackgroundProps) {
+export function LivingBackground({ backdrop, intensity: requested = 1, lamp: lampProp = 1 }: LivingBackgroundProps) {
   const [forced] = useState(testIntensity)
   const intensity = forced ?? requested
+  const lamp = Number.isFinite(lampProp) ? Math.min(1, Math.max(0, lampProp)) : 1
   const quality = useSceneQuality()
   const tier = quality?.tier ?? 'mid'
   const layers = layersFor(tier)
@@ -240,17 +293,22 @@ export function LivingBackground({ backdrop, intensity: requested = 1 }: LivingB
   const size = useThree((state) => state.size)
   const dpr = useThree((state) => state.viewport.dpr)
   const invalidate = useThree((state) => state.invalidate)
+  const gl = useThree((state) => state.gl)
+  const camera = useThree((state) => state.camera)
 
   // Rebuilt only when the tier changes what the shader compiles; the uniforms follow every frame.
   const { dropLayers, fogTaps } = layers
   const material = useMemo(() => createMaterial(dropLayers, fogTaps), [dropLayers, fogTaps])
   useEffect(() => () => material.dispose(), [material])
+  // Started now, so the shader compiles while the photograph decodes.
+  const shaderReady = compiled(gl, camera, dropLayers, fogTaps)
 
   // The backdrop texture: the still's own image, chosen once at mount. The scene
   // suspends until it has loaded, so the canvas fades in with the photograph already on it, never
   // over a blank frame.
   const [source] = useState(() => backdropSource(canvas, backdrop, size, dpr))
   const texture = use('still' in source ? textureFromStill(source.still) : textureFromFile(source.url))
+  use(shaderReady)
   useEffect(() => () => texture.dispose(), [texture])
   useEffect(() => {
     markBackdrop(canvas, tier)
@@ -280,35 +338,49 @@ export function LivingBackground({ backdrop, intensity: requested = 1 }: LivingB
   const eased = useRef<Vec2 | null>(null)
   const night = useRef(isNight ? 1 : 0)
 
-  // The canvas's box, measured when it moves or resizes rather than on every frame.
+  // The canvas's box and the still's object-position (the crop to match). The crop only changes
+  // with the layout, so it is read on resize. The box also moves with the page: a scroll only marks
+  // it stale, and the next frame reads it once. Reading layout inside the scroll event would force
+  // an extra style pass on every scroll frame, before the frame's own.
   const box = useRef<DOMRect | null>(null)
+  const boxStale = useRef(true)
+  const position = useRef<Vec2>([0.5, 0.5])
   useEffect(() => {
-    const measure = () => {
-      box.current = canvas.getBoundingClientRect()
+    const still = canvas.closest('[data-scene-host]')?.querySelector('img')
+    const relayout = () => {
+      boxStale.current = true
+      if (still) position.current = parseObjectPosition(getComputedStyle(still).objectPosition)
     }
-    measure()
-    const observer = new ResizeObserver(measure)
+    const moved = () => {
+      boxStale.current = true
+    }
+    relayout()
+    const observer = new ResizeObserver(relayout)
     observer.observe(canvas)
-    window.addEventListener('scroll', measure, { passive: true })
-    window.addEventListener('resize', measure, { passive: true })
+    window.addEventListener('scroll', moved, { passive: true })
+    window.addEventListener('resize', relayout, { passive: true })
     return () => {
       observer.disconnect()
-      window.removeEventListener('scroll', measure)
-      window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', moved)
+      window.removeEventListener('resize', relayout)
     }
   }, [canvas])
 
-  // Under reduced motion the frame loop runs on demand, so a new grade or intensity asks for a frame.
-  const stillFrame = reduced ? `${isNight ? 'night' : 'day'}:${intensity}` : null
+  // Under reduced motion the frame loop runs on demand, so a new grade, intensity or lamp asks for a frame.
+  const stillFrame = reduced ? `${isNight ? 'night' : 'day'}:${intensity}:${lamp}` : null
   useEffect(() => {
     if (stillFrame !== null) invalidate()
   }, [stillFrame, invalidate])
 
   useFrame((state, delta) => {
+    if (boxStale.current) {
+      box.current = canvas.getBoundingClientRect()
+      boxStale.current = false
+    }
     const rect = box.current ?? { left: 0, top: 0, width: size.width, height: size.height }
     const viewPx: Vec2 = rect.width > 0 && rect.height > 0 ? [rect.width, rect.height] : [size.width, size.height]
     const [aw, ah] = MEDIA[backdrop].aspect
-    const cover = coverUv(viewPx[0] / viewPx[1], imageAspect(texture) ?? aw / ah)
+    const cover = coverUv(viewPx[0] / viewPx[1], imageAspect(texture) ?? aw / ah, position.current)
 
     const animate = !reduced && state.frameloop === 'always'
     const time = reduced ? STILL_TIME : STILL_TIME + state.clock.elapsedTime
@@ -338,6 +410,7 @@ export function LivingBackground({ backdrop, intensity: requested = 1 }: LivingB
       focus: rest,
       time,
       night: night.current,
+      lamp,
       intensity,
       quality: layers.quality,
       scroll,

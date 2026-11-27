@@ -15,6 +15,12 @@ const r3f = vi.hoisted(() => ({
   frame: null as FrameCallback | null,
   invalidate: () => {},
   canvas: null as HTMLCanvasElement | null,
+  compiled: [] as unknown[],
+  parallel: true,
+  compileAsync: (object: unknown) => {
+    r3f.compiled.push(object)
+    return Promise.resolve(object)
+  },
 }))
 // The real three, with the material and loader recorded.
 const recorded = vi.hoisted(() => ({
@@ -29,7 +35,12 @@ vi.mock('@react-three/fiber', () => ({
   },
   useThree: (select: (state: unknown) => unknown) =>
     select({
-      gl: { domElement: r3f.canvas },
+      gl: {
+        domElement: r3f.canvas,
+        compileAsync: r3f.compileAsync,
+        extensions: { has: (name: string) => name === 'KHR_parallel_shader_compile' && r3f.parallel },
+      },
+      camera: {},
       size: { width: 800, height: 400 },
       viewport: { dpr: 1 },
       invalidate: r3f.invalidate,
@@ -68,6 +79,7 @@ interface RenderOptions {
   /** Put the still's <img> under the canvas, as SceneHost does (the normal path). */
   still?: boolean
   strict?: boolean
+  lamp?: number
 }
 
 let fallbacks = 0
@@ -76,18 +88,22 @@ function Fallback() {
   return null
 }
 
-function tree(tier: Quality['tier'], intensity: number, strict: boolean) {
+function tree(tier: Quality['tier'], intensity: number, strict: boolean, lamp?: number) {
   const scene = (
     <SceneQualityContext value={{ tier, dpr: [1, 1] }}>
       <Suspense fallback={<Fallback />}>
-        <LivingBackground backdrop="street-dusk" intensity={intensity} />
+        <LivingBackground backdrop="street-dusk" intensity={intensity} lamp={lamp} />
       </Suspense>
     </SceneQualityContext>
   )
   return strict ? <StrictMode>{scene}</StrictMode> : scene
 }
 
-async function renderBackground(tier: Quality['tier'], intensity = 0.6, { still = true, strict = false }: RenderOptions = {}) {
+async function renderBackground(
+  tier: Quality['tier'],
+  intensity = 0.6,
+  { still = true, strict = false, lamp }: RenderOptions = {},
+) {
   const host = document.createElement('div')
   host.dataset.sceneHost = ''
   if (still) {
@@ -102,7 +118,7 @@ async function renderBackground(tier: Quality['tier'], intensity = 0.6, { still 
   let view: ReturnType<typeof render> | undefined
   // The texture suspends the scene; an awaited act lets React finish once it has loaded.
   await act(async () => {
-    view = render(tree(tier, intensity, strict))
+    view = render(tree(tier, intensity, strict, lamp))
   })
   return view!
 }
@@ -121,6 +137,8 @@ beforeEach(() => {
   recorded.urls.length = 0
   recorded.textures.length = 0
   r3f.frame = null
+  r3f.compiled.length = 0
+  r3f.parallel = true
   fallbacks = 0
   // jsdom cannot decode images; a bitmap of the still's natural size stands in.
   vi.stubGlobal('createImageBitmap', vi.fn(async () => ({ width: 1920, height: 1072, close() {} })))
@@ -224,5 +242,68 @@ describe('LivingBackground', () => {
     expect(dispose).toHaveBeenCalled()
     expect(disposeTexture).toHaveBeenCalled()
     expect(r3f.canvas?.dataset.backdrop).toBeUndefined()
+  })
+
+  it('has the lamps on unless told otherwise, as the scene looked before chapters', async () => {
+    await renderBackground('mid')
+    const m = await material()
+    frame(1)
+    expect(m.uniforms.uLamp!.value).toBe(1)
+  })
+
+  it('hands the lamp to uLamp, clamped, and leaves the night clock alone', async () => {
+    setOverride('day')
+    const { rerender } = await renderBackground('mid', 1, { lamp: 0 })
+    const m = await material()
+    frame(1)
+    expect(m.uniforms.uLamp!.value).toBe(0)
+    expect(m.uniforms.uNight!.value).toBe(0)
+
+    await act(async () => rerender(tree('mid', 1, false, 0.4)))
+    frame(2)
+    expect(m.uniforms.uLamp!.value).toBeCloseTo(0.4)
+    expect(m.uniforms.uNight!.value).toBe(0)
+
+    await act(async () => rerender(tree('mid', 1, false, 7)))
+    frame(3)
+    expect(m.uniforms.uLamp!.value).toBe(1)
+  })
+
+  it('asks for a new still frame when the lamp changes under reduced motion', async () => {
+    setMatchMedia(REDUCED, true)
+    const invalidate = vi.fn()
+    r3f.invalidate = invalidate
+    const { rerender } = await renderBackground('mid', 1, { lamp: 1 })
+    await material()
+    invalidate.mockClear()
+    await act(async () => rerender(tree('mid', 1, false, 0.5)))
+    expect(invalidate).toHaveBeenCalled()
+    r3f.invalidate = () => {}
+  })
+
+  it('compiles its shader in the background before the first frame, rather than stalling it', async () => {
+    await renderBackground('high')
+    const m = await material()
+    const probes = r3f.compiled as { material: ShaderMaterial }[]
+    expect(probes.map((probe) => probe.material.defines)).toContainEqual(m.defines)
+  })
+
+  it('compiles each shader variant once, however often the scene suspends and remounts', async () => {
+    // A first mount that suspends loses its memo; keying the compile by the material itself made
+    // every retry start a new compile, and the scene never finished loading.
+    const { rerender } = await renderBackground('mid', 1, { strict: true })
+    await material()
+    await act(async () => rerender(tree('mid', 0.5, true)))
+    const mid = (r3f.compiled as { material: ShaderMaterial }[]).filter((probe) => probe.material.defines.DROP_LAYERS === 2)
+    expect(mid).toHaveLength(1)
+  })
+
+  it('leaves the compile to the first frame where the browser cannot compile in parallel', async () => {
+    // Without KHR_parallel_shader_compile (Safari, software WebGL) there is nothing to gain, and
+    // three would warn in the console on every visit.
+    r3f.parallel = false
+    await renderBackground('mid')
+    await material()
+    expect(r3f.compiled).toHaveLength(0)
   })
 })

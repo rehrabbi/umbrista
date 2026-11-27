@@ -35,6 +35,18 @@ describe('VideoLoop', () => {
     const sources = [...video.querySelectorAll('source')]
     expect(sources.map((s) => s.type)).toEqual(['video/webm', 'video/mp4'])
     expect(sources[0]).toHaveAttribute('src', '/media/steam-loop-1920.webm')
+    act(() => setIntersecting(video, true))
+    expect(video).toHaveAttribute('poster', '/media/steam-loop-poster-1920.webp')
+  })
+
+  it('asks for its poster only as it nears the screen, so it never competes with the first screen', () => {
+    const { container } = render(<VideoLoop name="steam-loop" />)
+    const video = container.querySelector('video')!
+    expect(video).not.toHaveAttribute('poster')
+    act(() => setIntersecting(video, true))
+    expect(video).toHaveAttribute('poster', '/media/steam-loop-poster-1920.webp')
+    // Once asked for, it stays: scrolling away does not drop it.
+    act(() => setIntersecting(video, false))
     expect(video).toHaveAttribute('poster', '/media/steam-loop-poster-1920.webp')
   })
 
@@ -43,6 +55,7 @@ describe('VideoLoop', () => {
     const { container } = render(<VideoLoop name="steam-loop" />)
     const video = container.querySelector('video')!
     expect(video.querySelector('source')).toHaveAttribute('src', '/media/steam-loop-1280.webm')
+    act(() => setIntersecting(video, true))
     expect(video).toHaveAttribute('poster', '/media/steam-loop-poster-1280.webp')
   })
 

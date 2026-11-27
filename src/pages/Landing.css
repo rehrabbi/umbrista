@@ -1,8 +1,22 @@
 /*
- * The hero is full bleed: the street photograph fills it, a scrim of the page colour fades it out
- * behind the text, and the copy sits at the bottom where the scrim is strongest. The scrim is the
- * page colour, so it follows night and day with the tokens.
+ * Chapter 1. The stage is full bleed: the street photograph fills it, a scrim of the page colour
+ * fades it out behind the text, and the copy sits at the bottom where the scrim is strongest. The
+ * scrim is the page colour, so it follows night and day with the tokens.
+ *
+ * With motion allowed, the section is taller than the screen and the stage sticks to the top while
+ * the visitor scrolls through the extra height: that is the pin (ScrollTrigger only reads the
+ * progress, so nothing in the layout moves when the script arrives, and nothing shifts). With
+ * reduced motion the section is just the stage.
  */
+.chapter-opening {
+  position: relative;
+}
+
+.chapter-opening[data-motion='scroll'] {
+  /* One screen to stand on, plus about 1.25 screens of scroll through the chapter. */
+  height: 225svh;
+}
+
 .landing-hero {
   position: relative;
   isolation: isolate;
@@ -12,10 +26,41 @@
   overflow: hidden;
 }
 
+.chapter-opening[data-motion='scroll'] .landing-hero {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  min-height: 32rem;
+  /* The lamps, 0..1, set by the chapter's script as the visitor scrolls. Off until it arrives. */
+  --lamp: 0;
+}
+
 .landing-scene {
   position: absolute;
   inset: 0;
   z-index: -2;
+}
+
+/*
+ * The lit café window sits left of centre in the photograph; on a narrow screen a centred crop
+ * would push it off the edge. This crop keeps it near the middle. The canvas reads the same
+ * object-position, so it still lines up with the photograph exactly.
+ */
+.landing-scene .scene-still {
+  object-position: 35% 50%;
+}
+
+/*
+ * The photograph underneath stands in for the lamps when there is no canvas: dimmer and greyer
+ * while they are off, itself once they are on. The canvas draws the real thing over it.
+ */
+.chapter-opening[data-motion='scroll'] .landing-scene .scene-still {
+  filter: brightness(calc(0.78 + 0.22 * var(--lamp))) saturate(calc(0.55 + 0.45 * var(--lamp)));
+}
+
+/* Once the canvas has drawn the photograph over it, the still underneath need not be filtered. */
+.chapter-opening[data-motion='scroll'] .landing-scene:has(canvas[data-backdrop='ready']) .scene-still {
+  filter: none;
 }
 
 .landing-hero::before {
@@ -26,9 +71,9 @@
   background: linear-gradient(
     to top,
     var(--color-bg) 0%,
-    color-mix(in srgb, var(--color-bg) 92%, transparent) 38%,
-    color-mix(in srgb, var(--color-bg) 55%, transparent) 68%,
-    color-mix(in srgb, var(--color-bg) 15%, transparent) 100%
+    color-mix(in srgb, var(--color-bg) 92%, transparent) 40%,
+    color-mix(in srgb, var(--color-bg) 45%, transparent) 62%,
+    color-mix(in srgb, var(--color-bg) 10%, transparent) 100%
   );
 }
 
@@ -41,10 +86,96 @@
   gap: var(--space-4);
 }
 
+/*
+ * At the top of the page the site header sits above the stage, so the stage's last few rems start
+ * below the fold until the header has scrolled away. Leave that much room under the copy.
+ */
+.chapter-opening[data-motion='scroll'] .landing-copy {
+  padding-bottom: calc(var(--space-7) + 4.5rem);
+}
+
+.chapter-mark {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  color: var(--color-text-quiet);
+  font-size: 0.9375rem;
+  letter-spacing: 0.04em;
+}
+
+.chapter-number {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--color-signal);
+  letter-spacing: 0.08em;
+}
+
+.landing-title {
+  display: grid;
+  gap: var(--space-2);
+  font-size: clamp(3.25rem, 8vw, 8rem);
+  line-height: 0.92;
+  letter-spacing: 0.01em;
+}
+
+/* The café's name, small above its promise, in the signal colour. */
+.landing-name {
+  font-size: clamp(1rem, 0.85rem + 0.6vw, 1.375rem);
+  line-height: 1;
+  letter-spacing: 0.24em;
+  color: var(--color-signal);
+}
+
+.landing-facts {
+  display: grid;
+  gap: var(--space-3);
+}
+
 .landing-lede {
   max-width: 40rem;
   color: var(--color-text);
   font-size: 1.125rem;
+}
+
+/* A quiet hint while the chapter waits for its first scroll; it fades as the lamps come on. */
+.scroll-cue {
+  position: absolute;
+  right: var(--space-4);
+  bottom: var(--space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text-quiet);
+  font-size: 0.8125rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: calc(1 - 2.5 * var(--lamp, 0));
+}
+
+.scroll-cue::after {
+  content: '';
+  width: 2.5rem;
+  height: 1px;
+  background: currentColor;
+}
+
+/* Chapters below the first fade up as they arrive, the way a lamp warms. */
+.chapter[data-fade] {
+  transition: opacity var(--dur-scene) var(--ease-settle);
+}
+
+.chapter[data-fade='waiting'] {
+  opacity: 0;
+}
+
+/*
+ * Still is complete: with reduced motion the chapters keep a gentle fade (no movement), so this
+ * one transition is exempt from the global switch-off in base.css.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .chapter[data-fade] {
+    transition: opacity 600ms ease-out !important;
+  }
 }
 
 .landing-craft {
@@ -62,4 +193,39 @@
 
 .landing-loop {
   border-radius: var(--radius-md);
+}
+
+/*
+ * On a wide screen the copy is a low band (the title, with the opening time beside it), so the scrim
+ * can stop lower and leave the café window clear to light up.
+ */
+@media (min-width: 60rem) {
+  .landing-hero::before {
+    background: linear-gradient(
+      to top,
+      var(--color-bg) 0%,
+      color-mix(in srgb, var(--color-bg) 90%, transparent) 30%,
+      color-mix(in srgb, var(--color-bg) 35%, transparent) 50%,
+      color-mix(in srgb, var(--color-bg) 10%, transparent) 100%
+    );
+  }
+
+  .landing-copy {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 24rem);
+    column-gap: var(--space-7);
+    align-items: end;
+  }
+
+  .landing-copy > .chapter-mark,
+  .landing-copy > .landing-title {
+    grid-column: 1;
+  }
+
+  .landing-facts {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: end;
+    /* Sit on the title's last baseline rather than below its descenders. */
+    padding-bottom: 0.5rem;
+  }
 }
