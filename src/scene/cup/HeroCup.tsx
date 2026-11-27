@@ -412,6 +412,9 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
   useFrame((frame, delta) => {
     const dt = Math.min(delta, 0.1)
     clock.current += dt
+    // Fades run on the wall clock, not the frame clock: a slow device (or a software renderer) whose
+    // frames take longer than the clamped step still finishes them on time, in a frame or two.
+    const now = performance.now() / 1000
 
     // The camera: a square frame, contained in whatever box the canvas has.
     const camera = frame.camera as PerspectiveCamera
@@ -424,8 +427,9 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
     const progress = fixedProgress ?? journeyProgress.get()
     // The hand-off from the still: the live cup holds the still's pose and coffee while the canvas
     // fades in over it, then eases to where the journey is.
-    const holdUntil = (drawnAt.current ?? clock.current) + durationMs / 1000
-    const handoff = smooth((clock.current - holdUntil) / HANDOFF_SECONDS)
+    // Under reduced motion the cup takes over at once: no ease.
+    const holdUntil = (drawnAt.current ?? now) + durationMs / 1000
+    const handoff = drawnAt.current === null ? 0 : reduced ? 1 : smooth((now - holdUntil) / HANDOFF_SECONDS)
     const handing = drawnAt.current === null || handoff < 1
     placeCamera(camera, mixOrbit(CUP_REST, still ? CUP_STILL_VIEW : orbitAt(progress), handoff), target, shape.frame)
 
@@ -460,9 +464,9 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
     if (still) {
       const wanted = handing ? LOOKS.cup : chapterLook(progress)
       if (!tween.current || !sameLook(tween.current.to, wanted)) {
-        tween.current = { from: shown.current, to: wanted, start: clock.current }
+        tween.current = { from: shown.current, to: wanted, start: now }
       }
-      const t = smooth((clock.current - tween.current.start) / STILL_FADE_SECONDS)
+      const t = smooth((now - tween.current.start) / STILL_FADE_SECONDS)
       look = blendLooks(tween.current.from, tween.current.to, t)
       fading = t < 1
     } else {
@@ -514,7 +518,7 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
     if (warm !== 'ready') return
     frame.gl.render(frame.scene, frame.camera)
     if (drawnAt.current === null) {
-      drawnAt.current = clock.current
+      drawnAt.current = now
       ready()
       setCupLive(true)
     }
