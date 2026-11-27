@@ -1,4 +1,5 @@
 import { MEDIA, type StillName } from './manifest'
+import { srcSet } from './srcset'
 
 export interface PictureProps {
   name: StillName
@@ -8,10 +9,6 @@ export interface PictureProps {
   priority?: boolean
   sizes?: string
   className?: string
-}
-
-function srcSet(name: string, widths: readonly number[], ext: 'avif' | 'webp'): string {
-  return widths.map((w) => `/media/${name}-${w}.${ext} ${w}w`).join(', ')
 }
 
 /**
@@ -32,7 +29,8 @@ export function Picture({ name, alt, priority = false, sizes = '100vw', classNam
         height={height}
         alt={alt}
         className={className}
-        decoding="async"
+        // The first screen's image is decoded as soon as it arrives; the rest off the main path.
+        decoding={priority ? undefined : 'async'}
         loading={priority ? 'eager' : 'lazy'}
         fetchPriority={priority ? 'high' : undefined}
       />
