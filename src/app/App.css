@@ -13,7 +13,13 @@
   outline: none;
 }
 
+/*
+ * While a page's code loads, the line holds a screen's height, so the footer starts below the
+ * first screen. Otherwise the footer sits at the bottom of the screen and is pushed away when the
+ * page arrives: a layout shift of about 0.2 on a phone, which the Lighthouse budget caught on /menu.
+ */
 .route-loading {
+  min-height: 100vh;
   padding: var(--space-7) var(--space-4);
   max-width: 72rem;
   margin: 0 auto;
