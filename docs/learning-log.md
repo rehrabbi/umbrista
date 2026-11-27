@@ -381,17 +381,34 @@ longer idle) on phones, trading a later rain for a quieter first few seconds.
   object, so the frame loop allocates nothing.
 - **Draw on demand.** The menu's scenes move only with the scroll, a turn or the row, so their hosts
   run R3F on demand (`onDemand`) and the frame loop idles whenever nothing moves.
-- **Load late, free later.** Each model loads when a scene first asks for it, and is disposed eight
-  seconds after nothing draws it, so flicking back and forth never reloads it but a long visit does
-  not keep every drink on the GPU.
-- **No pour.** The models are single meshes with the drink baked into the vessel, so the coffee
-  cannot fill separately; each drink rises, turns and is lit up by the lamp as it settles instead.
-- **Stills are gated like the landing's.** The counter's and the bar's photographs wait for the
-  visitor's first intent (or five quiet seconds), so the Menu's first screen is text, and the
-  Lighthouse budget, now on `/menu` too, measures it alone.
+- **Load late, free later, and only where the visitor settles.** Each model loads when a scene
+  first asks for it, and is disposed eight seconds after nothing draws it. The bar changes which
+  models it holds only after 150 ms on one drink, so a flick down the bar loads where it lands,
+  not every drink it passes; a load that lands after the visitor has moved on is freed too.
+- **The menu keeps its own model cache.** Sharing drei's would let the menu free the landing's
+  hero cup (the same file). Its own cache can free anything it holds without touching the landing.
+- **No pour** (controller ruling, 2026-11-28). The owner rejected a drawn milk "stick" on the hero
+  cup (2026-11-27), so a thin pour drawn into the drinks goes against an owner decision. The models
+  are single meshes with the drink baked in; each drink rises, turns and warms under the lamp
+  instead.
+- **Live is per drink.** One flag for the whole bar hid every still as soon as any drink drew, so
+  a drink still loading showed nothing. Each section now waits for its own drink's first frame.
+- **Stills first.** The counter shows its drinks' stills from the first paint (the controller's
+  look found it empty until the visitor moved); the bar's photographs below the first screen wait
+  for the visitor's first intent, as the landing's do.
+- **Light for food, not for a street.** The landing's orange key against a strong blue fill made
+  white cups and milk a muddy blue-grey and Fog Line rust. The menu has its own light: a warm
+  ambient, a soft near-neutral fill, a less saturated lamp and a warm window in the reflected room
+  (the numbers and reasons are in `MENU_LIGHT`, `src/menu/sceneParts.tsx`). Both scenes look down
+  at 27 degrees, so the coffee's surface shows.
 
 **What to remember.**
 
+- A sticky element with a negative bottom margin (to give its height back) can stick a whole screen
+  past the end of its parent: the bar's last drink ran over the night snacks' heading. A sticky
+  element inside an absolutely placed track that covers its section stops exactly at the end.
+- React retries a component suspended on `use(promise)` inside `act` only if that `act` is awaited;
+  a test that renders synchronously never sees the load land.
 - Sharing a cached glTF scene between two canvases does not work: an object has one parent. Each
   scene clones the nodes, which shares the geometry, materials and textures.
 - The hero cup's loader moves its shared scene to stand it on the table. Measuring a model's bounds

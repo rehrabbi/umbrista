@@ -161,6 +161,11 @@ Notes:
   `npm run models`: meshopt geometry (positions 14 bits, normals 10, texture coordinates 14) and
   WebP textures at 2048 px (quality 86, normal map 94). Same triangles as the master (about 30,000;
   no simplification). Decoded by three's bundled meshopt decoder; nothing is fetched elsewhere.
+- The cup's light copy for the menu's counter: `public/models/cup-lite.glb`, **0.18 MB** (budget
+  400 KB), by `npm run models -- cup-lite`, the same steps as the drinks' light versions (512 px
+  textures, meshoptimizer's simplifier with a target of a quarter of the vertices and an error bound
+  of 0.001); sha256 `cf03b8f653f2b4a941b8013f6792fb8c32d8b641660f7472355fa5b607698da4`. The full cup
+  is unchanged, byte for byte.
 - The cup's still (`cup-still`, transparent AVIF and WebP at 640 and 1280 px) is not a generated
   asset: `npm run cup-still` renders it from the model with the live scene itself, in the cup's rest
   pose, with its espresso, at night, so the still and the live cup match where the one replaces the

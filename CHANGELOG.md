@@ -16,7 +16,9 @@ once the whole site is built.
   its notes, "Add to order", and "Turn left" and "Turn right". Then the night snacks, each with its
   photograph. Prices are in
   crowns, with the key at the top. Only the drink on screen and its neighbours load their full
-  models; the counter draws the light ones. Until the 3D has drawn, and for good under reduced
+  models, and only once the visitor settles on a drink; the counter draws the light ones (Last Tram
+  as a light cup). The drinks are seen from a little above, so the coffee's surface shows, in a warm
+  light kept for the menu. Until the 3D has drawn, and for good under reduced
   motion or without WebGL, every drink is its photograph, and the whole menu reads and orders as
   plain text.
 - The order-ahead cart: add from the menu, the same drink twice counts as two, quantities from 1 to

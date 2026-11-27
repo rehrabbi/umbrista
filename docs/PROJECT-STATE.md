@@ -188,20 +188,31 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
     canvas of every drink's light model, `CounterScene`, in CSS pixels so each drink stands over its
     place), the bar (`DrinkStage`, one section per drink; `BarStage`, one sticky canvas over them;
     `BarScene`, the on-screen drink and its neighbours' full models), and the night snacks as cards
-    with their photographs (approved by the owner on 2026-11-28). `barProgress.ts` holds what changes every frame outside
-    React: the bar's progress (written by `followBar` from the scroll, never under reduced motion),
-    the drinks' turns, whether the bar is live, and the counter's row. `useDrinkModel(model,
-    'full' | 'lite')` loads through the cup's local meshopt decoder, gives each scene its own copy
-    normalised to a unit box, and frees a model eight seconds after nothing draws it.
+    with their photographs (approved by the owner on 2026-11-28). `barProgress.ts` holds what
+    changes every frame outside React: the bar's progress (written by `followBar` from the scroll,
+    never under reduced motion; it re-measures when anything on the page changes size), the drinks'
+    turns, which drinks the bar has drawn (each section hides its still and shows its turn buttons
+    only once its own drink has drawn; the buttons' row is held from the first paint), and the
+    counter's row. The bar changes which models it loads only after 150 ms on a drink, and a jump
+    from the counter scrolls at once, so a flick loads only where it lands. The counter shows the
+    drinks' stills from the first paint, the 3D fading in over them. Both scenes look down at 27
+    degrees and use the menu's own warmer light (`MENU_LIGHT` in `sceneParts.tsx`; the landing's
+    is unchanged). `useDrinkModel(model, 'full' | 'lite')` keeps its own cache apart from drei's (so
+    it never frees the landing's cup), loads with three's local meshopt decoder, gives each scene
+    its own copy normalised to a unit box, and frees a model eight seconds after nothing draws it,
+    or after a load lands that nobody waits for. Last Tram is `cup.glb` in the bar and the light
+    `cup-lite.glb` (0.18 MB) on the counter.
   - **Shared pieces**: `SceneHost` can leave its stills to the page (no `still`) and draw only on
     demand (`onDemand`); the night room is `src/scene/nightRoom.ts`; `smoothScroller()` returns the
     running Lenis; `.visually-hidden` is in `base.css`.
   - **Stills**: `npm run media` makes `drink-<id>` and `snack-<id>` (AVIF and WebP, 640 and 1280
     px) from the studio masters; Last Tram uses `cup-still`. Every still encode now decodes and scales on one thread.
   - **Lighthouse**: `lighthouserc.json` measures `/menu` beside `/`.
-  - Not done here: a pour (the models are single meshes with the drink baked in, so a drink rises,
-    turns and is lit up as it settles instead), a glass material for Night Ferry and Low Tide, and
-    frame times on a GPU (the owner's PC cannot run them; ruling 5).
+  - **No pour** (controller ruling, 2026-11-28): the owner rejected a drawn milk "stick" on the hero
+    cup (2026-11-27), so the menu draws no pour either; a drink rising, turning and warming under the
+    lamp stands in for "pours or fills". The models are single meshes with the drink baked in.
+  - Not done here: a glass material for Night Ferry and Low Tide (left out of this task by the
+    controller), and frame times on a GPU (the owner's PC cannot run them; ruling 5).
 
 Not yet: any real page content beyond the landing and the menu.
 
