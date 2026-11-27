@@ -70,6 +70,9 @@ export function lineFor(item: { id: string; name: string; price: number }): Omit
 
 const isText = (value: unknown): value is string => typeof value === 'string' && value.length > 0 && value.length <= 200
 
+/** The longest name a visitor may give a brewed drink. */
+export const MAX_BREW_NAME = 60
+
 function isBrewChoice(value: unknown): value is BrewChoice {
   if (typeof value !== 'object' || value === null) return false
   const choice = value as Record<string, unknown>
@@ -78,7 +81,7 @@ function isBrewChoice(value: unknown): value is BrewChoice {
     (choice.roast === 'light' || choice.roast === 'medium' || choice.roast === 'dark') &&
     isText(choice.method) &&
     isText(choice.milk) &&
-    (choice.name === undefined || typeof choice.name === 'string')
+    (choice.name === undefined || (typeof choice.name === 'string' && choice.name.length <= MAX_BREW_NAME))
   )
 }
 
@@ -102,7 +105,15 @@ export function readCart(): CartLine[] {
     if (stored === null) return []
     const value: unknown = JSON.parse(stored)
     if (!Array.isArray(value)) return []
-    return value.map(parseLine).filter((line): line is CartLine => line !== null)
+    // Lines are one per id: two stored under the same id become one, their quantities added.
+    const lines: CartLine[] = []
+    for (const line of value.map(parseLine)) {
+      if (!line) continue
+      const same = lines.findIndex((known) => known.id === line.id)
+      if (same === -1) lines.push(line)
+      else lines[same] = { ...lines[same]!, qty: clampQty(lines[same]!.qty + line.qty) }
+    }
+    return lines
   } catch {
     // Corrupt JSON, or storage refused (a private window, or storage switched off).
     return []

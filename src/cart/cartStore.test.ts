@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { BrewChoice } from '../../shared/brew'
-import { CART_KEY, MAX_QTY, cartCount, cartReducer, cartTotal, lineFor, readCart, writeCart, type CartLine } from './cartStore'
+import { CART_KEY, MAX_BREW_NAME, MAX_QTY, cartCount, cartReducer, cartTotal, lineFor, readCart, writeCart, type CartLine } from './cartStore'
 
 const FOG_LINE = { id: 'fog-line', itemId: 'fog-line', name: 'Fog Line', unitPrice: 340 }
 const UMBRA = { id: 'umbra', itemId: 'umbra', name: 'Umbra', unitPrice: 490 }
@@ -115,6 +115,27 @@ describe('session storage', () => {
       ]),
     )
     expect(readCart()).toEqual([{ ...FOG_LINE, qty: 20 }])
+  })
+
+  it('merges stored lines that share an id, adding their quantities within the limit', () => {
+    sessionStorage.setItem(CART_KEY, JSON.stringify([{ ...FOG_LINE, qty: 2 }, { ...UMBRA, qty: 1 }, { ...FOG_LINE, qty: 3 }, { ...UMBRA, qty: 19 }]))
+    expect(readCart()).toEqual([
+      { ...FOG_LINE, qty: 5 },
+      { ...UMBRA, qty: 20 },
+    ])
+  })
+
+  it('drops a stored brewed drink whose name is longer than 60 characters', () => {
+    const options = { beans: 'calvessa-blend', roast: 'dark', method: 'espresso', milk: 'none' }
+    const line = { id: 'custom-1', itemId: 'custom', name: 'Brewed', unitPrice: 450, qty: 1 }
+    sessionStorage.setItem(
+      CART_KEY,
+      JSON.stringify([
+        { ...line, options: { ...options, name: 'x'.repeat(MAX_BREW_NAME) } },
+        { ...line, id: 'custom-2', options: { ...options, name: 'x'.repeat(MAX_BREW_NAME + 1) } },
+      ]),
+    )
+    expect(readCart().map((kept) => kept.id)).toEqual(['custom-1'])
   })
 
   it('starts empty, without throwing, when session storage is refused', () => {
