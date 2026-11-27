@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { compare } from './compare'
 import { allowSoftwareGL } from './software-gl'
 
 function collectProblems(page: Page): string[] {
@@ -86,6 +87,34 @@ test('the cup fades in over its still, exactly aligned, and does not block the p
   await page.getByRole('button', { name: 'Spin' }).click()
   await page.waitForTimeout(500)
   expect(problems).toEqual([])
+})
+
+test('the live cup lands on its still: the same cup, pose and coffee, so the swap does not jump', async ({ page }) => {
+  // Reduced motion: one still frame drawn on demand at the rest pose, deterministic to compare. At
+  // night (the still is rendered at night), and at the high tier, with the still's shadows.
+  await allowSoftwareGL(page, 'high')
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.clock.setFixedTime(new Date('2026-11-26T22:00:00Z'))
+  await page.goto('/')
+  await bringCupNear(page)
+  const host = page.locator('.cup-scene')
+  await expect(host).toHaveAttribute('data-live', 'ready', { timeout: 30_000 })
+  await page.waitForTimeout(1000)
+  const box = (await host.boundingBox())!
+  const clip = { x: box.x, y: box.y, width: box.width, height: box.height }
+  const bare = '.journey .chapter-copy{visibility:hidden!important}'
+  const live = await page.screenshot({ clip, animations: 'disabled', style: `${bare}.cup-scene > picture{visibility:hidden!important}` })
+  const still = await page.screenshot({
+    clip,
+    animations: 'disabled',
+    style: `${bare}.cup-scene > picture{visibility:visible!important}.cup-scene .scene-canvas{visibility:hidden!important}`,
+  })
+  const { meanDiff, structureDiff, deviation } = await compare(page, live, still)
+  console.log(`cup still vs canvas: meanDiff ${meanDiff.toFixed(2)}, structureDiff ${structureDiff.toFixed(3)}`)
+  // Not blank, and the same cup in the same place: a different pose or coffee scores far higher.
+  expect(deviation).toBeGreaterThan(10)
+  expect(structureDiff).toBeLessThan(0.45)
+  expect(meanDiff).toBeLessThan(20)
 })
 
 test('without WebGL the cup is its still, with no errors', async ({ page }) => {
