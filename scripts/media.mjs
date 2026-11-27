@@ -33,9 +33,12 @@ const STILLS = ['street-dusk', 'rain-window', 'crema-macro']
 const ALPHA_STILLS = ['cup-still']
 // The menu's drinks, from their approved studio stills (docs/brand.md): what the bar and the counter
 // show before the 3D arrives, and for good under reduced motion or without WebGL. One drink fills at
-// most one screen, so 640 and 1280 px are enough. Drink 1, Last Tram, is the cup and uses cup-still.
+// most one screen, so 640 and 1280 px are enough there; 320 px is for the counter, where each is
+// about 7rem across from the first paint and should cost the first screen as little as it can.
+// Drink 1, Last Tram, is the cup and uses cup-still.
 const DRINK_STILLS = ['fog-line', 'lantern', 'sodium', 'night-ferry', 'low-tide', 'umbra', 'wet-cobble', 'three-oclock']
-const DRINK_WIDTHS = [640, 1280]
+const DRINK_WIDTHS = [320, 640, 1280]
+const SNACK_WIDTHS = [640, 1280]
 // The night snacks, from their approved studio stills (docs/brand.md), on the menu's snack cards.
 const SNACK_STILLS = ['burnt-custard-tart', 'olive-oil-orange-cake', 'dark-chocolate-sea-salt']
 const LOOPS = [{ name: 'steam-loop', file: 'steam-loop.mp4' }]
@@ -168,7 +171,7 @@ for (const snack of SNACK_STILLS) {
   const input = requireMaster(`snacks/${snack}.png`)
   const size = dimensions(input)
   const aspect = aspectOf(size)
-  entries[name] = { kind: 'still', aspect, widths: stillSet(input, name, aspect, size.width, [], false, DRINK_WIDTHS) }
+  entries[name] = { kind: 'still', aspect, widths: stillSet(input, name, aspect, size.width, [], false, SNACK_WIDTHS) }
 }
 
 for (const texture of TEXTURES) {
