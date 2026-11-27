@@ -83,7 +83,6 @@ async function settle(ms = 400) {
 const fullModels = () => new Set(requests.filter(([, detail]) => detail === 'full').map(([model]) => model))
 const model = (name: string, detail = 'full') => models.get(`${name}:${detail}`) as Group | undefined
 
-/** Mount the menu with its two canvases live, the bar settled on the drink at `progress`. */
 /** Run frames until a drink's turn has eased all the way. */
 function settleTurn() {
   act(() => {
@@ -91,6 +90,7 @@ function settleTurn() {
   })
 }
 
+/** Mount the menu with its two canvases live, the bar settled on the drink at `progress`. */
 async function renderLive(progress: number) {
   const view = renderMenu()
   intent(view.container)
@@ -195,9 +195,13 @@ describe('Menu', () => {
     await renderLive(0.5)
     expect(fullModels()).toEqual(new Set(['cup', 'fog-line']))
     requests.length = 0
-    act(() => {
-      for (let progress = 0.5; progress <= 8.5; progress += 0.25) barProgress.set(progress)
-    })
+    // One drink after another, each for less than the settling time, as a quick flick passes them.
+    for (let progress = 1.5; progress <= 8.5; progress += 1) {
+      act(() => barProgress.set(progress))
+      await settle(SETTLE_MS / 3)
+    }
+    // Nothing it passed was asked for.
+    expect(fullModels()).toEqual(new Set())
     await settle(SETTLE_MS + 150)
     expect(fullModels()).toEqual(new Set(['wet-cobble', 'three-oclock']))
   }, 20_000)
@@ -219,7 +223,9 @@ describe('Menu', () => {
     expect(holder.rotation.y).toBeCloseTo(drinkPose(1.5, 1, TURN_STEP, pose).angle, 3)
   }, 20_000)
 
-  it('stands each drink on the counter under its place', async () => {
+  it('stands each drink on the counter under its place, starting on the first drink', async () => {
+    // Left over from a counter before this one: a new counter starts on the first drink again.
+    updateCounterView({ active: 5 })
     await renderLive(0.5)
     act(() => {
       updateCounterView({ first: 100, pitch: 150, scroll: 30, width: 800 })
