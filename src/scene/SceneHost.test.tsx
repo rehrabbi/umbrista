@@ -1,14 +1,18 @@
 import { act, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { useEffect, type ReactNode } from 'react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setIntersecting, useFakeIntersectionObserver } from '../test/intersection'
 import { setMatchMedia, setWebGL } from '../test/setup'
+import { resetSceneGate } from './gate'
+import { useSceneReady } from './scene-ready'
 import { SceneHost } from './SceneHost'
 
 // R3F's Canvas cannot run in jsdom. This stand-in exposes the props the host passes it.
 vi.mock('@react-three/fiber', () => ({
-  Canvas: ({ frameloop, dpr }: { frameloop?: string; dpr?: number[] }) => (
+  Canvas: ({ frameloop, dpr, children }: { frameloop?: string; dpr?: number[]; children?: ReactNode }) => (
     <div data-testid="r3f" data-frameloop={frameloop} data-dpr={JSON.stringify(dpr)}>
       <canvas data-testid="gl" />
+      {children}
     </div>
   ),
 }))
@@ -20,19 +24,89 @@ const LABEL = 'Calvessa at dusk, one café window lit'
 
 useFakeIntersectionObserver()
 
-afterEach(() => {
-  Object.defineProperty(document, 'hidden', { configurable: true, value: false })
+beforeEach(() => {
+  resetSceneGate()
 })
 
-function renderHost() {
-  return render(
+afterEach(() => {
+  Object.defineProperty(document, 'hidden', { configurable: true, value: false })
+  resetSceneGate()
+})
+
+/** The visitor shows intent (the first pointer move), which lets scenes start. */
+function intent() {
+  act(() => {
+    window.dispatchEvent(new Event('pointermove'))
+  })
+}
+
+function renderHost({ waitForVisitor = false } = {}) {
+  const view = render(
     <SceneHost still="street-dusk" label={LABEL}>
       <group />
     </SceneHost>,
   )
+  if (!waitForVisitor) intent()
+  return view
+}
+
+/** A scene that says when it has drawn its first frame. */
+function DrawsOnce() {
+  const ready = useSceneReady()
+  useEffect(() => ready(), [ready])
+  return null
 }
 
 describe('SceneHost', () => {
+  it('creates no WebGL context and no canvas until the visitor shows intent', async () => {
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext')
+    renderHost({ waitForVisitor: true })
+    await act(() => new Promise((resolve) => setTimeout(resolve, 900)))
+    expect(getContext).not.toHaveBeenCalled()
+    expect(screen.queryByTestId('r3f')).toBeNull()
+    intent()
+    expect(await screen.findByTestId('r3f', {}, SLOW)).toBeInTheDocument()
+    expect(getContext).toHaveBeenCalled()
+    getContext.mockRestore()
+  })
+
+  it('with `near`, also waits until the host nears the screen', async () => {
+    const { container } = render(
+      <SceneHost still="street-dusk" label={LABEL} near="100% 0px">
+        <group />
+      </SceneHost>,
+    )
+    intent()
+    await act(() => new Promise((resolve) => setTimeout(resolve, 900)))
+    expect(screen.queryByTestId('r3f')).toBeNull()
+    act(() => setIntersecting(container.querySelector('[data-scene-host]')!, true))
+    expect(await screen.findByTestId('r3f', {}, SLOW)).toBeInTheDocument()
+  }, 10_000)
+
+  it('fades the canvas in only once its scene has drawn, over the still', async () => {
+    const { container } = render(
+      <SceneHost still="street-dusk" label={LABEL}>
+        <DrawsOnce />
+      </SceneHost>,
+    )
+    const host = container.querySelector('[data-scene-host]')!
+    intent()
+    await screen.findByTestId('r3f', {}, SLOW)
+    expect(host).toHaveAttribute('data-live', 'ready')
+    expect(screen.getByAltText(LABEL)).toBeInTheDocument()
+  })
+
+  it('waits to fade in while its scene has not drawn', async () => {
+    const { container } = renderHost()
+    await screen.findByTestId('r3f', {}, SLOW)
+    expect(container.querySelector('[data-scene-host]')).not.toHaveAttribute('data-live')
+  })
+
+  it('marks a swap host, whose still steps aside once the live scene is in', () => {
+    const { container } = render(<SceneHost still="street-dusk" label={LABEL} swap />)
+    expect(container.querySelector('[data-scene-host]')).toHaveAttribute('data-swap')
+  })
+
   it('shows the still first and mounts the canvas after first paint', async () => {
     renderHost()
     expect(screen.getByAltText(LABEL)).toBeInTheDocument()

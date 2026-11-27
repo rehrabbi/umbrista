@@ -4,11 +4,13 @@ import type { ReactNode } from 'react'
 export interface SceneCanvasProps {
   frameloop: 'always' | 'demand'
   dpr: [number, number]
+  /** Multisample the canvas: fine edges (a cup's rim) need it, a full-screen backdrop does not. */
+  antialias?: boolean
   children?: ReactNode
 }
 
 /** The only module that imports three and R3F for the host, so it loads as its own chunk. */
-export default function SceneCanvas({ frameloop, dpr, children }: SceneCanvasProps) {
+export default function SceneCanvas({ frameloop, dpr, antialias = false, children }: SceneCanvasProps) {
   return (
     <Canvas
       className="scene-canvas"
@@ -18,7 +20,7 @@ export default function SceneCanvas({ frameloop, dpr, children }: SceneCanvasPro
       style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
       frameloop={frameloop}
       dpr={dpr}
-      gl={{ alpha: true, antialias: false, powerPreference: 'high-performance' }}
+      gl={{ alpha: true, antialias, powerPreference: 'high-performance' }}
     >
       {children}
     </Canvas>

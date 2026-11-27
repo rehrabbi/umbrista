@@ -17,6 +17,7 @@ import { usePrefersReducedMotion } from '../../media/usePrefersReducedMotion'
 import { useNight } from '../../time/useNight'
 import type { Tier } from '../quality'
 import { useSceneQuality } from '../scene-quality'
+import { useSceneReady } from '../scene-ready'
 import glowSource from './glow.frag.glsl?raw'
 import rainGlassSource from './rain-glass.frag.glsl?raw'
 import {
@@ -295,6 +296,7 @@ export function LivingBackground({ backdrop, intensity: requested = 1, lamp: lam
   const invalidate = useThree((state) => state.invalidate)
   const gl = useThree((state) => state.gl)
   const camera = useThree((state) => state.camera)
+  const ready = useSceneReady()
 
   // Rebuilt only when the tier changes what the shader compiles; the uniforms follow every frame.
   const { dropLayers, fogTaps } = layers
@@ -416,6 +418,8 @@ export function LivingBackground({ backdrop, intensity: requested = 1, lamp: lam
       scroll,
       depth: parallax(scroll, intensity),
     })
+    // This frame draws the photograph: the host may fade the canvas in over the still.
+    ready()
   })
 
   return (

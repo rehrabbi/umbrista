@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useFakeIntersectionObserver } from '../test/intersection'
+import { resetSceneGate } from './gate'
 import { SceneHost } from './SceneHost'
 
 // The canvas module throws when it renders, as R3F does when it cannot create a renderer.
@@ -21,6 +22,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks()
+  resetSceneGate()
 })
 
 describe('SceneHost when the canvas fails', () => {
@@ -33,7 +35,8 @@ describe('SceneHost when the canvas fails', () => {
         </SceneHost>
       </main>,
     )
-    // Give the host time to mount the canvas, fail, and fall back.
+    // The visitor moves the pointer; give the host time to mount the canvas, fail, and fall back.
+    window.dispatchEvent(new Event('pointermove'))
     await new Promise((resolve) => setTimeout(resolve, 1200))
     expect(screen.getByRole('heading', { name: 'Still here' })).toBeInTheDocument()
     expect(screen.getByAltText(LABEL)).toBeInTheDocument()

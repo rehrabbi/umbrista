@@ -1,9 +1,11 @@
-import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import type { StillName } from '../media/manifest'
 import { Picture } from '../media/Picture'
 import { dprFor, isSoftwareRenderer, measureFrameTime, quality, type Quality, type Tier } from './quality'
+import { whenScenesMayStart } from './gate'
 import { SceneBoundary } from './SceneBoundary'
 import { SceneQualityContext } from './scene-quality'
+import { SceneReadyContext } from './scene-ready'
 import { useSceneActive } from './visibility'
 import './SceneHost.css'
 
@@ -18,6 +20,18 @@ export interface SceneHostProps {
   /** Pass for the page's LCP image. */
   priority?: boolean
   className?: string
+  /**
+   * Start only once the host is within this distance of the screen (an IntersectionObserver
+   * rootMargin, such as '100% 0px'), so a scene further down the page loads nothing before then.
+   */
+  near?: string
+  /**
+   * The canvas draws the still's subject itself, over a transparent background (the hero cup): once
+   * the live scene has faded in, the still steps aside, so the two never show at once.
+   */
+  swap?: boolean
+  /** Smooth the canvas's edges (multisampling). Worth it for an object with fine edges, not a backdrop. */
+  antialias?: boolean
   /** R3F elements drawn over the still. */
   children?: ReactNode
 }
@@ -79,24 +93,61 @@ function afterFirstPaint(task: () => void): () => void {
   return () => clearTimeout(id)
 }
 
+/** Is the host near the screen? Always true without `near`, or without IntersectionObserver. */
+function useNear(ref: RefObject<Element | null>, near: string | undefined): boolean {
+  const [isNear, setNear] = useState(() => near === undefined || typeof IntersectionObserver === 'undefined')
+  useEffect(() => {
+    const element = ref.current
+    if (isNear || !element || near === undefined) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return
+        setNear(true)
+        observer.disconnect()
+      },
+      { rootMargin: near },
+    )
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [ref, near, isNear])
+  return isNear
+}
+
 /**
  * The stage for a live 3D scene. The still is always there first, so the page has a photograph
- * before any 3D loads. The Canvas mounts after first paint, fades in, and runs its frame loop only
- * while the scene is visible. If WebGL is missing or only emulated in software, or the context is
+ * before any 3D loads. Nothing 3D starts until the visitor shows intent or the loaded page has been
+ * quiet a while (see gate.ts), and, with `near`, until the host nears the screen. The Canvas then
+ * mounts, fades in once its scene has drawn, and runs its frame loop only while the scene is visible. If WebGL is missing or only emulated in software, or the context is
  * lost during the visit, the canvas is removed and the still is all that remains: never a blank or
  * black canvas, and never a slideshow of slow frames.
  */
-export function SceneHost({ still, label, priority = false, className, children }: SceneHostProps) {
+export function SceneHost({
+  still,
+  label,
+  priority = false,
+  className,
+  near,
+  swap = false,
+  antialias = false,
+  children,
+}: SceneHostProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [tier, setTier] = useState<Quality | null>(null)
   const [lost, setLost] = useState(false)
+  const [drawn, setDrawn] = useState(false)
   const active = useSceneActive(ref)
+  const isNear = useNear(ref, near)
+  const ready = useCallback(() => setDrawn(true), [])
+  // Waited for from mount, so the visitor's intent counts even while the host is still far away.
+  const [mayStart, setMayStart] = useState(false)
+  useEffect(() => whenScenesMayStart(() => setMayStart(true)), [])
 
   useEffect(() => {
+    if (!isNear || !mayStart) return
     let cancelled = false
-    const cancel = afterFirstPaint(() => {
-      // Probed here, not at mount, so no WebGL context is created during the LCP window.
-      if (!hasFastWebGL()) return
+    const cancelPaint = afterFirstPaint(() => {
+      // Probed here, not at mount, so no WebGL context is created before the visitor needs one.
+      if (cancelled || !hasFastWebGL()) return
       void measureFrameTime().then((frameMs) => {
         if (cancelled) return
         const forced = forcedTier()
@@ -105,15 +156,18 @@ export function SceneHost({ still, label, priority = false, className, children 
     })
     return () => {
       cancelled = true
-      cancel()
+      cancelPaint()
     }
-  }, [])
+  }, [isNear, mayStart])
 
   // webglcontextlost does not bubble, but a capturing listener on the host still sees it.
   useEffect(() => {
     const host = ref.current
     if (!host) return
-    const onLost = () => setLost(true)
+    const onLost = () => {
+      setLost(true)
+      setDrawn(false)
+    }
     host.addEventListener('webglcontextlost', onLost, true)
     return () => host.removeEventListener('webglcontextlost', onLost, true)
   }, [])
@@ -121,13 +175,26 @@ export function SceneHost({ still, label, priority = false, className, children 
   const showCanvas = tier !== null && !lost
 
   return (
-    <div ref={ref} data-scene-host="" className={['scene-host', className].filter(Boolean).join(' ')}>
+    <div
+      ref={ref}
+      data-scene-host=""
+      data-live={showCanvas && drawn ? 'ready' : undefined}
+      data-swap={swap ? '' : undefined}
+      className={['scene-host', className].filter(Boolean).join(' ')}
+    >
       <Picture name={still} alt={label} priority={priority} className="scene-still" />
       {showCanvas && (
-        <SceneBoundary onError={() => setLost(true)}>
+        <SceneBoundary
+          onError={() => {
+            setLost(true)
+            setDrawn(false)
+          }}
+        >
           <Suspense fallback={null}>
-            <SceneCanvas frameloop={active ? 'always' : 'demand'} dpr={tier.dpr}>
-              <SceneQualityContext value={tier}>{children}</SceneQualityContext>
+            <SceneCanvas frameloop={active ? 'always' : 'demand'} dpr={tier.dpr} antialias={antialias && tier.tier !== 'low'}>
+              <SceneQualityContext value={tier}>
+                <SceneReadyContext value={ready}>{children}</SceneReadyContext>
+              </SceneQualityContext>
             </SceneCanvas>
           </Suspense>
         </SceneBoundary>

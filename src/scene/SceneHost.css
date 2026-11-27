@@ -18,26 +18,31 @@
   object-fit: cover;
 }
 
-/* R3F wraps the canvas in a div of this class. The canvas fades in over the still. */
+/*
+ * R3F wraps the canvas in a div of this class. It waits, invisible, until its scene has drawn a
+ * frame (the host then says data-live='ready'), and only then fades in over the still: never over
+ * a blank frame. Under reduced motion base.css switches the fade off and the canvas is simply there.
+ */
 .scene-canvas {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  animation: scene-fade-in var(--dur-scene) var(--ease-settle) both;
+  opacity: 0;
+  transition: opacity var(--dur-scene) var(--ease-settle);
 }
 
-@keyframes scene-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.scene-host[data-live='ready'] .scene-canvas {
+  opacity: 1;
 }
 
-/* No fade under reduced motion: the canvas is simply there. */
-@media (prefers-reduced-motion: reduce) {
-  .scene-canvas {
-    animation: none;
-  }
+/*
+ * A swap host draws the still's subject itself on a transparent canvas (the hero cup). Its still
+ * stays until the canvas has fully faded in, then steps aside, so the two are never seen at once.
+ */
+.scene-host[data-swap] > picture {
+  transition: visibility 0s linear var(--dur-scene);
+}
+
+.scene-host[data-swap][data-live='ready'] > picture {
+  visibility: hidden;
 }
