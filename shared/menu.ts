@@ -19,7 +19,7 @@ export interface MenuItem {
    * public/models/drinks/<name>.glb with its light version <name>-lite.glb.
    */
   model?: string
-  /** Its photograph, by name in src/media/manifest.ts. Unset for a dish with no photograph yet. */
+  /** Its photograph, by name in src/media/manifest.ts. Unset for an item with no photograph. */
   still?: string
 }
 
@@ -118,6 +118,7 @@ export const MENU: readonly MenuItem[] = [
     notes: 'Its top burnt dark under the grill. Crisp pastry, and a middle that still trembles.',
     price: 320,
     category: 'small-plates',
+    still: 'snack-burnt-custard-tart',
   },
   {
     id: 'olive-oil-orange-cake',
@@ -125,6 +126,7 @@ export const MENU: readonly MenuItem[] = [
     notes: 'A slice of olive oil cake with orange all through it. Moist, and a little bitter at the edges.',
     price: 360,
     category: 'small-plates',
+    still: 'snack-olive-oil-orange-cake',
   },
   {
     id: 'dark-chocolate-sea-salt',
@@ -132,6 +134,7 @@ export const MENU: readonly MenuItem[] = [
     notes: 'A few squares of dark chocolate under flakes of sea salt. Small, and enough.',
     price: 240,
     category: 'small-plates',
+    still: 'snack-dark-chocolate-sea-salt',
   },
 ]
 

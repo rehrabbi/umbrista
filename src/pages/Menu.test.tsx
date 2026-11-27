@@ -91,15 +91,22 @@ describe('Menu', () => {
     expect(screen.getAllByRole('button', { name: /^Add to order/ })).toHaveLength(MENU.length)
   })
 
-  it('shows the night snacks as finished cards, with no photograph', () => {
-    renderMenu()
+  it('shows each night snack with its photograph, named, once the visitor shows intent', () => {
+    const { container } = renderMenu()
     const snacks = screen.getByRole('region', { name: 'Night snacks' })
-    expect(within(snacks).getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)).toEqual([
-      'Burnt custard tart',
-      'Olive oil & orange cake',
-      'Dark chocolate with sea salt',
-    ])
+    const names = ['Burnt custard tart', 'Olive oil & orange cake', 'Dark chocolate with sea salt']
+    expect(within(snacks).getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)).toEqual(names)
+    // Nothing below the first screen is asked for before intent; the photographs' boxes are held open.
     expect(snacks.querySelector('img')).toBeNull()
+    expect(snacks.querySelectorAll('.snack-photo')).toHaveLength(3)
+    intent(container)
+    for (const name of names) {
+      const photo = within(snacks).getByRole('img', { name })
+      expect(photo.getAttribute('src')).toMatch(/^\/media\/snack-[a-z-]+-1280\.webp$/)
+      expect(photo).toHaveAttribute('width')
+      expect(photo).toHaveAttribute('height')
+      expect(photo).toHaveAttribute('loading', 'lazy')
+    }
   })
 
   it('jumps from the counter to a drink’s section, and moves focus to its name', () => {

@@ -4,10 +4,13 @@ import { DRINKS, MENU, type MenuItem } from '../../shared/menu'
 import { formatPrice, formatTotal } from '../../shared/money'
 import { useAddToOrder, useCart } from '../cart/CartProvider'
 import { cartCount, cartTotal } from '../cart/cartStore'
+import { Picture } from '../media/Picture'
 import { usePrefersReducedMotion } from '../media/usePrefersReducedMotion'
 import { followBar, useBarLive } from '../menu/barProgress'
 import { BarStage, DrinkStage } from '../menu/DrinkStage'
 import { MenuCounter } from '../menu/MenuCounter'
+import { stillOf } from '../menu/stills'
+import { useScenesMayStart } from '../scene/gate'
 import { smoothScroller } from '../scroll/useSmoothScroll'
 import { Button } from '../ui/Button'
 import { PageHeading } from '../ui/PageHeading'
@@ -28,13 +31,23 @@ function OrderNote() {
   )
 }
 
-/** A night snack: a card that is finished as type alone, with room for a photograph later. */
-function SnackCard({ item }: { item: MenuItem }) {
+/**
+ * A night snack: its photograph (asked for once the visitor shows intent, like every picture below
+ * the first screen, in a square box held open so nothing shifts when it arrives), then its name,
+ * notes, price and "Add to order".
+ */
+function SnackCard({ item, mayLoad }: { item: MenuItem; mayLoad: boolean }) {
   const addToOrder = useAddToOrder()
   const headingId = useId()
+  const still = stillOf(item)
   return (
     <li className="snack">
       <article aria-labelledby={headingId} className="snack-card">
+        {still && (
+          <div className="snack-photo">
+            {mayLoad && <Picture name={still} alt={item.name} sizes="(min-width: 60rem) 22rem, 92vw" className="snack-still" />}
+          </div>
+        )}
         <h3 id={headingId} className="snack-name">
           {item.name}
         </h3>
@@ -68,6 +81,7 @@ function useBarScroll(reduced: boolean, bar: RefObject<HTMLElement | null>): voi
  */
 export default function Menu() {
   const reduced = usePrefersReducedMotion()
+  const mayLoad = useScenesMayStart()
   const live = useBarLive()
   const bar = useRef<HTMLElement>(null)
   const barTitle = useId()
@@ -117,7 +131,7 @@ export default function Menu() {
         </div>
         <ul className="snack-list">
           {SNACKS.map((item) => (
-            <SnackCard key={item.id} item={item} />
+            <SnackCard key={item.id} item={item} mayLoad={mayLoad} />
           ))}
         </ul>
         <OrderNote />
