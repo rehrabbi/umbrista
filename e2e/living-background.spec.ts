@@ -6,7 +6,16 @@ test.use({ timezoneId: 'Europe/London', viewport: { width: 1440, height: 900 } }
 const NIGHT = new Date('2026-11-26T22:00:00Z')
 const DAY = new Date('2026-11-26T13:00:00Z')
 
-const READY = '.landing-scene canvas[data-backdrop="ready"]'
+const READY = '.dusk-scene canvas[data-backdrop="ready"]'
+
+/**
+ * The street is the third chapter (owner decision 2026-11-27). Its scene starts once the visitor has
+ * shown intent and the chapter is near the screen: move the pointer, then bring the chapter into view.
+ */
+async function showStreet(page: Page) {
+  await page.mouse.move(700, 300)
+  await page.locator('.dusk-stage').scrollIntoViewIfNeeded()
+}
 
 /** Console errors, page errors, and any shader trouble three reports (it warns about link logs). */
 function collectProblems(page: Page): string[] {
@@ -80,17 +89,18 @@ async function compare(page: Page, a: Buffer, b: Buffer): Promise<Comparison> {
   )
 }
 
-// The scrim and the copy sit over both pictures; leave them out so the photograph itself is compared.
-const BARE = '.landing-hero::before{display:none!important}.landing-copy{visibility:hidden!important}'
+// The scrim, the copy and the cup sit over both pictures; leave them out so the photograph itself is compared.
+const BARE =
+  '.dusk-scene::after{display:none!important}.chapter-dusk .chapter-copy,.cup-stage{visibility:hidden!important}'
 
 /** The hero as the canvas draws it (the still hidden), then the still alone (the canvas hidden). */
 async function canvasAndStill(page: Page): Promise<[Buffer, Buffer]> {
-  const box = await page.locator('.landing-scene').boundingBox()
+  const box = await page.locator('.dusk-scene').boundingBox()
   expect(box).not.toBeNull()
   const clip = { x: box!.x, y: box!.y, width: box!.width, height: box!.height }
   const shot = (hide: string) =>
     page.screenshot({ clip, animations: 'disabled', style: `${BARE}${hide}{visibility:hidden!important}` })
-  return [await shot('.landing-scene img'), await shot('.scene-canvas')]
+  return [await shot('.dusk-scene img'), await shot('.dusk-scene .scene-canvas')]
 }
 
 test.describe('the living background', () => {
@@ -105,6 +115,7 @@ test.describe('the living background', () => {
       await page.emulateMedia({ reducedMotion: 'reduce' })
       await page.clock.setFixedTime(time)
       await page.goto('/')
+      await showStreet(page)
       await expect(page.locator(READY)).toHaveCount(1, { timeout: 20_000 })
 
       const [canvas, still] = await canvasAndStill(page)
@@ -126,6 +137,7 @@ test.describe('the living background', () => {
     await forceIntensity(page, 0)
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto('/')
+    await showStreet(page)
     await expect(page.locator(READY)).toHaveCount(1, { timeout: 20_000 })
     const [canvas, still] = await canvasAndStill(page)
     const { meanDiff, deviation } = await compare(page, canvas, still)
@@ -140,6 +152,7 @@ test.describe('the living background', () => {
       const problems = collectProblems(page)
       await allowSoftwareGL(page, tier)
       await page.goto('/')
+      await showStreet(page)
       const canvas = page.locator(READY)
       await expect(canvas).toHaveCount(1, { timeout: 20_000 })
       await expect(canvas).toHaveAttribute('data-tier', tier)

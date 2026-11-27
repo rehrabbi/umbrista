@@ -1,7 +1,7 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { allowSoftwareGL } from './software-gl'
 
-function collectProblems(page: import('@playwright/test').Page): string[] {
+function collectProblems(page: Page): string[] {
   const problems: string[] = []
   page.on('console', (message) => {
     if (message.type() === 'error') problems.push(`console: ${message.text()}`)
@@ -12,82 +12,114 @@ function collectProblems(page: import('@playwright/test').Page): string[] {
   return problems
 }
 
-test('the landing hero image loads, and the h1 comes first', async ({ page }) => {
+/** The visitor shows intent (the scenes may start) and brings the cup's chapters near. */
+async function bringCupNear(page: Page) {
+  await page.mouse.move(400, 300)
+  await page.locator('section[data-chapter="cup"]').scrollIntoViewIfNeeded()
+}
+
+test('the hero is the craft film: its poster loads first, edge to edge, and the h1 comes first', async ({ page }) => {
   const problems = collectProblems(page)
   await page.goto('/')
 
-  const hero = page.locator('.landing-scene img')
+  const hero = page.locator('.hero-media img')
   await expect(hero).toHaveAttribute('fetchpriority', 'high')
   await expect(hero).toHaveAttribute('loading', 'eager')
-  await expect
-    .poll(() => hero.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0))
-    .toBe(true)
-  expect(await hero.evaluate((img: HTMLImageElement) => img.currentSrc)).toMatch(/\/media\/street-dusk-\d+\.avif$/)
+  await expect.poll(() => hero.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true)
+  expect(await hero.evaluate((img: HTMLImageElement) => img.currentSrc)).toMatch(/\/media\/steam-loop-poster-\d+\.avif$/)
+  // Full bleed: the poster covers the whole width of the screen.
+  const box = await hero.boundingBox()
+  expect(box!.x).toBe(0)
+  expect(box!.width).toBe(page.viewportSize()!.width)
+  expect(await page.locator('img[fetchpriority="high"]').count()).toBe(1)
 
-  const firstHeading = await page.getByRole('main').locator('h1, img').first().evaluate((el) => el.tagName)
-  expect(firstHeading).toBe('H1')
+  const first = await page.getByRole('main').locator('h1, img').first().evaluate((el) => el.tagName)
+  expect(first).toBe('H1')
   expect(problems).toEqual([])
 })
 
-test('the canvas mounts over the still when WebGL works, and the page stays quiet', async ({ page }) => {
+test('the film is muted, swaps in over its poster once the page has loaded, and plays', async ({ page }) => {
+  await page.goto('/')
+  const video = page.locator('video.hero-film')
+  await expect(video).toHaveCount(1)
+  await expect(video).toHaveJSProperty('muted', true)
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(false)
+  await expect(video).toHaveAttribute('data-playing', '')
+  const [film, poster] = await Promise.all([video.boundingBox(), page.locator('.hero-media img').boundingBox()])
+  for (const key of ['x', 'y', 'width', 'height'] as const) expect(Math.abs(film![key] - poster![key])).toBeLessThanOrEqual(1)
+})
+
+test('under reduced motion the hero is its poster and there is no video element', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+  await expect(page.locator('.hero-media img')).toBeVisible()
+  await page.waitForTimeout(500)
+  await expect(page.locator('video')).toHaveCount(0)
+})
+
+test('no 3D is created for the first screen until the visitor shows intent', async ({ page }) => {
+  await allowSoftwareGL(page)
+  await page.goto('/')
+  await page.waitForTimeout(2500)
+  await expect(page.locator('canvas')).toHaveCount(0)
+  await bringCupNear(page)
+  await expect(page.locator('.cup-scene canvas')).toHaveCount(1, { timeout: 15_000 })
+})
+
+test('the cup fades in over its still, exactly aligned, and does not block the page', async ({ page }) => {
   const problems = collectProblems(page)
   await allowSoftwareGL(page)
   await page.goto('/')
-  await expect(page.locator('.landing-scene canvas')).toHaveCount(1, { timeout: 10_000 })
-  await expect(page.locator('.landing-scene img')).toBeVisible()
+  await bringCupNear(page)
+  const host = page.locator('.cup-scene')
+  await expect(host).toHaveAttribute('data-live', 'ready', { timeout: 30_000 })
+  const canvas = host.locator('canvas')
+  const [box, frame] = await Promise.all([canvas.boundingBox(), host.boundingBox()])
+  for (const key of ['x', 'y', 'width', 'height'] as const) expect(Math.abs(box![key] - frame![key])).toBeLessThanOrEqual(1)
+  const still = await host.locator('img').boundingBox()
+  for (const key of ['x', 'y', 'width', 'height'] as const) expect(Math.abs(still![key] - frame![key])).toBeLessThanOrEqual(1)
+  expect(await canvas.evaluate((el) => getComputedStyle(el.parentElement!).pointerEvents)).toBe('none')
+  // The controls still answer: the buttons send their moves without errors.
+  await page.getByRole('button', { name: 'Splash' }).click()
+  await page.getByRole('button', { name: 'Spin' }).click()
+  await page.waitForTimeout(500)
   expect(problems).toEqual([])
 })
 
-test('without WebGL only the still is shown, with no errors', async ({ page }) => {
+test('without WebGL the cup is its still, with no errors', async ({ page }) => {
   const problems = collectProblems(page)
   await page.addInitScript(() => {
     HTMLCanvasElement.prototype.getContext = () => null
   })
   await page.goto('/')
-  await expect(page.locator('.landing-scene img')).toBeVisible()
+  await bringCupNear(page)
+  await expect(page.locator('.cup-scene img')).toBeVisible()
   await page.waitForTimeout(1500)
-  await expect(page.locator('.landing-scene canvas')).toHaveCount(0)
+  await expect(page.locator('canvas')).toHaveCount(0)
   expect(problems).toEqual([])
 })
 
-test('on a software renderer only the still is shown, with no errors', async ({ page }) => {
+test('on a software renderer the cup is its still, with no errors', async ({ page }) => {
   // This browser's WebGL is SwiftShader; without the test override the site must refuse it.
   const problems = collectProblems(page)
   await page.goto('/')
-  await expect(page.locator('.landing-scene img')).toBeVisible()
+  await bringCupNear(page)
+  await expect(page.locator('.cup-scene img')).toBeVisible()
   await page.waitForTimeout(1500)
-  await expect(page.locator('.landing-scene canvas')).toHaveCount(0)
+  await expect(page.locator('canvas')).toHaveCount(0)
   expect(problems).toEqual([])
 })
 
-test('the steam loop is muted and plays once scrolled into view', async ({ page }) => {
+test('every chapter photograph fills the screen edge to edge', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/')
-  const video = page.locator('video.landing-loop')
-  await expect(video).toHaveJSProperty('muted', true)
-  await video.scrollIntoViewIfNeeded()
-  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(false)
-})
-
-test('under reduced motion the loop is its poster and there is no video element', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/')
-  await expect(page.locator('.landing-craft img')).toBeVisible()
-  await expect(page.locator('video')).toHaveCount(0)
-})
-
-test('the canvas covers the still exactly and does not block clicks', async ({ page }) => {
-  await allowSoftwareGL(page)
-  await page.goto('/')
-  // The canvas is in the page while its scene loads, but hidden until the photograph is on it.
-  const canvas = page.locator('.landing-scene canvas[data-backdrop="ready"]')
-  await expect(canvas).toHaveCount(1, { timeout: 10_000 })
-  const still = await page.locator('.landing-scene img').boundingBox()
-  const box = await canvas.boundingBox()
-  expect(still).not.toBeNull()
-  expect(box).not.toBeNull()
-  for (const key of ['x', 'y', 'width', 'height'] as const) {
-    expect(Math.abs(box![key] - still![key])).toBeLessThanOrEqual(1)
+  for (const selector of ['.hero-media', '.dusk-scene', '.chapter-window .chapter-media']) {
+    const media = page.locator(selector)
+    await media.scrollIntoViewIfNeeded()
+    const box = await media.boundingBox()
+    expect(box!.x, selector).toBe(0)
+    expect(box!.width, selector).toBe(1440)
+    const radius = await media.evaluate((el) => getComputedStyle(el).borderRadius)
+    expect(radius, selector).toBe('0px')
   }
-  const pointerEvents = await canvas.evaluate((el) => getComputedStyle(el.parentElement!).pointerEvents)
-  expect(pointerEvents).toBe('none')
 })
