@@ -1,7 +1,6 @@
 import { useGLTF } from '@react-three/drei'
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import { Box3, Mesh, Vector3, type Group } from 'three'
-import type { GLTFLoader } from 'three-stdlib'
 
 /** The compressed cup, built by `npm run models` from the approved master. */
 export const CUP_URL = '/models/cup.glb'
@@ -30,7 +29,7 @@ export interface CupModel {
  * The meshopt decoder is three's own, bundled with the site (a small WebAssembly module embedded
  * in it), so nothing is fetched from a CDN. Draco is never used: the cup is not Draco-compressed.
  */
-function withLocalDecoders(loader: GLTFLoader): void {
+const withLocalDecoders: NonNullable<Parameters<typeof useGLTF>[3]> = (loader) => {
   loader.setMeshoptDecoder(MeshoptDecoder)
 }
 
