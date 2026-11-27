@@ -4,7 +4,7 @@ import { Picture } from '../media/Picture'
 import { VideoLoop } from '../media/VideoLoop'
 import { usePrefersReducedMotion } from '../media/usePrefersReducedMotion'
 import { CupControls } from '../scene/cup/CupControls'
-import { pushCupInput } from '../scene/cup/cupInput'
+import { pushCupInput, useCupLive } from '../scene/cup/cupInput'
 import { CHAPTERS, chapterIndex } from '../scene/journey/chapters'
 import { journeyProgress, useJourneyProgress } from '../scene/journey/progress'
 import { useScenesMayStart, whenScenesMayStart } from '../scene/gate'
@@ -146,6 +146,32 @@ function Chapter({
   )
 }
 
+/**
+ * May the hero's film play? Once the page has loaded and the browser is next idle, so the poster
+ * (the first screen's image) has the network to itself; never when the visitor has asked to save
+ * data, and never under reduced motion, where the poster is the hero.
+ */
+function useFilmMayPlay(reduced: boolean): boolean {
+  const [may, setMay] = useState(false)
+  useEffect(() => {
+    const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true
+    if (reduced || saveData) return
+    let idle: number | ReturnType<typeof setTimeout> | undefined
+    const start = () => {
+      if (typeof requestIdleCallback === 'function') idle = requestIdleCallback(() => setMay(true), { timeout: 2000 })
+      else idle = setTimeout(() => setMay(true), 200)
+    }
+    if (document.readyState === 'complete') start()
+    else window.addEventListener('load', start, { once: true })
+    return () => {
+      window.removeEventListener('load', start)
+      if (typeof idle === 'number' && typeof cancelIdleCallback === 'function') cancelIdleCallback(idle)
+      else clearTimeout(idle)
+    }
+  }, [reduced])
+  return may
+}
+
 /** A chapter's small number and name. */
 function ChapterMark({ index, title }: { index: number; title: string }) {
   return (
@@ -161,18 +187,20 @@ export function Landing() {
   const failed = useJourneyScroll(reduced, root)
   const still = reduced || failed
   useStillJourney(still, root)
-  // Nothing beyond the poster is asked for until the visitor shows intent or the loaded page has
-  // been quiet a while (gate.ts), so the hero's poster has the network to itself; after that each
-  // picture still waits for its place on screen.
+  // The later chapters' pictures wait for the visitor's intent or a quiet, loaded page (gate.ts), so
+  // the hero's poster has the network to itself; after that each still waits for its place on screen.
   const mayLoad = useScenesMayStart()
+  // The cup's controls appear once the live cup is there to answer them; a still cannot be played with.
+  const cupLive = useCupLive()
+  const filmMayPlay = useFilmMayPlay(reduced)
 
   return (
     <div ref={root} className="landing">
       {/*
        * The hero: the craft, full screen. The crema's close-up fills the viewport edge to edge (its
-       * poster is the page's one priority image); the film swaps in over it, frame for frame, on the
-       * visitor's first intent or once the loaded page has been quiet a while, and under reduced
-       * motion stays the poster. The copy comes first in the document, so the heading is read
+       * poster is the page's one priority image); the film swaps in over it, frame for frame, once
+       * the page has loaded and the browser is idle; under reduced motion, or when the visitor saves
+       * data, the poster stays. The copy comes first in the document, so the heading is read
        * before any picture.
        */}
       <section data-chapter={CRAFT.id} className="chapter chapter-hero">
@@ -194,7 +222,7 @@ export function Landing() {
         </div>
         <div className="chapter-media hero-media">
           <Picture name="steam-loop-poster" alt="Crema on a fresh espresso, close up, with steam rising from it." priority className="chapter-photo" />
-          {!reduced && mayLoad && <VideoLoop name="steam-loop" poster={false} className="chapter-photo hero-film" />}
+          {filmMayPlay && <VideoLoop name="steam-loop" poster={false} className="chapter-photo hero-film" />}
         </div>
       </section>
 
@@ -206,8 +234,12 @@ export function Landing() {
           <div className="chapter-copy">
             <ChapterMark index={1} title={CUP.title} />
             <h2 className="chapter-line">{CUP.line}</h2>
-            <p className="chapter-note">Tilt it, spin it, or set the coffee moving.</p>
-            <CupControls onInput={pushCupInput} />
+            {cupLive && (
+              <>
+                <p className="chapter-note">Tilt it, spin it, or set the coffee moving.</p>
+                <CupControls onInput={pushCupInput} />
+              </>
+            )}
           </div>
         </Chapter>
 

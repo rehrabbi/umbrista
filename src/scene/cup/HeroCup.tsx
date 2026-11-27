@@ -28,12 +28,12 @@ import {
 import { usePrefersReducedMotion } from '../../media/usePrefersReducedMotion'
 import { useNight } from '../../time/useNight'
 import { parseDurationMs, stepNight } from '../background/uniforms'
-import { CUP_STILL_VIEW, orbitAt, type Orbit } from '../journey/chapters'
+import { CUP_REST, CUP_STILL_VIEW, orbitAt, type Orbit } from '../journey/chapters'
 import { journeyProgress } from '../journey/progress'
 import { useSceneQuality } from '../scene-quality'
 import { useSceneReady } from '../scene-ready'
-import { onCupInput, takeCupInputs } from './cupInput'
-import { chapterLook, liquidLook, type LiquidLook } from './liquidLook'
+import { onCupInput, setCupLive, takeCupInputs } from './cupInput'
+import { LOOKS, chapterLook, liquidLook, type LiquidLook } from './liquidLook'
 import { applyLook, createLiquidMaterial, liquidSurface } from './liquidSurface'
 import { REST, step, type CupInput, type CupState } from './physics'
 import { useCupModel, type CupModel } from './useCupModel'
@@ -44,8 +44,46 @@ const FOV = 28
 const PUSH_SECONDS = 0.32
 /** How far below the rim the coffee stops when the cup is full, as a fraction of the cup's height. */
 const BRIM_MARGIN = 0.07
-/** How long the look takes to fade from one chapter's state to the next under reduced motion. */
-const STILL_FADE_SECONDS = 0.6
+/** How long the coffee takes to change from one chapter's state to the next in still chapters. */
+const STILL_FADE_SECONDS = 0.9
+/**
+ * After the canvas has faded in over the still (it holds the still's pose and coffee until then),
+ * how long the cup takes to ease from that pose to where the journey is.
+ */
+const HANDOFF_SECONDS = 0.9
+
+/** 0..1, eased at both ends. */
+function smooth(t: number): number {
+  const x = Math.min(1, Math.max(0, t))
+  return x * x * (3 - 2 * x)
+}
+
+function mixOrbit(a: Orbit, b: Orbit, t: number): Orbit {
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]
+}
+
+/**
+ * Dispose of three objects once nothing draws with them any more. React's development mode runs
+ * effects twice (mount, unmount, mount); disposing on that first unmount and then drawing with the
+ * same objects again would make three rebuild them under a compile that is still waiting on the
+ * old ones. So the disposal waits a microtask and skips whatever the effect has taken back since.
+ */
+function useDisposeOnUnmount(...owned: { dispose(): void }[]): void {
+  const live = useRef(new Set<{ dispose(): void }>())
+  useEffect(() => {
+    // The set lives as long as the component; the ref only holds it.
+    const drawing = live.current
+    for (const item of owned) drawing.add(item)
+    return () => {
+      for (const item of owned) drawing.delete(item)
+      queueMicrotask(() => {
+        for (const item of owned) if (!drawing.has(item)) item.dispose()
+      })
+    }
+    // The objects are this effect's inputs: a new set is a new effect.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, owned)
+}
 
 /**
  * The vertical field of view that fits a square frame inside the canvas, as `object-fit: contain`
@@ -175,9 +213,14 @@ function seatTexture(): CanvasTexture {
 /**
  * The glaze: the model's own maps on three's physical material, with a clear coat for the wet shine
  * of a glazed cup. The model's baked emissive map is kept faint: in a dark room a cup gives no light.
+ * The model is loaded once for the page and kept, so its glaze is made once and kept with it: a
+ * remount of the scene finds it already glazed and never draws with a disposed material.
  */
-function glaze(scene: Group): MeshPhysicalMaterial[] {
-  const made: MeshPhysicalMaterial[] = []
+const glazed = new WeakSet<Group>()
+
+function glaze(scene: Group): void {
+  if (glazed.has(scene)) return
+  glazed.add(scene)
   scene.traverse((object) => {
     if (!(object instanceof Mesh)) return
     object.castShadow = true
@@ -200,9 +243,7 @@ function glaze(scene: Group): MeshPhysicalMaterial[] {
     })
     material.normalScale.copy(source.normalScale)
     object.material = material
-    made.push(material)
   })
-  return made
 }
 
 /** Every texture the cup's materials draw with. */
@@ -260,8 +301,7 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
   const invalidate = useThree((state) => state.invalidate)
   const size = useThree((state) => state.size)
 
-  const materials = useMemo(() => glaze(model.scene), [model.scene])
-  useEffect(() => () => materials.forEach((material) => material.dispose()), [materials])
+  glaze(model.scene)
 
   // The shape the scene works from.
   const shape = useShape(model)
@@ -271,13 +311,7 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
     const material = createLiquidMaterial(shape.brimRadius)
     return { geometry, material }
   }, [shape.brimRadius])
-  useEffect(
-    () => () => {
-      liquid.geometry.dispose()
-      liquid.material.dispose()
-    },
-    [liquid],
-  )
+  useDisposeOnUnmount(liquid.geometry, liquid.material)
 
   const stream = useMemo(() => {
     const geometry = new CylinderGeometry(0.008, 0.014, 2.4, 20, 1, true)
@@ -293,20 +327,12 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
     })
     return { geometry, material }
   }, [])
-  useEffect(
-    () => () => {
-      stream.geometry.dispose()
-      stream.material.dispose()
-    },
-    [stream],
-  )
+  useDisposeOnUnmount(stream.geometry, stream.material)
 
   const table = useMemo(() => shadowCatcher(), [])
-  useEffect(() => () => table.dispose(), [table])
   const contact = useMemo(() => contactTexture(), [])
-  useEffect(() => () => contact.dispose(), [contact])
   const seat = useMemo(() => seatTexture(), [])
-  useEffect(() => () => seat.dispose(), [seat])
+  useDisposeOnUnmount(table, contact, seat)
 
   // The room's reflections.
   useEffect(() => {
@@ -361,10 +387,14 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
   const yaw = useRef(0)
   const clock = useRef(0)
   useEffect(() => onCupInput(invalidate), [invalidate])
+  // The page offers the cup's controls only while the live cup is there to answer them.
+  useEffect(() => () => setCupLive(false), [])
+  const drawnAt = useRef<number | null>(null)
+  const tween = useRef<{ from: LiquidLook; to: LiquidLook; start: number } | null>(null)
 
   const night = useRef(isNight ? 1 : 0)
   const [durationMs] = useState(() => parseDurationMs(getComputedStyle(document.documentElement).getPropertyValue('--dur-scene')))
-  const shown = useRef<LiquidLook | null>(null)
+  const shown = useRef<LiquidLook>(LOOKS.cup)
   const target = useMemo(() => new Vector3(0, shape.centreY, 0), [shape.centreY])
   const sloshDir = useMemo(() => new Vector2(1, 0), [])
 
@@ -381,7 +411,12 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
     camera.far = 50
     camera.updateProjectionMatrix()
     const progress = fixedProgress ?? journeyProgress.get()
-    placeCamera(camera, still ? CUP_STILL_VIEW : orbitAt(progress), target, shape.frame)
+    // The hand-off from the still: the live cup holds the still's pose and coffee while the canvas
+    // fades in over it, then eases to where the journey is.
+    const holdUntil = (drawnAt.current ?? clock.current) + durationMs / 1000
+    const handoff = smooth((clock.current - holdUntil) / HANDOFF_SECONDS)
+    const handing = drawnAt.current === null || handoff < 1
+    placeCamera(camera, mixOrbit(CUP_REST, still ? CUP_STILL_VIEW : orbitAt(progress), handoff), target, shape.frame)
 
     // The visitor's pushes, each held for a moment; a drag turns the cup at once.
     for (const input of takeCupInputs()) {
@@ -407,14 +442,21 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
     if (spin.current) spin.current.rotation.y = yaw.current
     if (state.current.tilt[0] !== 0 || state.current.tilt[1] !== 0) sloshDir.set(state.current.tilt[0], state.current.tilt[1]).normalize()
 
-    // The coffee: its look for the journey, or under reduced motion its chapter's, faded in.
-    const wanted = still ? chapterLook(progress) : liquidLook(progress)
-    let look = wanted
-    if (still && shown.current) {
-      const t = Math.min(1, dt / STILL_FADE_SECONDS)
-      look = blendLooks(shown.current, wanted, t)
+    // The coffee: its look for the journey, eased in from the still's espresso; or, in still
+    // chapters, each chapter's own state, changing to the next over STILL_FADE_SECONDS.
+    let look: LiquidLook
+    let fading = false
+    if (still) {
+      const wanted = handing ? LOOKS.cup : chapterLook(progress)
+      if (!tween.current || !sameLook(tween.current.to, wanted)) {
+        tween.current = { from: shown.current, to: wanted, start: clock.current }
+      }
+      const t = smooth((clock.current - tween.current.start) / STILL_FADE_SECONDS)
+      look = blendLooks(tween.current.from, tween.current.to, t)
+      fading = t < 1
+    } else {
+      look = blendLooks(LOOKS.cup, liquidLook(progress), handoff)
     }
-    const fading = still && shown.current !== null && !sameLook(look, wanted)
     shown.current = look
     const uniforms = (surface.current?.material as typeof liquid.material | undefined)?.userData.uniforms
     if (!uniforms) return
@@ -466,8 +508,12 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
     }
     if (warm !== 'ready') return
     frame.gl.render(frame.scene, frame.camera)
-    ready()
-    if (frame.frameloop === 'demand' && (moving || fading)) invalidate()
+    if (drawnAt.current === null) {
+      drawnAt.current = clock.current
+      ready()
+      setCupLive(true)
+    }
+    if (frame.frameloop === 'demand' && (moving || fading || handing)) invalidate()
   }, 1)
 
   // A still canvas draws again when the journey, the clock or the switch changes.

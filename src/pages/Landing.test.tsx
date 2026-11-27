@@ -25,10 +25,20 @@ vi.mock('../scene/journey/Journey', () => ({
   Journey: ({ progress }: { progress: number }) => <div data-testid="journey" data-progress={progress} />,
 }))
 
-// So does the cup; here it says whether it was asked for still chapters.
-vi.mock('../scene/cup/HeroCup', () => ({
-  default: ({ still }: { still?: boolean }) => <div data-testid="hero-cup" data-still={String(Boolean(still))} />,
-}))
+// So does the cup; here it says whether it was asked for still chapters, and that it is live.
+vi.mock('../scene/cup/HeroCup', async () => {
+  const { useEffect } = await import('react')
+  const { setCupLive } = await import('../scene/cup/cupInput')
+  return {
+    default: function HeroCup({ still }: { still?: boolean }) {
+      useEffect(() => {
+        setCupLive(true)
+        return () => setCupLive(false)
+      }, [])
+      return <div data-testid="hero-cup" data-still={String(Boolean(still))} />
+    },
+  }
+})
 
 const REDUCED = '(prefers-reduced-motion: reduce)'
 const PROMISE = 'We open when the light goes.'
@@ -89,7 +99,9 @@ describe('Landing', () => {
     expect(priority[0]!.getAttribute('src')).toContain('/media/steam-loop-poster-')
     expect(priority[0]).toHaveAttribute('loading', 'eager')
     expect(priority[0]!.closest('section')).toHaveAttribute('data-chapter', 'craft')
-    // Every later chapter's media loads lazily, near the screen.
+    // Every later chapter's media is asked for after the visitor's intent, and lazily, near the screen.
+    intent(container)
+    expect(container.querySelectorAll('img:not([fetchpriority="high"])').length).toBeGreaterThan(0)
     for (const image of container.querySelectorAll('img:not([fetchpriority="high"])')) {
       expect(image).toHaveAttribute('loading', 'lazy')
     }
@@ -110,12 +122,14 @@ describe('Landing', () => {
     expect(links).toEqual(['/menu', '/brew', '/reserve', '/join'])
   })
 
-  it('has buttons to play with the cup', () => {
-    renderLanding()
-    const controls = screen.getByRole('group', { name: 'Play with the cup' })
+  it('offers buttons to play with the cup once the live cup is there, not before', async () => {
+    const { container } = renderLanding()
+    expect(screen.queryByRole('group', { name: 'Play with the cup' })).toBeNull()
+    intent(container)
+    const controls = await screen.findByRole('group', { name: 'Play with the cup' }, SLOW)
     expect(controls.closest('section')).toHaveAttribute('data-chapter', 'cup')
     for (const name of ['Tilt left', 'Tilt right', 'Spin', 'Splash']) expect(screen.getByRole('button', { name })).toBeInTheDocument()
-  })
+  }, 15_000)
 
   it('creates no canvas until the visitor shows intent, and none before the hero text', async () => {
     const { container } = renderLanding()

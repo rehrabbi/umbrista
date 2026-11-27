@@ -32,11 +32,15 @@ export interface Chapter {
   loop?: LoopName
 }
 
-/** The cup at rest: turned a little, seen from just above the rim, as in the approved preview. */
-export const CUP_REST: Orbit = [25, 72, 1.05]
+/**
+ * The cup at rest: turned a little, seen from high enough to look into the crema. It is the pose
+ * the cup's still is rendered in (npm run cup-still), the live cup's first frame, and the one view
+ * under reduced motion, so the still and the live cup always meet in the same place.
+ */
+export const CUP_REST: Orbit = [35, 58, 1.04]
 
-/** The one view of the cup under reduced motion: high enough to see the coffee, and never moving. */
-export const CUP_STILL_VIEW: Orbit = [40, 52, 1.02]
+/** The one view of the cup under reduced motion: the rest pose, never moving. */
+export const CUP_STILL_VIEW: Orbit = CUP_REST
 
 export const CHAPTERS: readonly Chapter[] = [
   {
@@ -97,9 +101,9 @@ export function chapterAt(progress: number): { index: number; local: number } {
 export function orbitAt(progress: number): Orbit {
   const { index, local } = chapterAt(progress)
   const { from, to } = CHAPTERS[index]!.camera
-  // Eased at the ends of the journey only, so the camera keeps moving through chapter changes.
-  const t = local
-  return [from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t, from[2] + (to[2] - from[2]) * t]
+  // Linear within each chapter: the smooth scroll already eases the visitor's hand, and a curve per
+  // chapter would make the camera stop at every chapter change.
+  return [from[0] + (to[0] - from[0]) * local, from[1] + (to[1] - from[1]) * local, from[2] + (to[2] - from[2]) * local]
 }
 
 /**
