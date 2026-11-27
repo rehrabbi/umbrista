@@ -31,6 +31,11 @@ const STILLS = ['street-dusk', 'rain-window', 'crema-macro']
 // Stills with a transparent background, kept transparent in both formats: the hero cup, rendered
 // from its own model by `npm run cup-still`, which the live cup replaces in place.
 const ALPHA_STILLS = ['cup-still']
+// The menu's drinks, from their approved studio stills (docs/brand.md): what the bar and the counter
+// show before the 3D arrives, and for good under reduced motion or without WebGL. One drink fills at
+// most one screen, so 640 and 1280 px are enough. Drink 1, Last Tram, is the cup and uses cup-still.
+const DRINK_STILLS = ['fog-line', 'lantern', 'sodium', 'night-ferry', 'low-tide', 'umbra', 'wet-cobble', 'three-oclock']
+const DRINK_WIDTHS = [640, 1280]
 const LOOPS = [{ name: 'steam-loop', file: 'steam-loop.mp4' }]
 // Textures for the 3D scenes: square WebP only (a WebGL texture loads through a plain image, with no
 // <picture> to fall back from AVIF), at 768 px and 512 px for the low quality tier. The hero cup's
@@ -45,6 +50,8 @@ const TEXTURE_WIDTHS = [768, 512]
 const TEXTURE_QUALITY = 55
 
 const BITEXACT = ['-map_metadata', '-1', '-fflags', '+bitexact', '-flags:v', '+bitexact']
+// Decode and scale on one thread too (the encoders already are): the build never loads every core.
+const ONE_THREAD = ['-threads', '1', '-filter_threads', '1']
 
 function fail(message) {
   console.error(`media: ${message}`)
@@ -102,8 +109,8 @@ function build(outName, make) {
   console.log(`  ${outName}  ${(statSync(path).size / 1024).toFixed(0)} KB`)
 }
 
-function stillSet(input, name, aspect, sourceWidth, extraInput = [], alpha = false) {
-  const widths = IMAGE_WIDTHS.filter((w) => w <= sourceWidth)
+function stillSet(input, name, aspect, sourceWidth, extraInput = [], alpha = false, sizes = IMAGE_WIDTHS) {
+  const widths = sizes.filter((w) => w <= sourceWidth)
   for (const w of widths) {
     const scale = `scale=${w}:${heightFor(w, aspect)}:flags=lanczos`
     // AVIF carries transparency as a second, greyscale image beside the colour one.
@@ -111,11 +118,11 @@ function stillSet(input, name, aspect, sourceWidth, extraInput = [], alpha = fal
       ? ['-filter_complex', `[0]${scale},format=yuva420p,split[c][a];[a]alphaextract[a]`, '-map', '[c]', '-map', '[a]']
       : ['-vf', `${scale},format=yuv420p`]
     build(`${name}-${w}.avif`, (out) =>
-      run('ffmpeg', ['-v', 'error', '-y', ...extraInput, '-i', input, ...avifPicture, ...BITEXACT,
+      run('ffmpeg', ['-v', 'error', '-y', ...ONE_THREAD, ...extraInput, '-i', input, ...avifPicture, ...BITEXACT,
         '-c:v', 'libaom-av1', '-crf', String(AVIF_CRF), '-b:v', '0', '-cpu-used', '4', '-row-mt', '0', '-threads', '1',
         '-still-picture', '1', '-frames:v', '1', out]))
     build(`${name}-${w}.webp`, (out) =>
-      run('ffmpeg', ['-v', 'error', '-y', ...extraInput, '-i', input, '-vf', alpha ? `${scale},format=yuva420p` : scale, ...BITEXACT,
+      run('ffmpeg', ['-v', 'error', '-y', ...ONE_THREAD, ...extraInput, '-i', input, '-vf', alpha ? `${scale},format=yuva420p` : scale, ...BITEXACT,
         '-c:v', 'libwebp', '-quality', String(WEBP_QUALITY), '-compression_level', '6', '-frames:v', '1', out]))
   }
   return widths
@@ -142,6 +149,15 @@ for (const name of ALPHA_STILLS) {
   const size = dimensions(input)
   const aspect = aspectOf(size)
   entries[name] = { kind: 'still', aspect, widths: stillSet(input, name, aspect, size.width, [], true) }
+}
+
+for (const drink of DRINK_STILLS) {
+  const name = `drink-${drink}`
+  console.log(name)
+  const input = requireMaster(`drinks/${drink}.png`)
+  const size = dimensions(input)
+  const aspect = aspectOf(size)
+  entries[name] = { kind: 'still', aspect, widths: stillSet(input, name, aspect, size.width, [], false, DRINK_WIDTHS) }
 }
 
 for (const texture of TEXTURES) {
