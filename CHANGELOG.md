@@ -13,7 +13,8 @@ once the whole site is built.
   along with a swipe, a trackpad or a mouse drag, and chosen with the arrow keys, Home and End;
   Enter or a tap goes to that drink. Then the bar, one drink per screen: each rises into view,
   turns with the scroll and settles under the lamp, with its name and price rising in kinetic type,
-  its notes, "Add to order", and "Turn left" and "Turn right". Then the night snacks. Prices are in
+  its notes, "Add to order", and "Turn left" and "Turn right". Then the night snacks, each with its
+  photograph. Prices are in
   crowns, with the key at the top. Only the drink on screen and its neighbours load their full
   models; the counter draws the light ones. Until the 3D has drawn, and for good under reduced
   motion or without WebGL, every drink is its photograph, and the whole menu reads and orders as

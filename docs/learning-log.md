@@ -403,6 +403,5 @@ longer idle) on phones, trading a later rain for a quieter first few seconds.
 
 - Night Ferry and Low Tide still read frosted; a transmission material on their glass needs a look
   on a GPU before it is worth its cost.
-- The night snacks wait for the owner's go on photoreal stills; the cards are finished without them.
 - The menu's frame times, with a drink on screen and while flicking along the counter, need a short
   look on a machine with a GPU.

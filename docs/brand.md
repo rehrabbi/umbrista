@@ -142,6 +142,10 @@ masters stay in Higgsfield and are found again by their job IDs; only web deriva
 | Coffee surface 2, from above: the milk blooming up through the crema | The cup's coffee surface (dusk on the street) | Nano Banana 2, 4K still | `5db64658` | 2026-11-27 |
 | Coffee surface 3, from above: a wide rosetta with a foam "lamp cord" and a round dot | The cup's coffee surface (the window, and aged for the last cup) | Nano Banana 2, 4K still | `8389ae19` | 2026-11-27 |
 | Coffee surface 4, from above: the last cup | Not used: the owner chose to age surface 3 live instead | Nano Banana 2, 4K still | `6fc56cef` | 2026-11-27 |
+| Burnt custard tart, studio still on the seamless navy set | Menu, the night snacks | Nano Banana 2, 4K still | `550fcdae` | 2026-11-28 |
+| Olive oil and orange cake, studio still on the seamless navy set | Menu, the night snacks | Nano Banana 2, 4K still | `99018d8b` | 2026-11-28 |
+| Dark chocolate with sea salt, studio still on the seamless navy set | Menu, the night snacks | Nano Banana 2, 4K still | `249abc6a` | 2026-11-28 |
+| Burnt custard tart on linen | Not used: shot on a linen tablecloth, not the seamless navy set | Nano Banana 2, 4K still | `54ef8076` | 2026-11-28 |
 
 Notes:
 
@@ -187,6 +191,10 @@ Notes:
   arrives and for good under reduced motion or without WebGL: `npm run media` makes `drink-<id>`
   in AVIF and WebP at 640 and 1280 px (7 to 145 KB). Last Tram uses the cup's still. The rejected
   glass Three O'Clock is not encoded.
+- The night snacks' stills (owner's go, 2026-11-28) are on the menu's snack cards: `npm run media`
+  makes `snack-<id>` in AVIF and WebP at 640 and 1280 px (19 to 90 KB) from the masters in the
+  git-ignored `media-src/snacks/`. The rejected linen tart and the contact sheets there are never
+  encoded.
 - Web copies of the drinks, by `npm run models`, the same steps as the cup's (meshopt, WebP at
   quality 86, normal map 94). Each drink has two: `public/models/drinks/<id>.glb`, the full model
   for the bar (budget 1.5 MB, every triangle of the master, textures at 2048 px unless that is over

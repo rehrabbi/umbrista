@@ -188,7 +188,7 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
     canvas of every drink's light model, `CounterScene`, in CSS pixels so each drink stands over its
     place), the bar (`DrinkStage`, one section per drink; `BarStage`, one sticky canvas over them;
     `BarScene`, the on-screen drink and its neighbours' full models), and the night snacks as cards
-    of type alone (no stills yet: ruling 1). `barProgress.ts` holds what changes every frame outside
+    with their photographs (approved by the owner on 2026-11-28). `barProgress.ts` holds what changes every frame outside
     React: the bar's progress (written by `followBar` from the scroll, never under reduced motion),
     the drinks' turns, whether the bar is live, and the counter's row. `useDrinkModel(model,
     'full' | 'lite')` loads through the cup's local meshopt decoder, gives each scene its own copy
@@ -196,8 +196,8 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   - **Shared pieces**: `SceneHost` can leave its stills to the page (no `still`) and draw only on
     demand (`onDemand`); the night room is `src/scene/nightRoom.ts`; `smoothScroller()` returns the
     running Lenis; `.visually-hidden` is in `base.css`.
-  - **Stills**: `npm run media` makes `drink-<id>` (AVIF and WebP, 640 and 1280 px) from the studio
-    masters; Last Tram uses `cup-still`. Every still encode now decodes and scales on one thread.
+  - **Stills**: `npm run media` makes `drink-<id>` and `snack-<id>` (AVIF and WebP, 640 and 1280
+    px) from the studio masters; Last Tram uses `cup-still`. Every still encode now decodes and scales on one thread.
   - **Lighthouse**: `lighthouserc.json` measures `/menu` beside `/`.
   - Not done here: a pour (the models are single meshes with the drink baked in, so a drink rises,
     turns and is lit up as it settles instead), a glass material for Night Ferry and Low Tide, and
