@@ -21,9 +21,9 @@ export interface CupState {
 export interface CupInput {
   /** Where the cup is being leaned, each axis -1..1 of the full tilt, while held. */
   tilt?: [number, number]
-  /** A push on the spin, in turns of acceleration (about 1 for a button), while held. */
+  /** A push on the spin, -1..1 (1 for a button), while held. Clamped. */
   spin?: number
-  /** A push on the coffee, while held (about 1 for a button). */
+  /** A push on the coffee, 0..1 (1 for a button), while held. Clamped. */
   splash?: number
   /** An immediate turn, in radians, from dragging the cup. Not part of the state: the scene adds it. */
   turn?: number
@@ -70,13 +70,13 @@ export function step(state: CupState, input: CupInput, dt: number): CupState {
   const tiltY = clamp(relax(fromY, targetY, TILT_RATE, dt), -MAX_TILT, MAX_TILT)
 
   // A held push draws the spin towards its own speed; let go and it coasts down to rest.
-  const spin = relax(state.spin, finite(input.spin) * SPIN_PUSH, SPIN_FRICTION, dt)
+  const spin = relax(state.spin, clamp(finite(input.spin), -1, 1) * SPIN_PUSH, SPIN_FRICTION, dt)
 
   // The coffee is stirred by a splash and by the cup moving under it, then stills. A held splash
   // relaxes towards its own level; the lean's change adds a kick at the step's midpoint, so it is
   // damped by half the step either way and the total does not depend on the step size.
   const moved = Math.hypot(tiltX - fromX, tiltY - fromY) * SLOSH_PER_TILT
-  const splash = Math.max(0, finite(input.splash)) * SPLASH_PUSH
+  const splash = clamp(finite(input.splash), 0, 1) * SPLASH_PUSH
   const settled = relax(state.slosh, splash / SLOSH_DAMPING, SLOSH_DAMPING, dt)
   const slosh = clamp(settled + moved * Math.exp((-SLOSH_DAMPING * dt) / 2), 0, 1)
 

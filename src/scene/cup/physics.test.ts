@@ -53,6 +53,14 @@ describe('step', () => {
     expect(quiet.slosh).toBeGreaterThanOrEqual(0)
   })
 
+  it('treats a push beyond -1..1 as a full push', () => {
+    const hard = run(60, 1, { spin: 50, splash: 50 }, 1)
+    const full = run(60, 1, { spin: 1, splash: 1 }, 1)
+    expect(hard.spin).toBeCloseTo(full.spin, 10)
+    expect(hard.slosh).toBeCloseTo(full.slosh, 10)
+    expect(run(60, 1, { spin: -50 }, 1).spin).toBeCloseTo(-full.spin, 10)
+  })
+
   it('keeps the slosh between 0 and 1', () => {
     const state = run(60, 4, { splash: 50 }, 4)
     expect(state.slosh).toBeLessThanOrEqual(1)
