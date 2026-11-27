@@ -36,8 +36,9 @@ once the whole site is built.
 
 ### Changed
 
-- The 3D scenes start later: no WebGL and no three.js until the visitor moves the pointer, touches,
-  presses a key or scrolls, or the loaded page has been quiet for five seconds. Each canvas fades in
+- The first screen loads alone: no WebGL, no three.js, no scroll choreography, no film and no
+  picture below it until the visitor moves the pointer, touches, presses a key or scrolls, or the
+  loaded page has been quiet for five seconds. Each canvas fades in
   over its still only once its scene has drawn.
 - With reduced motion each chapter is a still: the cup shows that chapter's coffee and fades to the
   next chapter's, and the street is one screen with the lamps on.

@@ -140,7 +140,7 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
     Journey progress counts chapters; a chapter is halfway when its middle is at the middle of the
     screen. `orbitAt` is the cup's camera path; `lampsAt` the street's lamps.
   - **The hero** (`src/pages/Landing.tsx`): the steam loop's poster through `Picture` (priority),
-    the film over it once the page has loaded (`VideoLoop` with `poster={false}`, faded in when it
+    the film over it on the first intent (`VideoLoop` with `poster={false}`, faded in when it
     plays), the h1 "Umbrista" plus the promise rising letter by letter in CSS (`KineticTitle rise`,
     25 ms apart over `--dur-chapter`), the lede, `OpeningTime`, "Reserve a table" and "See the menu".
   - **The cup's stage** (`src/pages/landing/CupStage.tsx`): sticky across chapters 2 to 5, over them,
@@ -159,8 +159,8 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
     spin, slosh), `CupControls` (buttons, arrow keys, the drag surface), `cupInput` (page to
     scene).
   - **The foot gap** is closed in the scene by a seat disc (see `docs/brand.md`).
-  - **Start the 3D later** (`src/scene/gate.ts`): no WebGL context until the first intent or five
-    quiet seconds after load; each canvas fades in over its still once its scene has drawn
+  - **Start the 3D later** (`src/scene/gate.ts`): no WebGL context, no GSAP, no hero film and no
+    picture below the first screen until the first intent or five quiet seconds after load; each canvas fades in over its still once its scene has drawn
     (`useSceneReady`).
   - **Scripts:** `npm run models` (list-driven, `scripts/models.mjs`), `npm run cup-still`
     (`scripts/cup-still/`), and `npm run media` keeps a still's transparency.
