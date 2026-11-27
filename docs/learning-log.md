@@ -362,3 +362,47 @@ longer idle) on phones, trading a later rain for a quieter first few seconds.
 - The hero's film now starts on the first intent; a phone visitor who only reads sees the poster
   until they touch or five quiet seconds pass.
 - The window chapter's photograph has its own cup in it, so two cups show there.
+
+## 2026-11-28: The menu and the cart (Task 10)
+
+**Decisions and why.**
+
+- **One canvas for the counter, one for the bar.** Nine canvases (one per drink) would be nine WebGL
+  contexts, and browsers drop the oldest past about sixteen. The counter draws every drink's light
+  model in one canvas; the bar has one sticky canvas over its sections, like the landing's cup
+  stage, holding only the drink on screen and its neighbours.
+- **The counter's scene works in CSS pixels.** The camera is placed so that the plane through the
+  drinks shows the canvas exactly, so a drink stands over its place in the listbox whatever the row's
+  scroll. The listbox is the real control (keys, taps, the accessible names); the scene follows it.
+- **Scroll frames re-render nothing.** The bar's progress, the turns and the counter's row live in
+  `src/menu/barProgress.ts`, outside React. The scenes read them in their frame loop and are woken
+  through listeners; React renders the bar again only when another drink comes on screen, to change
+  which models are loaded. A drink's pose is a pure function (`drinkPose`) that writes into one
+  object, so the frame loop allocates nothing.
+- **Draw on demand.** The menu's scenes move only with the scroll, a turn or the row, so their hosts
+  run R3F on demand (`onDemand`) and the frame loop idles whenever nothing moves.
+- **Load late, free later.** Each model loads when a scene first asks for it, and is disposed eight
+  seconds after nothing draws it, so flicking back and forth never reloads it but a long visit does
+  not keep every drink on the GPU.
+- **No pour.** The models are single meshes with the drink baked into the vessel, so the coffee
+  cannot fill separately; each drink rises, turns and is lit up by the lamp as it settles instead.
+- **Stills are gated like the landing's.** The counter's and the bar's photographs wait for the
+  visitor's first intent (or five quiet seconds), so the Menu's first screen is text, and the
+  Lighthouse budget, now on `/menu` too, measures it alone.
+
+**What to remember.**
+
+- Sharing a cached glTF scene between two canvases does not work: an object has one parent. Each
+  scene clones the nodes, which shares the geometry, materials and textures.
+- The hero cup's loader moves its shared scene to stand it on the table. Measuring a model's bounds
+  in its own frame keeps the menu's copy right whichever page loaded it first.
+- oxlint's React rules refuse mutating a value a hook returned, even inside `useFrame`. Mutate a
+  `ref`'d group around it instead.
+
+**Questions to revisit.**
+
+- Night Ferry and Low Tide still read frosted; a transmission material on their glass needs a look
+  on a GPU before it is worth its cost.
+- The night snacks wait for the owner's go on photoreal stills; the cards are finished without them.
+- The menu's frame times, with a drink on screen and while flicking along the counter, need a short
+  look on a machine with a GPU.

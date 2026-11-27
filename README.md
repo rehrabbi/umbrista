@@ -45,7 +45,7 @@ npm run cup-still                 # render the hero cup's still from its model i
 npm run typecheck                 # tsc -b
 npx playwright install chromium   # once, then:
 npm run e2e                       # end-to-end smoke test (Playwright)
-npm run build && npx lhci autorun # Lighthouse budget on / (mobile): performance, LCP and CLS
+npm run build && npx lhci autorun # Lighthouse budget on / and /menu (mobile): performance, LCP and CLS
 ```
 
 ## Media
@@ -56,6 +56,8 @@ poster) and described by the generated `src/media/manifest.ts`. The full-size ma
 repository: keep local copies in `media-src/` (git-ignored) and run `npm run media` to rebuild the
 derivatives. It needs `ffmpeg` on your PATH, skips files that already exist, and rebuilds everything
 with `npm run media -- --force`. The output is deterministic, so a rebuild leaves `git status` clean.
+The menu's drinks have stills too, from their studio masters in `media-src/drinks/` (AVIF and WebP
+at 640 and 1280 px); every encode runs on one thread.
 
 The cup's 3D model works the same way: its master stays in `media-src/cup.glb`, and `npm run
 models` writes the compressed copy to `public/models/cup.glb` (one list entry per model in

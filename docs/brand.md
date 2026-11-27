@@ -181,7 +181,12 @@ Notes:
   copy of that still. The masters (about 10 to 12 MB each) are in
   the git-ignored `media-src/drinks/`.
 - Night Ferry and Low Tide are glass drinks, and image to 3D bakes no transmission: their textures
-  read frosted and opaque. The menu (plan Task 10) may give their glass a glass material.
+  read frosted and opaque. The menu (plan Task 10) does not give their glass a glass material yet:
+  whether one is worth its cost needs a look on a GPU.
+- The drinks' studio stills are also the menu's photographs (plan Task 10), shown before the 3D
+  arrives and for good under reduced motion or without WebGL: `npm run media` makes `drink-<id>`
+  in AVIF and WebP at 640 and 1280 px (7 to 145 KB). Last Tram uses the cup's still. The rejected
+  glass Three O'Clock is not encoded.
 - Web copies of the drinks, by `npm run models`, the same steps as the cup's (meshopt, WebP at
   quality 86, normal map 94). Each drink has two: `public/models/drinks/<id>.glb`, the full model
   for the bar (budget 1.5 MB, every triangle of the master, textures at 2048 px unless that is over

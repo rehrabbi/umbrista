@@ -2,14 +2,13 @@
 
 The resume-here snapshot. Read [`WAYS-OF-WORKING.md`](WAYS-OF-WORKING.md) first.
 
-Last updated: 2026-11-27.
+Last updated: 2026-11-28.
 
 ## 1. Current stage
 
-**Task 9b, the drink models**, built on `task/9b-drink-models` (pushed, no pull request yet; see
-section 3), waiting for review. Tasks 0 to 9 are merged into `develop`; Task 9, the landing
-complete and the hero cup, is pull request #12. Both `main` and `develop` are
-protected. The owner approved a photoreal direction (ADR 0002), and on 2026-11-27 decided the
+**Task 10, the menu and the cart**, built on `task/10-menu-cart`, draft pull request #14 into
+`develop`, with CI verifying. Tasks 0 to 9b are merged into `develop` (Task 9b, the drink models,
+is pull request #13). Both `main` and `develop` are protected. The owner approved a photoreal direction (ADR 0002), and on 2026-11-27 decided the
 landing's order and hero (section 2).
 
 ## 2. Locked decisions
@@ -168,7 +167,7 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   - **Scripts:** `npm run models` (list-driven, `scripts/models.mjs`), `npm run cup-still`
     (`scripts/cup-still/`), and `npm run media` keeps a still's transparency.
 
-- Task 9b, on `task/9b-drink-models`: the eight menu drinks as web 3D models (Drink 1, Last Tram,
+- Task 9b, merged into `develop` (pull request #13): the eight menu drinks as web 3D models (Drink 1, Last Tram,
   reuses the cup). `npm run models` builds each twice from its master in `media-src/drinks/`:
   `public/models/drinks/<id>.glb` for the bar (at most 1.5 MB; textures at 2048 px for Fog Line,
   1024 for the rest) and `<id>-lite.glb` for the counter (at most 400 KB; 512 px textures and
@@ -176,16 +175,43 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   script builds one model at a time on one image thread and takes model names
   (`npm run models -- fog-line lantern`). Night Ferry and Low Tide read frosted: no baked glass.
 
-Not yet: the menu, and any real page content beyond the landing.
+- Task 10, on `task/10-menu-cart` (pull request #14): the menu and the order-ahead cart.
+  - **Data** (`shared/`, pure, for the server too): `menu.ts` (`MENU`, the nine approved drinks and
+    three night snacks, prices in hundredths of a crown; `DRINKS`, the ones with a model, `model`
+    `cup` for Last Tram), `money.ts` (`formatPrice` "4.60", `formatTotal` "19.10 crowns") and
+    `brew.ts` (the `BrewChoice` type only; Task 11 adds its functions).
+  - **The cart** (`src/cart/`): `cartReducer` (`add`, `remove`, `setQty`, `clear`; quantities 1 to
+    20; the same item again raises its quantity), kept in `sessionStorage` under `umbrista.cart`
+    (`readCart` drops what is malformed and starts empty on anything corrupt or refused).
+    `CartProvider` wraps the shell in `App`; `useCart` and `useAddToOrder` (adds and toasts).
+  - **The menu** (`src/pages/Menu.tsx`, `src/menu/`): the counter (`MenuCounter`, a listbox over one
+    canvas of every drink's light model, `CounterScene`, in CSS pixels so each drink stands over its
+    place), the bar (`DrinkStage`, one section per drink; `BarStage`, one sticky canvas over them;
+    `BarScene`, the on-screen drink and its neighbours' full models), and the night snacks as cards
+    of type alone (no stills yet: ruling 1). `barProgress.ts` holds what changes every frame outside
+    React: the bar's progress (written by `followBar` from the scroll, never under reduced motion),
+    the drinks' turns, whether the bar is live, and the counter's row. `useDrinkModel(model,
+    'full' | 'lite')` loads through the cup's local meshopt decoder, gives each scene its own copy
+    normalised to a unit box, and frees a model eight seconds after nothing draws it.
+  - **Shared pieces**: `SceneHost` can leave its stills to the page (no `still`) and draw only on
+    demand (`onDemand`); the night room is `src/scene/nightRoom.ts`; `smoothScroller()` returns the
+    running Lenis; `.visually-hidden` is in `base.css`.
+  - **Stills**: `npm run media` makes `drink-<id>` (AVIF and WebP, 640 and 1280 px) from the studio
+    masters; Last Tram uses `cup-still`. Every still encode now decodes and scales on one thread.
+  - **Lighthouse**: `lighthouserc.json` measures `/menu` beside `/`.
+  - Not done here: a pour (the models are single meshes with the drink baked in, so a drink rises,
+    turns and is lit up as it settles instead), a glass material for Night Ferry and Low Tide, and
+    frame times on a GPU (the owner's PC cannot run them; ruling 5).
+
+Not yet: any real page content beyond the landing and the menu.
 
 ## 4. Exact next step
 
-**Review Task 9b**: open the pull request for `task/9b-drink-models` into `develop`, let CI run,
-merge on green, archive the branch as `merged/task-9b-drink-models`. Then **Task 10, the menu**
-(the 3D bar and counter, and the cart; plan Task 10): `useDrinkModel(id, 'full' | 'lite')` loads
-`public/models/drinks/<id>.glb` or `<id>-lite.glb`; Night Ferry and Low Tide may need a glass
-material. "Lighthouse budget" is a required check on `main` and
-`develop` (the owner, 2026-11-27). Still open for the Content Security Policy when `vercel.json`
+**Review Task 10**: pull request #14 into `develop`; on green, a short look at the menu's frame
+times on a GPU (a drink on screen, and flicking along the counter), then merge and archive the
+branch as `merged/task-10-menu-cart`. Then **Task 11, Brew-your-own** (plan Task 11): `brewLook`
+and `brewPrice` in `shared/brew.ts`, the BrewCup, and "Add to order" as a `custom` cart line through
+`useCart`. "Lighthouse budget" is a required check on `main` and `develop` (the owner, 2026-11-27). Still open for the Content Security Policy when `vercel.json`
 arrives: `'wasm-unsafe-eval'` in `script-src` for the meshopt decoder, and the sha256 of the one
 inline script in `index.html` (the hero poster's preload on `/`, added at build by
 `vite.config.ts`). Also the 16 px favicon in a real browser tab.
