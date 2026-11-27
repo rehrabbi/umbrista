@@ -1,11 +1,10 @@
-import { useFrame, useThree } from '@react-three/fiber'
+import { useFrame, useLoader, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   BackSide,
   BoxGeometry,
   CanvasTexture,
   Color,
-  CylinderGeometry,
   DirectionalLight,
   Group,
   Mesh,
@@ -19,6 +18,7 @@ import {
   ShadowMaterial,
   SpotLight,
   SRGBColorSpace,
+  TextureLoader,
   Texture,
   Vector2,
   Vector3,
@@ -30,6 +30,7 @@ import { useNight } from '../../time/useNight'
 import { parseDurationMs, stepNight } from '../background/uniforms'
 import { CUP_REST, CUP_STILL_VIEW, orbitAt, type Orbit } from '../journey/chapters'
 import { journeyProgress } from '../journey/progress'
+import { MEDIA, type TextureName } from '../../media/manifest'
 import { useSceneQuality } from '../scene-quality'
 import { useSceneReady } from '../scene-ready'
 import { onCupInput, setCupLive, takeCupInputs } from './cupInput'
@@ -259,6 +260,28 @@ function texturesOf(scene: Object3D): Texture[] {
   return [...textures]
 }
 
+/** The photographed coffee surfaces, in the order the look weighs them (liquidLook's `surface`). */
+const SURFACES: readonly TextureName[] = ['surface-espresso', 'surface-bloom', 'surface-rosetta']
+
+/** The surfaces' files: 1024 px on the high tier, the 512 px copies otherwise. */
+function surfaceUrls(tier: string): string[] {
+  return SURFACES.map((name) => {
+    const widths = MEDIA[name].widths
+    const width = tier === 'high' ? Math.max(...widths) : Math.min(...widths)
+    return `/media/${name}-${width}.webp`
+  })
+}
+
+/** The photographs are sRGB, seen at a slant: decoded to linear, and filtered across the slant. */
+function prepareSurfaces(textures: Texture[]): void {
+  for (const texture of textures) {
+    if (texture.colorSpace === SRGBColorSpace) continue
+    texture.colorSpace = SRGBColorSpace
+    texture.anisotropy = 4
+    texture.needsUpdate = true
+  }
+}
+
 /** The night and day lighting: the lamp's colour and strength, the window's, the room's. */
 const LIGHT = {
   night: { key: new Color('#ffb062'), keyIntensity: 55, fill: new Color('#7f9bd6'), fillIntensity: 0.6, rim: 0.9, room: 0.7 },
@@ -306,6 +329,10 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
   // The shape the scene works from.
   const shape = useShape(model)
 
+  const surfaces = useLoader(TextureLoader, surfaceUrls(tier))
+  // Before the compile and the uploads below, which run in later effects and frames.
+  useEffect(() => prepareSurfaces(surfaces), [surfaces])
+
   const liquid = useMemo(() => {
     const geometry = liquidSurface(shape.brimRadius)
     const material = createLiquidMaterial(shape.brimRadius)
@@ -313,21 +340,6 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
   }, [shape.brimRadius])
   useDisposeOnUnmount(liquid.geometry, liquid.material)
 
-  const stream = useMemo(() => {
-    const geometry = new CylinderGeometry(0.008, 0.014, 2.4, 20, 1, true)
-    geometry.translate(0, 1.2, 0)
-    const material = new MeshPhysicalMaterial({
-      color: new Color('#f4eee3'),
-      roughness: 0.3,
-      clearcoat: 0.7,
-      sheen: 0.6,
-      // Milk scatters light inside itself, so even its shaded side stays pale.
-      emissive: new Color('#f4eee3'),
-      emissiveIntensity: 0.18,
-    })
-    return { geometry, material }
-  }, [])
-  useDisposeOnUnmount(stream.geometry, stream.material)
 
   const table = useMemo(() => shadowCatcher(), [])
   const contact = useMemo(() => contactTexture(), [])
@@ -355,7 +367,6 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
   const tilt = useRef<Group>(null)
   const spin = useRef<Group>(null)
   const surface = useRef<Mesh>(null)
-  const pour = useRef<Mesh>(null)
   const key = useRef<SpotLight>(null)
   const ground = useRef<Mesh>(null)
   const fill = useRef<DirectionalLight>(null)
@@ -373,13 +384,13 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
       .catch(() => undefined)
       .then(() => {
         if (cancelled) return
-        uploads.current = texturesOf(model.scene)
+        uploads.current = [...texturesOf(model.scene), ...surfaces]
         setWarm('uploading')
       })
     return () => {
       cancelled = true
     }
-  }, [get, model.scene])
+  }, [get, model.scene, surfaces])
 
   // The visitor's moves.
   const state = useRef<CupState>(REST)
@@ -465,23 +476,17 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
     uniforms.uSlosh.value = state.current.slosh
     uniforms.uSloshDir.value.copy(sloshDir)
     uniforms.uArtAngle.value = -model.handleAngle
+    uniforms.uSurfaceEspresso.value = surfaces[0] ?? null
+    uniforms.uSurfaceBloom.value = surfaces[1] ?? null
+    uniforms.uSurfaceRosetta.value = surfaces[2] ?? null
+    // The still was rendered with the procedural crema: the live cup starts from it, and fades to
+    // the photographs as it takes over from the still.
+    uniforms.uProcedural.value = 1 - handoff
     if (surface.current) {
       const height = shape.levelHeight(look.level)
       const scale = shape.wallRadiusAt(height) / shape.brimRadius
       surface.current.position.y = height
       surface.current.scale.set(scale, 1, scale)
-    }
-    if (pour.current) {
-      // The stream thins a little as the pour eases off, and its end lifts out of the cup as it stops.
-      pour.current.visible = look.pour > 0.01
-      const width = 0.55 + 0.45 * look.pour
-      pour.current.scale.set(width, 1, width)
-      // The stream lands at the base of the art (see the liquid shader), turned with the handle.
-      const height = shape.levelHeight(look.level)
-      const reach = 0.34 * shape.wallRadiusAt(height)
-      const lift = (1 - look.pour) * 2.2
-      pour.current.position.set(reach * Math.sin(model.handleAngle), height + lift, -reach * Math.cos(model.handleAngle))
-      pour.current.rotation.z = reduced ? 0 : Math.sin(frame.clock.elapsedTime * 1.7) * 0.01
     }
 
     // Night or day, stepped over the scene's duration.
@@ -521,6 +526,11 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
     if (!reduced) return
     return journeyProgress.subscribe(invalidate)
   }, [reduced, invalidate])
+  // Each warm-up step needs a frame. A canvas drawn only on demand (reduced motion) gets no frame
+  // by itself once compiling has finished, so the cup would never appear: ask for one.
+  useEffect(() => {
+    if (warm !== 'compiling') invalidate()
+  }, [warm, invalidate])
   const grade = isNight ? 'night' : 'day'
   useEffect(() => {
     if (grade) invalidate()
@@ -557,7 +567,6 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
             <meshPhysicalMaterial map={seat} roughness={0.45} clearcoat={0.6} clearcoatRoughness={0.15} />
           </mesh>
           <mesh ref={surface} geometry={liquid.geometry} material={liquid.material} receiveShadow />
-          <mesh ref={pour} geometry={stream.geometry} material={stream.material} visible={false} castShadow />
         </group>
       </group>
       {/* The table: only the shadows on it are drawn, over the page behind the canvas. */}
@@ -580,7 +589,8 @@ function sameLook(a: LiquidLook, b: LiquidLook): boolean {
     Math.abs(a.cool - b.cool) < 1e-3 &&
     Math.abs(a.level - b.level) < 1e-3 &&
     Math.abs(a.pour - b.pour) < 1e-3 &&
-    Math.abs(a.swirl - b.swirl) < 1e-3
+    Math.abs(a.swirl - b.swirl) < 1e-3 &&
+    a.surface.every((weight, index) => Math.abs(weight - b.surface[index]!) < 1e-3)
   )
 }
 
@@ -595,6 +605,7 @@ function blendLooks(a: LiquidLook, b: LiquidLook, t: number): LiquidLook {
     art: mix(a.art, b.art),
     cool: mix(a.cool, b.cool),
     level: mix(a.level, b.level),
+    surface: [mix(a.surface[0], b.surface[0]), mix(a.surface[1], b.surface[1]), mix(a.surface[2], b.surface[2])],
   }
 }
 

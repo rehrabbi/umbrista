@@ -1,7 +1,13 @@
 /*
  * The coffee's surface in the hero cup: a disc built in code, drawn just over the model's own crema,
- * so that it can ripple, change colour, take the milk and bloom into latte art. The pattern is all
- * procedural (value noise, stacked crescents for the art), written for Umbrista.
+ * so that it can ripple and change. What it shows is photographed (owner decision 2026-11-27): three
+ * top-down photographs of the coffee, the crema, the milk blooming up through it and the rosetta,
+ * cross-faded by the journey and aged live for the last cup. The scene's own lamps light it, and a
+ * splash ripples it.
+ *
+ * The procedural crema below (value noise) is kept for one moment only: the cup's still was rendered
+ * with it, so the live cup starts from it and fades to the photographs as it takes over from the
+ * still (see HeroCup).
  */
 import {
   BufferAttribute,
@@ -9,6 +15,7 @@ import {
   Color,
   MeshPhysicalMaterial,
   SRGBColorSpace,
+  Texture,
   Vector2,
   Vector3,
   type WebGLProgramParametersWithUniforms,
@@ -96,6 +103,14 @@ export interface LiquidUniforms {
   uCool: { value: number }
   /** Turns the art in the cup, in radians, so its head points away from the drinker. */
   uArtAngle: { value: number }
+  /** The photographed surfaces: the crema, the milk blooming, the rosetta. */
+  uSurfaceEspresso: { value: Texture | null }
+  uSurfaceBloom: { value: Texture | null }
+  uSurfaceRosetta: { value: Texture | null }
+  /** How much of each photograph shows (sums to 1). */
+  uSurface: { value: Vector3 }
+  /** How much of the procedural crema shows instead, 0..1: only while taking over from the still. */
+  uProcedural: { value: number }
 }
 
 const NOISE = /* glsl */ `
@@ -172,8 +187,46 @@ uniform float uPour;
 uniform float uArt;
 uniform float uCool;
 uniform float uArtAngle;
+uniform sampler2D uSurfaceEspresso;
+uniform sampler2D uSurfaceBloom;
+uniform sampler2D uSurfaceRosetta;
+uniform vec3 uSurface;
+uniform float uProcedural;
 varying vec2 vDisc;
 ${NOISE}
+
+const vec3 LQ_LUMA = vec3(0.2126, 0.7152, 0.0722);
+
+/*
+ * The photographed surface at a point of the disc (-1..1), in linear light. Each photograph fills
+ * its frame with the coffee; the disc is mapped to a circle inset from the frame's edges, clear of
+ * the cup rim at its corners, and turned with the handle so the rosetta's dot points away from the
+ * drinker.
+ *
+ * Grade: the milk-bloom photograph is more golden than the others. Its browns are brought to halfway
+ * between the espresso's and the rosetta's (gains measured on the masters' mid tones, in linear
+ * light), leaving its whites white, so the cross-fades show no colour jump.
+ *
+ * Ageing (the last cup, uCool): the photograph is sampled from blurrier mip levels, so the art's edges
+ * soften, and its colour is muted and a little darkened. The sheen flattens in the roughness below.
+ */
+vec3 lqPhoto(vec2 p) {
+  vec2 q = mat2(cos(uArtAngle), sin(uArtAngle), -sin(uArtAngle), cos(uArtAngle)) * p;
+  vec2 uv = 0.5 + q * 0.44;
+  float soften = uCool * 1.8;
+  vec3 colour = vec3(0.0);
+  if (uSurface.x > 0.001) colour += uSurface.x * texture2D(uSurfaceEspresso, uv, soften).rgb;
+  if (uSurface.y > 0.001) {
+    vec3 bloom = texture2D(uSurfaceBloom, uv, soften).rgb;
+    float light = dot(bloom, LQ_LUMA);
+    bloom *= mix(vec3(1.27, 1.11, 1.5), vec3(1.0), smoothstep(0.35, 0.8, light));
+    colour += uSurface.y * bloom;
+  }
+  if (uSurface.z > 0.001) colour += uSurface.z * texture2D(uSurfaceRosetta, uv, soften).rgb;
+  float grey = dot(colour, LQ_LUMA);
+  colour = mix(colour, vec3(grey) * vec3(1.04, 0.98, 0.92), uCool * 0.25) * (1.0 - 0.08 * uCool);
+  return colour;
+}
 
 vec3 lqSrgb(vec3 c) { return pow(c, vec3(2.2)); }
 
@@ -274,7 +327,9 @@ vec3 lqSurface(vec2 p) {
 `
 
 const FRAGMENT_COLOUR = /* glsl */ `
-vec4 diffuseColor = vec4( lqSurface(vDisc), opacity );
+vec3 lqColour = lqPhoto(vDisc);
+if (uProcedural > 0.001) lqColour = mix(lqColour, lqSurface(vDisc), uProcedural);
+vec4 diffuseColor = vec4( lqColour, opacity );
 `
 
 const FRAGMENT_ROUGHNESS = /* glsl */ `
@@ -301,6 +356,11 @@ export function createLiquidMaterial(radius: number): MeshPhysicalMaterial & { u
     uArt: { value: 0 },
     uCool: { value: 0 },
     uArtAngle: { value: 0 },
+    uSurfaceEspresso: { value: null },
+    uSurfaceBloom: { value: null },
+    uSurfaceRosetta: { value: null },
+    uSurface: { value: new Vector3(1, 0, 0) },
+    uProcedural: { value: 0 },
   }
   const material = new MeshPhysicalMaterial({
     roughness: 0.32,
@@ -323,7 +383,7 @@ export function createLiquidMaterial(radius: number): MeshPhysicalMaterial & { u
       .replace('#include <roughnessmap_fragment>', FRAGMENT_ROUGHNESS)
   }
   // One program for every liquid, whatever its radius.
-  material.customProgramCacheKey = () => 'umbrista-liquid-2'
+  material.customProgramCacheKey = () => 'umbrista-liquid-3'
   return material
 }
 
@@ -336,4 +396,5 @@ export function applyLook(uniforms: LiquidUniforms, look: LiquidLook): void {
   uniforms.uPour.value = look.pour
   uniforms.uArt.value = look.art
   uniforms.uCool.value = look.cool
+  uniforms.uSurface.value.set(look.surface[0], look.surface[1], look.surface[2])
 }
