@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useReducer, type Dispatch, type ReactNode } from 'react'
-import { cartReducer, readCart, writeCart, type CartAction, type CartLine } from './cartStore'
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, type Dispatch, type ReactNode } from 'react'
+import { toast } from '../ui/toast-store'
+import { cartReducer, lineFor, readCart, writeCart, type CartAction, type CartLine } from './cartStore'
 
 export interface CartContextValue {
   lines: readonly CartLine[]
@@ -28,4 +29,16 @@ export function useCart(): CartContextValue {
   const cart = useContext(CartContext)
   if (!cart) throw new Error('useCart needs a CartProvider above it')
   return cart
+}
+
+/** Adds a menu item to the order and says so. */
+export function useAddToOrder(): (item: { id: string; name: string; price: number }) => void {
+  const { dispatch } = useCart()
+  return useCallback(
+    (item) => {
+      dispatch({ type: 'add', line: lineFor(item) })
+      toast(`${item.name} is in your order.`, { kind: 'success' })
+    },
+    [dispatch],
+  )
 }
