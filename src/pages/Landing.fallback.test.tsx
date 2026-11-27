@@ -46,11 +46,11 @@ describe('Landing, when the scroll choreography cannot load', () => {
         <Landing />
       </MemoryRouter>,
     )
-    await waitFor(() => expect(container.querySelector('section[data-chapter="dusk"]')).toHaveAttribute('data-motion', 'still'), SLOW)
     act(() => {
       window.dispatchEvent(new Event('pointermove'))
       for (const host of container.querySelectorAll('[data-scene-host]')) setIntersecting(host, true)
     })
+    await waitFor(() => expect(container.querySelector('section[data-chapter="dusk"]')).toHaveAttribute('data-motion', 'still'), SLOW)
     expect((await screen.findByTestId('journey', {}, SLOW)).dataset.progress).toBe(String(CHAPTERS.length))
     expect((await screen.findByTestId('hero-cup', {}, SLOW)).dataset.still).toBe('true')
   }, 15_000)

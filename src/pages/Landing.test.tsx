@@ -135,12 +135,17 @@ describe('Landing', () => {
 
   it('follows the journey with one ScrollTrigger per chapter, and pins the street', async () => {
     const { container } = renderLanding()
+    // Nothing loads the choreography before the visitor shows intent.
+    await settle(300)
+    expect(ScrollTrigger.getAll()).toHaveLength(0)
+    intent(container)
     expect(container.querySelector('section[data-chapter="dusk"]')).toHaveAttribute('data-motion', 'scroll')
     await waitFor(() => expect(ScrollTrigger.getAll()).toHaveLength(CHAPTERS.length), SLOW)
   }, 15_000)
 
   it('removes its ScrollTriggers on unmount', async () => {
-    const { unmount } = renderLanding()
+    const { container, unmount } = renderLanding()
+    intent(container)
     await waitFor(() => expect(ScrollTrigger.getAll()).toHaveLength(CHAPTERS.length), SLOW)
     unmount()
     expect(ScrollTrigger.getAll()).toHaveLength(0)

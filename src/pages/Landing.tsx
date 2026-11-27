@@ -7,7 +7,7 @@ import { CupControls } from '../scene/cup/CupControls'
 import { pushCupInput } from '../scene/cup/cupInput'
 import { CHAPTERS, chapterIndex } from '../scene/journey/chapters'
 import { journeyProgress, useJourneyProgress } from '../scene/journey/progress'
-import { useScenesMayStart } from '../scene/gate'
+import { useScenesMayStart, whenScenesMayStart } from '../scene/gate'
 import { SceneHost } from '../scene/SceneHost'
 import { OpeningTime } from '../time/OpeningTime'
 import { buttonClasses } from '../ui/Button'
@@ -33,40 +33,10 @@ function LiveStreet({ still }: { still: boolean }) {
   return <Journey progress={still ? CHAPTERS.length : progress} />
 }
 
-const INTENT = ['wheel', 'touchstart', 'keydown', 'pointerdown', 'scroll'] as const
-
 /**
- * Run `task` once the browser is idle after load, or as soon as the visitor shows they are about to
- * scroll, whichever comes first. Keeps the choreography's download off the first screen's network
- * and main thread. Returns a function that cancels it.
- */
-function whenIdleOrIntent(task: () => void): () => void {
-  let done = false
-  const run = () => {
-    if (done) return
-    done = true
-    cancel()
-    task()
-  }
-  const options = { passive: true, once: true, capture: true }
-  for (const type of INTENT) window.addEventListener(type, run, options)
-  let idle: number | ReturnType<typeof setTimeout>
-  if (typeof requestIdleCallback === 'function') idle = requestIdleCallback(run, { timeout: 2500 })
-  else idle = setTimeout(run, 200)
-  function cancel() {
-    for (const type of INTENT) window.removeEventListener(type, run, options)
-    if (typeof cancelIdleCallback === 'function' && typeof idle === 'number') cancelIdleCallback(idle)
-    else clearTimeout(idle)
-  }
-  return () => {
-    done = true
-    cancel()
-  }
-}
-
-/**
- * The journey's scroll choreography, while motion is allowed. GSAP loads with it, once the page is
- * idle or the visitor starts to scroll. Returns whether it failed to load: the page then shows its
+ * The journey's scroll choreography, while motion is allowed. GSAP loads with it on the visitor's
+ * first intent (they are about to scroll), or once the loaded page has been quiet a while: never
+ * while the first screen loads. Returns whether it failed to load: the page then shows its
  * chapters as stills, as it does under reduced motion.
  */
 function useJourneyScroll(reduced: boolean, root: RefObject<HTMLElement | null>): boolean {
@@ -77,7 +47,7 @@ function useJourneyScroll(reduced: boolean, root: RefObject<HTMLElement | null>)
     if (reduced || !page) return
     let cancelled = false
     let stop: (() => void) | undefined
-    const cancelWait = whenIdleOrIntent(() => {
+    const cancelWait = whenScenesMayStart(() => {
       import('./landing/journeyScroll')
         .then(({ playJourney }) => {
           if (cancelled) return

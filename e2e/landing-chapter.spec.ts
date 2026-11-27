@@ -141,7 +141,7 @@ test('the scroll never jumps back when the first wheel loads the choreography mi
     window.requestIdleCallback = () => 0
   })
   await page.goto('/')
-  await page.mouse.move(700, 400)
+  // No pointer move: the wheel is the visitor's first intent, so it is what loads the choreography.
   // Let the page run on the browser's loop for a while first, so the two clocks are far apart.
   await page.waitForTimeout(1500)
   await page.evaluate(() => {
