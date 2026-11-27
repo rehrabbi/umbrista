@@ -130,7 +130,8 @@ test('under reduced motion the chapters are still: no pin, the title whole, the 
     stage: element.querySelector('.dusk-stage')!.getBoundingClientRect().height,
   }))
   expect(sizes.section).toBe(sizes.stage)
-  // No script sets the lamps: the photograph is shown as it is.
+  // No script sets the lamps: the photograph is shown as it is (asked for once the visitor moves).
+  await page.mouse.move(700, 300)
   await expect(page.locator('.dusk-scene img')).toHaveCSS('filter', 'none')
 })
 
