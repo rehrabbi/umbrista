@@ -1,9 +1,19 @@
 /*
  * The cup's stage: one screen tall, sticky for the length of the cup's chapters, laid over them
  * (the negative margin gives its height back, so the first chapter starts at the same place). Only
- * the cup and its drag area take any room; the rest lets clicks and selection through.
+ * the cup's own square takes pointer input; the rest lets clicks, selection and scrolling through.
+ *
+ * The cup's box: on a phone held upright, the upper part of the screen; on a wide screen, or a
+ * phone turned sideways, the right half. The still is contained in the box and the canvas frames
+ * the same square, centred in it.
  */
 .cup-stage {
+  --cup-top: 3svh;
+  --cup-left: 4vw;
+  --cup-width: 92vw;
+  --cup-height: 42svh;
+  --cup-side: min(var(--cup-width), var(--cup-height));
+
   position: sticky;
   top: 0;
   z-index: 1;
@@ -12,11 +22,12 @@
   pointer-events: none;
 }
 
-/* The cup's box: the still is contained in it and the canvas frames the same square. */
-.cup-scene,
-.cup-scene-drag {
+.cup-scene {
   position: absolute;
-  inset: 4svh 4vw 50svh;
+  top: var(--cup-top);
+  left: var(--cup-left);
+  width: var(--cup-width);
+  height: var(--cup-height);
 }
 
 .cup-scene.scene-host {
@@ -27,13 +38,21 @@
   object-fit: contain;
 }
 
+/* Only the cup's own square turns the cup. */
 .cup-scene-drag {
+  position: absolute;
+  top: calc(var(--cup-top) + (var(--cup-height) - var(--cup-side)) / 2);
+  left: calc(var(--cup-left) + (var(--cup-width) - var(--cup-side)) / 2);
+  width: var(--cup-side);
+  height: var(--cup-side);
   pointer-events: auto;
 }
 
-@media (min-width: 60rem) {
-  .cup-scene,
-  .cup-scene-drag {
-    inset: 8svh 3vw 8svh 50vw;
+@media (min-width: 60rem), (orientation: landscape) and (max-height: 32rem) {
+  .cup-stage {
+    --cup-top: 8svh;
+    --cup-left: 50vw;
+    --cup-width: 47vw;
+    --cup-height: 84svh;
   }
 }

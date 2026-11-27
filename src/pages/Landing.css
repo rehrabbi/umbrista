@@ -225,6 +225,26 @@
   filter: none;
 }
 
+/*
+ * 4. The window. The photograph has a cup of its own on the table, in the middle. The crop keeps it
+ * away from the 3D cup: on a phone it is cropped off to the right (the cup is above the copy there);
+ * on a wide screen the photograph is drawn wider than the screen and shifted left, so its cup sits
+ * low on the left under the scrim and the copy, while the 3D cup stands on the right.
+ */
+.chapter-window .chapter-photo {
+  object-position: 0% 50%;
+}
+
+@media (min-width: 60rem), (orientation: landscape) and (max-height: 32rem) {
+  .chapter-window .chapter-media > picture {
+    left: -42vw;
+  }
+
+  .chapter-window .chapter-photo {
+    object-position: 50% 30%;
+  }
+}
+
 /* 5. The last cup: the room after closing, one lamp left low. */
 .chapter-last {
   background:
@@ -251,10 +271,39 @@
   }
 }
 
-/* On a phone the cup takes the upper half: the copy below it keeps the lower half. */
-@media (max-width: 59.99rem) {
+/*
+ * On a phone held upright the cup takes the top of the screen (CupStage.css): the copy keeps below
+ * it, set a little smaller so it fits there with the cup's controls.
+ */
+@media (max-width: 59.99rem) and (orientation: portrait), (max-width: 59.99rem) and (min-height: 32.01rem) {
   .journey .chapter-copy {
-    min-height: 48svh;
+    padding-top: var(--space-4);
+    padding-bottom: 5svh;
+    gap: var(--space-3);
+  }
+
+  .journey .chapter-line {
+    font-size: clamp(1.75rem, 7.6vw, 3rem);
+  }
+
+  .journey .chapter-note {
+    font-size: 1rem;
+  }
+}
+
+/* A phone turned sideways: the cup on the right, as on a wide screen, and the copy on the left. */
+@media (orientation: landscape) and (max-height: 32rem) {
+  .journey .chapter-copy > * {
+    max-width: 44vw;
+  }
+
+  .journey .chapter-copy {
+    padding-bottom: 6svh;
+    gap: var(--space-2);
+  }
+
+  .journey .chapter-line {
+    font-size: clamp(1.5rem, 8svh, 2.5rem);
   }
 }
 
