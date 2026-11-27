@@ -56,19 +56,19 @@ describe('CupControls', () => {
   })
 })
 
-describe('CupDragSurface', () => {
-  function setup() {
-    const onInput = vi.fn()
-    render(<CupDragSurface onInput={onInput} />)
-    const surface = screen.getByTestId('cup-drag')
-    const capture = vi.fn()
-    const release = vi.fn()
-    surface.setPointerCapture = capture
-    surface.releasePointerCapture = release
-    surface.hasPointerCapture = () => capture.mock.calls.length > release.mock.calls.length
-    return { onInput, surface, capture }
-  }
+function setup() {
+  const onInput = vi.fn()
+  render(<CupDragSurface onInput={onInput} />)
+  const surface = screen.getByTestId('cup-drag')
+  const capture = vi.fn()
+  const release = vi.fn()
+  surface.setPointerCapture = capture
+  surface.releasePointerCapture = release
+  surface.hasPointerCapture = () => capture.mock.calls.length > release.mock.calls.length
+  return { onInput, surface, capture }
+}
 
+describe('CupDragSurface', () => {
   const touch = { pointerId: 7, pointerType: 'touch', isPrimary: true }
 
   it('lets the page scroll vertically through it', () => {
