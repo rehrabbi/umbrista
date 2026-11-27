@@ -33,7 +33,7 @@
 .cup-drag {
   position: absolute;
   inset: 0;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
   cursor: grab;
 }
 

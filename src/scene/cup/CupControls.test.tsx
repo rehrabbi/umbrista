@@ -71,9 +71,9 @@ function setup() {
 describe('CupDragSurface', () => {
   const touch = { pointerId: 7, pointerType: 'touch', isPrimary: true }
 
-  it('lets the page scroll vertically through it', () => {
+  it('lets the page scroll vertically and pinch-zoom through it', () => {
     const { surface } = setup()
-    expect(surface.style.touchAction).toBe('pan-y')
+    expect(surface.style.touchAction).toBe('pan-y pinch-zoom')
   })
 
   it('never captures a vertical swipe, so the page scrolls', () => {

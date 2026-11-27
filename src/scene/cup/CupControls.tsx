@@ -70,10 +70,10 @@ export interface CupDragSurfaceProps {
 }
 
 /**
- * The area over the cup that turns it when dragged sideways. Vertical swipes are the page's: the
- * surface allows vertical panning (`touch-action: pan-y`) and only takes the pointer once a drag has
- * gone DRAG_INTENT_PX sideways, more than it has gone up or down. A quick release sets the cup
- * spinning on, slowing to rest.
+ * The area over the cup that turns it when dragged sideways. Vertical swipes and pinches are the
+ * page's: the surface allows them (`touch-action: pan-y pinch-zoom`) and only takes the pointer
+ * once a drag has gone DRAG_INTENT_PX sideways, more than it has gone up or down. A quick release
+ * sets the cup spinning on, slowing to rest.
  */
 export function CupDragSurface({ onInput, className }: CupDragSurfaceProps) {
   const drag = useRef<Drag | null>(null)
@@ -130,7 +130,7 @@ export function CupDragSurface({ onInput, className }: CupDragSurfaceProps) {
       aria-hidden="true"
       className={['cup-drag', className].filter(Boolean).join(' ')}
       // Set from script (the stylesheet has it too), so it holds whatever the cascade does.
-      style={{ touchAction: 'pan-y' }}
+      style={{ touchAction: 'pan-y pinch-zoom' }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={end}
