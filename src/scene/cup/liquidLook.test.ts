@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CHAPTERS } from '../journey/chapters'
+import { CHAPTERS, chapterIndex } from '../journey/chapters'
 import { LOOKS, chapterLook, liquidLook, type LiquidLook } from './liquidLook'
 
 const FIELDS = ['crema', 'milk', 'swirl', 'pour', 'art', 'cool', 'level'] as const
@@ -94,5 +94,26 @@ describe('chapterLook (reduced motion)', () => {
   it('does not scrub: within a chapter the look never changes', () => {
     const first = chapterLook(2.01)
     for (let progress = 2.01; progress < 3; progress += 0.01) expect(chapterLook(progress)).toEqual(first)
+  })
+})
+
+describe('liquidLook: the photographed surfaces', () => {
+  it('shows each chapter its own photograph at its midpoint, and ages the cup only in the last chapter', () => {
+    expect(liquidLook(1.5).surface).toEqual([1, 0, 0])
+    expect(liquidLook(2.5).surface).toEqual([0, 1, 0])
+    expect(liquidLook(3.5).surface).toEqual([0, 0, 1])
+    expect(liquidLook(4.5).surface).toEqual([0, 0, 1])
+    expect(liquidLook(4.5).cool).toBe(1)
+    const last = chapterIndex('last-cup')
+    for (let progress = 0; progress <= last; progress += 0.01) expect(liquidLook(progress).cool, String(progress)).toBe(0)
+    let previous = liquidLook(last)
+    for (let progress = last; progress <= CHAPTERS.length; progress += 0.001) {
+      const look = liquidLook(progress)
+      const sum = look.surface[0] + look.surface[1] + look.surface[2]
+      expect(sum).toBeCloseTo(1, 10)
+      for (let i = 0; i < 3; i++) expect(Math.abs(look.surface[i]! - previous.surface[i]!)).toBeLessThan(0.005)
+      expect(Math.abs(look.cool - previous.cool)).toBeLessThan(0.005)
+      previous = look
+    }
   })
 })
