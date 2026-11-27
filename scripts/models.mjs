@@ -37,9 +37,28 @@ const NORMAL_QUALITY = 94
 // Texture coordinates keep 14 bits: a 2048 px atlas then lands within a quarter of a texel.
 const TEXCOORD_BITS = 14
 
-// The CLI's own entry point (its `bin`), found from the package's main module.
+// The CLI's own entry point: the `bin` its package.json names. The package exports only its main
+// module, so its folder is found by walking up from that to its package.json.
 const require = createRequire(import.meta.url)
-const CLI = join(dirname(require.resolve('@gltf-transform/cli')), '..', 'bin', 'cli.js')
+
+function cliEntry() {
+  let folder = dirname(require.resolve('@gltf-transform/cli'))
+  for (;;) {
+    const manifest = join(folder, 'package.json')
+    if (existsSync(manifest)) {
+      const pkg = JSON.parse(readFileSync(manifest, 'utf8'))
+      if (pkg.name === '@gltf-transform/cli') {
+        const bin = typeof pkg.bin === 'string' ? pkg.bin : pkg.bin['gltf-transform']
+        return join(folder, bin)
+      }
+    }
+    const parent = dirname(folder)
+    if (parent === folder) fail('could not find @gltf-transform/cli. Run npm ci first.')
+    folder = parent
+  }
+}
+
+const CLI = cliEntry()
 
 function fail(message) {
   console.error(`models: ${message}`)
@@ -55,7 +74,7 @@ function transform(args) {
 }
 
 function sha(path) {
-  return createHash('sha256').update(readFileSync(path)).digest('hex').slice(0, 12)
+  return createHash('sha256').update(readFileSync(path)).digest('hex')
 }
 
 function build(model) {
@@ -65,7 +84,7 @@ function build(model) {
   }
   const out = join(OUT, model.out)
   if (existsSync(out) && !force) {
-    console.log(`models: ${model.id} is built (public/models/${model.out}); --force rebuilds it`)
+    console.log(`models: ${model.id} is built (public/models/${model.out}, sha256 ${sha(out)}); --force rebuilds it`)
     return
   }
   mkdirSync(dirname(out), { recursive: true })
