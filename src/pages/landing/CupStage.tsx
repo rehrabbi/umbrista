@@ -7,6 +7,15 @@ import './CupStage.css'
 // The cup's scene imports three, drei and the model's decoder: it loads with its canvas, never with the page.
 const HeroCup = lazy(() => import('../../scene/cup/HeroCup'))
 
+/**
+ * Test-only: Playwright may set `window.umbristaTestNoCup` before the page loads, to test another
+ * scene (the street) without the cup drawing beside it in software WebGL, which is very slow. The
+ * cup is then its still. Nothing in the app sets it.
+ */
+function cupDisabledForTest(): boolean {
+  return (window as Window & { umbristaTestNoCup?: boolean }).umbristaTestNoCup === true
+}
+
 export interface CupStageProps {
   /** Chapters as stills (reduced motion, or the scroll choreography could not load). */
   still: boolean
@@ -32,7 +41,7 @@ export function CupStage({ still }: CupStageProps) {
         swap
         antialias
       >
-        <HeroCup still={still} />
+        {cupDisabledForTest() ? null : <HeroCup still={still} />}
       </SceneHost>
       <CupDragSurface onInput={pushCupInput} className="cup-scene-drag" />
     </div>

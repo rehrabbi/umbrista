@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { compare } from './compare'
-import { allowSoftwareGL, forceIntensity } from './software-gl'
+import { allowSoftwareGL, forceIntensity, withoutCup } from './software-gl'
 
 // The clock decides night or day, so pin it: 22:00 and 13:00 in London are night and day.
 test.use({ timezoneId: 'Europe/London', viewport: { width: 1440, height: 900 } })
@@ -53,6 +53,7 @@ test.describe('the living background', () => {
     test(`draws the street photograph on the canvas at ${name}, lined up with the still`, async ({ page }) => {
       const problems = collectProblems(page)
       await allowSoftwareGL(page)
+      await withoutCup(page)
       await page.emulateMedia({ reducedMotion: 'reduce' })
       await page.clock.setFixedTime(time)
       await page.goto('/')
@@ -75,6 +76,7 @@ test.describe('the living background', () => {
 
   test('with the effect off, the canvas is the still to within a few levels', async ({ page }) => {
     await allowSoftwareGL(page)
+    await withoutCup(page)
     await forceIntensity(page, 0)
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto('/')
@@ -92,6 +94,7 @@ test.describe('the living background', () => {
     test(`compiles and runs the ${tier} tier without shader errors`, async ({ page }) => {
       const problems = collectProblems(page)
       await allowSoftwareGL(page, tier)
+      await withoutCup(page)
       await page.goto('/')
       await showStreet(page)
       const canvas = page.locator(READY)

@@ -89,6 +89,8 @@ test('the cup keeps its place on screen from its chapter to the last', async ({ 
 })
 
 test('scrolling through the street keeps its stage pinned and turns the lamps on', async ({ page }) => {
+  // Many wheel notches, each waiting for the smoothing: on a busy CI runner this takes a while.
+  test.setTimeout(90_000)
   const problems = collectProblems(page)
   await page.goto('/')
   await page.mouse.move(700, 400)

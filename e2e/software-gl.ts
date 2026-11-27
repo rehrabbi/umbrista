@@ -21,3 +21,13 @@ export async function forceIntensity(page: Page, intensity: number): Promise<voi
     ;(window as Window & { umbristaTestIntensity?: number }).umbristaTestIntensity = value
   }, intensity)
 }
+
+/**
+ * Leave the hero cup as its still, through its test hook: for tests of another scene, so the cup
+ * does not draw in software WebGL beside it (slow enough to starve the test).
+ */
+export async function withoutCup(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    ;(window as Window & { umbristaTestNoCup?: boolean }).umbristaTestNoCup = true
+  })
+}
