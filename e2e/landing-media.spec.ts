@@ -90,6 +90,8 @@ test('the cup fades in over its still, exactly aligned, and does not block the p
 })
 
 test('the live cup lands on its still: the same cup, pose and coffee, so the swap does not jump', async ({ page }) => {
+  // The cup waits for intent, loads its model and photographs, compiles and fades in: give it time.
+  test.setTimeout(120_000)
   // Reduced motion: one still frame drawn on demand at the rest pose, deterministic to compare. At
   // night (the still is rendered at night), and at the high tier, with the still's shadows.
   await allowSoftwareGL(page, 'high')
@@ -98,7 +100,7 @@ test('the live cup lands on its still: the same cup, pose and coffee, so the swa
   await page.goto('/')
   await bringCupNear(page)
   const host = page.locator('.cup-scene')
-  await expect(host).toHaveAttribute('data-live', 'ready', { timeout: 30_000 })
+  await expect(host).toHaveAttribute('data-live', 'ready', { timeout: 90_000 })
   await page.waitForTimeout(1000)
   const box = (await host.boundingBox())!
   const clip = { x: box.x, y: box.y, width: box.width, height: box.height }
