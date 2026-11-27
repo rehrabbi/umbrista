@@ -31,12 +31,42 @@ export function ReadyAfterFrame({ onReady }: { onReady: () => void }) {
   return null
 }
 
-/** The room's reflections for the glazes and glass: the same night room as the hero cup's. */
+/*
+ * The menu's light (the controller's look on a GPU, 2026-11-28): the landing's orange key against a
+ * strong blue fill made white cups and milk a muddy blue-grey and Fog Line rust. Food wants one warm
+ * key and a soft, nearly neutral fill. Shared by the bar and the counter; the landing keeps its own.
+ *   - Ambient: a warm parchment sky over an umber floor, 0.9, so a white glaze reads as warm
+ *     off-white rather than grey where the lamp does not reach.
+ *   - Fill: a barely cool grey-blue (#d4dbe6, about a fifth of the old saturation) at 0.35, not 0.6:
+ *     it keeps the night's cool edge without tinting milk.
+ *   - Rim: #aab6cc at 0.45, half the old strength, so the backs of glasses still separate from the
+ *     page.
+ *   - Key: the sodium lamp, desaturated from #ffb062 to #ffc78f, so milk drinks read tan, not orange.
+ *   - Reflections: the night room with its window panel warm-neutral (0.85, 0.82, 0.78) instead of
+ *     blue, at 0.6.
+ *   - Exposure: 1.05, a touch brighter than the landing's 0.95.
+ */
+export const MENU_LIGHT = {
+  sky: '#e8dccb',
+  ground: '#2b2420',
+  ambient: 0.9,
+  fill: '#d4dbe6',
+  fillIntensity: 0.35,
+  rim: '#aab6cc',
+  rimIntensity: 0.45,
+  key: '#ffc78f',
+  pane: [0.85, 0.82, 0.78] as [number, number, number],
+  room: 0.6,
+  exposure: 1.05,
+}
+
+/** The room's reflections for the glazes and glass: the night room, with the menu's warm window. */
 export function useNightRoom(intensity: number): void {
   const get = useThree((state) => state.get)
   useEffect(() => {
     const { gl, scene } = get()
-    const environment = nightRoom(gl as WebGLRenderer)
+    gl.toneMappingExposure = MENU_LIGHT.exposure
+    const environment = nightRoom(gl as WebGLRenderer, { pane: MENU_LIGHT.pane })
     if (!environment) return
     scene.environment = environment
     scene.environmentIntensity = intensity
