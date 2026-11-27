@@ -1,0 +1,158 @@
+/*
+ * The bar: one screen per drink. Each section holds the drink's copy and, in the drink's box, its
+ * still. The bar's canvas is one screen tall and sticky for the length of the bar, laid over the
+ * sections (the negative margin gives its height back), with the same box: on a phone held upright,
+ * the upper part of the screen; on a wide screen, or a phone turned sideways, the right half. Only
+ * the buttons take pointer input; the canvas lets everything through.
+ */
+.bar {
+  --drink-top: 4svh;
+  --drink-left: 4vw;
+  --drink-width: 92vw;
+  --drink-height: 46svh;
+
+  position: relative;
+}
+
+.bar-stage {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 100svh;
+  margin-bottom: -100svh;
+  pointer-events: none;
+}
+
+.bar-scene {
+  position: absolute;
+  top: var(--drink-top);
+  left: var(--drink-left);
+  width: var(--drink-width);
+  height: var(--drink-height);
+}
+
+.bar-scene.scene-host {
+  background: transparent;
+}
+
+.drink {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 100svh;
+}
+
+.drink-media {
+  position: absolute;
+  top: var(--drink-top);
+  left: var(--drink-left);
+  width: var(--drink-width);
+  height: var(--drink-height);
+}
+
+.drink-media > picture {
+  position: absolute;
+  inset: 0;
+}
+
+.drink-still {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Once the live drink has faded in over it, the still steps aside. */
+.bar[data-live] .drink-still {
+  visibility: hidden;
+  transition: visibility 0s linear var(--dur-scene);
+}
+
+.drink-copy {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) 8svh;
+  display: grid;
+  gap: var(--space-3);
+  align-content: end;
+}
+
+.drink-copy > * {
+  max-width: 32rem;
+}
+
+.drink-number {
+  color: var(--color-text-quiet);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}
+
+.drink-name {
+  font-size: clamp(2.75rem, 11vw, 6rem);
+  letter-spacing: 0.02em;
+}
+
+.drink-name:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 6px;
+}
+
+.drink-notes {
+  color: var(--color-text-quiet);
+  font-size: 1.125rem;
+}
+
+.drink-price {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 7vw, 3.5rem);
+  line-height: 1;
+  color: var(--color-signal);
+  font-variant-numeric: tabular-nums;
+}
+
+.drink-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.drink-turn {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/*
+ * Before a drink's section arrives, its name and price wait below their baselines, to rise into
+ * place when it does (motion allowed only; KineticTitle then plays the rise).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .drink:not([data-arrived]) .kinetic-letter {
+    transform: translateY(105%);
+    opacity: 0;
+  }
+}
+
+@media (min-width: 60rem), (orientation: landscape) and (max-height: 32rem) {
+  .bar {
+    --drink-top: 8svh;
+    --drink-left: 50vw;
+    --drink-width: 47vw;
+    --drink-height: 84svh;
+  }
+
+  .drink {
+    align-items: center;
+  }
+
+  .drink-copy {
+    padding-bottom: var(--space-6);
+  }
+
+  .drink-copy > * {
+    max-width: min(32rem, 42vw);
+  }
+}

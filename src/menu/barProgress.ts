@@ -55,6 +55,43 @@ export function useDrinkOnScreen(count: number): number {
   return useSyncExternalStore(barProgress.subscribe, read, read)
 }
 
+/** How far a drink rises into view, in the bar scene's units (its height is one). */
+export const RISE = 1.7
+/** How far a drink turns while it crosses the screen, in radians. */
+export const SCROLL_TURN = 1.1
+/** A drink's angle at rest, three-quarters on, in radians. */
+export const REST_ANGLE = -0.35
+
+export interface DrinkPose {
+  /** Height above its place: negative while it rises into view, positive as it leaves upwards. */
+  y: number
+  /** The angle it should turn to (the bar eases towards it). */
+  angle: number
+  /** Whether any of it can be on screen. */
+  visible: boolean
+}
+
+function ease(t: number): number {
+  const x = Math.min(1, Math.max(0, t))
+  return x * x * (3 - 2 * x)
+}
+
+/**
+ * Where drink `index` stands for a bar progress, and how far the visitor has turned it: it rises
+ * into view from below as its section arrives, settles while it holds the middle of the screen,
+ * turns with the scroll the whole way, and leaves upwards. Writes into `pose` (no allocation; it
+ * runs every frame) and returns it.
+ */
+export function drinkPose(progress: number, index: number, turn: number, pose: DrinkPose): DrinkPose {
+  const offset = progress - index - 0.5
+  const arrive = ease((offset + 0.85) / 0.6)
+  const leave = ease((offset - 0.25) / 0.6)
+  pose.y = (arrive - 1) * RISE + leave * RISE
+  pose.angle = REST_ANGLE + offset * SCROLL_TURN + turn
+  pose.visible = arrive > 0 && leave < 1
+  return pose
+}
+
 /**
  * The bar's progress for a scroll position, from the drinks' sections: `centre` is the middle of
  * the screen and `tops` and `heights` the sections', all in page pixels. Continuous across the
