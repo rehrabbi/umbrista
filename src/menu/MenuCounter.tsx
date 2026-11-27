@@ -3,7 +3,6 @@ import { formatPrice } from '../../shared/money'
 import { DRINKS } from '../../shared/menu'
 import { Picture } from '../media/Picture'
 import { usePrefersReducedMotion } from '../media/usePrefersReducedMotion'
-import { useScenesMayStart } from '../scene/gate'
 import { SceneHost } from '../scene/SceneHost'
 import { updateCounterView } from './barProgress'
 import { stillOf } from './stills'
@@ -28,15 +27,15 @@ interface Drag {
 }
 
 /**
- * The counter: every drink standing in a row under the lamp, in 3D (the light models, one canvas
- * for all of them) once the visitor shows intent; until then, and for good under reduced motion or
- * without WebGL, each drink's still. It is a listbox, so it reads and works the same either way:
+ * The counter: every drink standing in a row under the lamp. From the first paint each place shows
+ * its drink's still; once the visitor shows intent the 3D counter (the light models, one canvas for
+ * all of them) fades in over them after its first drawn frame, and the stills step aside. Under
+ * reduced motion or without WebGL the stills stay. It is a listbox, so it reads and works the same either way:
  * the arrow keys (and Home and End) choose a drink, Enter or a tap jumps to it in the bar. The row
  * scrolls sideways with a swipe, a trackpad, or a mouse drag; the scene follows the row.
  */
 export function MenuCounter({ onPick }: MenuCounterProps) {
   const reduced = usePrefersReducedMotion()
-  const mayLoad = useScenesMayStart()
   const [active, setActive] = useState(0)
   const listId = useId()
   const strip = useRef<HTMLUListElement>(null)
@@ -61,6 +60,8 @@ export function MenuCounter({ onPick }: MenuCounterProps) {
       })
     }
     const onScroll = () => updateCounterView({ scroll: list.scrollLeft })
+    // A new counter starts on the first drink, whatever a counter before it had chosen.
+    updateCounterView({ active: 0 })
     measure()
     list.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', measure)
@@ -183,7 +184,7 @@ export function MenuCounter({ onPick }: MenuCounterProps) {
               >
                 <span className="counter-still-box">
                   {/* The name is the option's text; the photograph is for the eye only. */}
-                  {still && mayLoad && <Picture name={still} alt="" sizes="10rem" className="counter-still" />}
+                  {still && <Picture name={still} alt="" sizes="10rem" className="counter-still" />}
                 </span>
                 <span className="counter-name">{drink.name}</span> <span className="counter-price">{formatPrice(drink.price)}</span>
               </li>

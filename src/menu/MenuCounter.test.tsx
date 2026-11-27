@@ -116,6 +116,18 @@ describe('MenuCounter', () => {
     expect(onPick).not.toHaveBeenCalled()
   })
 
+  it('shows every drink’s still in its place from the first paint, before any 3D', () => {
+    const { container } = render(<MenuCounter onPick={() => {}} />)
+    expect(container.querySelector('canvas')).toBeNull()
+    for (const option of screen.getAllByRole('option')) {
+      const still = option.querySelector('img')
+      expect(still).not.toBeNull()
+      // The name is the option's text; the picture is for the eye.
+      expect(still).toHaveAttribute('alt', '')
+    }
+    expect(screen.getAllByRole('option')[0]!.querySelector('img')!.getAttribute('src')).toContain('/media/cup-still-')
+  })
+
   it('draws the counter with the light models once the visitor shows intent', async () => {
     const { container } = render(<MenuCounter onPick={() => {}} />)
     await settle(300)
