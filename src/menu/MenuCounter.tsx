@@ -184,7 +184,7 @@ export function MenuCounter({ onPick }: MenuCounterProps) {
               >
                 <span className="counter-still-box">
                   {/* The name is the option's text; the photograph is for the eye only. */}
-                  {still && <Picture name={still} alt="" sizes="10rem" className="counter-still" />}
+                  {still && <Picture name={still} alt="" sizes="7rem" className="counter-still" />}
                 </span>
                 <span className="counter-name">{drink.name}</span> <span className="counter-price">{formatPrice(drink.price)}</span>
               </li>

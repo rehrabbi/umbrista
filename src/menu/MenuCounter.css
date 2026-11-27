@@ -88,10 +88,17 @@
   user-select: none;
 }
 
+/*
+ * A drink's still is about the size its 3D model stands at (three-quarters of its place), and no
+ * larger: shown from the first paint, a bigger one became the page's largest image, and the
+ * Menu's largest paint waited for it (2.57 s against the 2.5 s budget). At this size the intro's
+ * text is the largest thing on the first screen.
+ */
 .counter-still-box {
   align-self: stretch;
-  justify-self: stretch;
+  justify-self: center;
   position: relative;
+  width: min(100%, 7rem);
   min-height: 0;
 }
 
