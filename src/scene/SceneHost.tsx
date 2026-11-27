@@ -1,9 +1,8 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import type { StillName } from '../media/manifest'
 import { Picture } from '../media/Picture'
-import { usePageLoaded } from '../media/usePageLoaded'
 import { dprFor, isSoftwareRenderer, measureFrameTime, quality, type Quality, type Tier } from './quality'
-import { whenScenesMayStart } from './gate'
+import { useScenesMayStart } from './gate'
 import { SceneBoundary } from './SceneBoundary'
 import { SceneQualityContext } from './scene-quality'
 import { SceneReadyContext } from './scene-ready'
@@ -23,8 +22,8 @@ export interface SceneHostProps {
   /** The still's `sizes`, when the host is not as wide as the viewport. */
   sizes?: string
   /**
-   * Ask for the still only once the page has loaded, so a still just below the first screen never
-   * competes with the first screen's own image for the network.
+   * Ask for the still only once the scenes may start (the visitor's first intent, or a quiet page;
+   * see gate.ts), so a still below the first screen never competes with the first screen's image.
    */
   deferStill?: boolean
   className?: string
@@ -148,10 +147,8 @@ export function SceneHost({
   const active = useSceneActive(ref)
   const isNear = useNear(ref, near)
   const ready = useCallback(() => setDrawn(true), [])
-  const loaded = usePageLoaded()
   // Waited for from mount, so the visitor's intent counts even while the host is still far away.
-  const [mayStart, setMayStart] = useState(false)
-  useEffect(() => whenScenesMayStart(() => setMayStart(true)), [])
+  const mayStart = useScenesMayStart()
 
   useEffect(() => {
     if (!isNear || !mayStart) return
@@ -193,7 +190,7 @@ export function SceneHost({
       data-swap={swap ? '' : undefined}
       className={['scene-host', className].filter(Boolean).join(' ')}
     >
-      {(!deferStill || loaded) && <Picture name={still} alt={label} priority={priority} sizes={sizes} className="scene-still" />}
+      {(!deferStill || mayStart) && <Picture name={still} alt={label} priority={priority} sizes={sizes} className="scene-still" />}
       {showCanvas && (
         <SceneBoundary
           onError={() => {

@@ -1,13 +1,13 @@
 import { lazy, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { Link } from 'react-router'
 import { Picture } from '../media/Picture'
-import { usePageLoaded } from '../media/usePageLoaded'
 import { VideoLoop } from '../media/VideoLoop'
 import { usePrefersReducedMotion } from '../media/usePrefersReducedMotion'
 import { CupControls } from '../scene/cup/CupControls'
 import { pushCupInput } from '../scene/cup/cupInput'
 import { CHAPTERS, chapterIndex } from '../scene/journey/chapters'
 import { journeyProgress, useJourneyProgress } from '../scene/journey/progress'
+import { useScenesMayStart } from '../scene/gate'
 import { SceneHost } from '../scene/SceneHost'
 import { OpeningTime } from '../time/OpeningTime'
 import { buttonClasses } from '../ui/Button'
@@ -191,17 +191,19 @@ export function Landing() {
   const failed = useJourneyScroll(reduced, root)
   const still = reduced || failed
   useStillJourney(still, root)
-  // Nothing below the first screen is asked for before the page has loaded, so the hero's poster
-  // has the network to itself; after that each picture still waits for its place on screen.
-  const loaded = usePageLoaded()
+  // Nothing beyond the poster is asked for until the visitor shows intent or the loaded page has
+  // been quiet a while (gate.ts), so the hero's poster has the network to itself; after that each
+  // picture still waits for its place on screen.
+  const mayLoad = useScenesMayStart()
 
   return (
     <div ref={root} className="landing">
       {/*
        * The hero: the craft, full screen. The crema's close-up fills the viewport edge to edge (its
-       * poster is the page's one priority image); the film swaps in over it once the page has
-       * loaded, frame for frame, and stays the poster under reduced motion. The copy comes first in
-       * the document, so the heading is read before any picture.
+       * poster is the page's one priority image); the film swaps in over it, frame for frame, on the
+       * visitor's first intent or once the loaded page has been quiet a while, and under reduced
+       * motion stays the poster. The copy comes first in the document, so the heading is read
+       * before any picture.
        */}
       <section data-chapter={CRAFT.id} className="chapter chapter-hero">
         <div className="chapter-copy hero-copy">
@@ -222,7 +224,7 @@ export function Landing() {
         </div>
         <div className="chapter-media hero-media">
           <Picture name="steam-loop-poster" alt="Crema on a fresh espresso, close up, with steam rising from it." priority className="chapter-photo" />
-          {!reduced && loaded && <VideoLoop name="steam-loop" poster={false} className="chapter-photo hero-film" />}
+          {!reduced && mayLoad && <VideoLoop name="steam-loop" poster={false} className="chapter-photo hero-film" />}
         </div>
       </section>
 
@@ -263,7 +265,7 @@ export function Landing() {
 
         <Chapter id={WINDOW.id} className="chapter-window">
           <div className="chapter-media">
-            {loaded && (
+            {mayLoad && (
               <Picture
                 name="rain-window"
                 alt="Rain on the café window at night, a lamp over the table and the wet street outside."

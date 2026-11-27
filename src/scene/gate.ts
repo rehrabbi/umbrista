@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 /*
  * When the page's 3D scenes may start. Creating the first WebGL context and evaluating three.js cost
  * a few hundred milliseconds of main thread, so nothing 3D starts while the visitor is only looking
@@ -77,4 +79,15 @@ export function resetSceneGate(): void {
   waiting.clear()
   disarm?.()
   disarm = null
+}
+
+/**
+ * Whether the gate is open, as React state: false until the visitor's first intent or a quiet,
+ * loaded page. Media that is not needed for the first screen waits for it, so nothing competes
+ * with the first screen's own image while the page loads.
+ */
+export function useScenesMayStart(): boolean {
+  const [mayStart, setMayStart] = useState(sceneGateOpen)
+  useEffect(() => whenScenesMayStart(() => setMayStart(true)), [])
+  return mayStart
 }

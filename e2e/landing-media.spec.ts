@@ -38,8 +38,10 @@ test('the hero is the craft film: its poster loads first, edge to edge, and the 
   expect(problems).toEqual([])
 })
 
-test('the film is muted, swaps in over its poster once the page has loaded, and plays', async ({ page }) => {
+test('the film is muted, swaps in over its poster on the first intent, and plays', async ({ page }) => {
   await page.goto('/')
+  await expect(page.locator('video')).toHaveCount(0)
+  await page.mouse.move(400, 300)
   const video = page.locator('video.hero-film')
   await expect(video).toHaveCount(1)
   await expect(video).toHaveJSProperty('muted', true)
