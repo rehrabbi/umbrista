@@ -1,4 +1,4 @@
-// Renders the hero cup's still from the cup model itself, into media-src/cup-still.png (a 2048 px
+// Renders the hero cup's still from the cup model itself, into media-src/cup-still.png (a 1280 px
 // square with a transparent background). `npm run media` then makes its web copies.
 //
 //   npm run cup-still
@@ -15,7 +15,7 @@ import { createServer } from 'vite'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const OUT = join(root, 'media-src', 'cup-still.png')
-const SIZE = 2048
+const SIZE = 1280
 
 const server = await createServer({ root, configFile: join(root, 'vite.config.ts'), server: { port: 5198, strictPort: true }, logLevel: 'error' })
 await server.listen()
