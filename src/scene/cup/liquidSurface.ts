@@ -214,6 +214,11 @@ const vec3 LQ_LUMA = vec3(0.2126, 0.7152, 0.0722);
  *
  * Ageing (the last cup, uCool): the photograph is sampled from blurrier mip levels, so the art's edges
  * soften, and its colour is muted and a little darkened. The sheen flattens in the roughness below.
+ * The mute is a partial desaturation followed by a brown tint (red and green above blue, green 0.97
+ * of red): muting towards a neutral grey left the rosetta's foam, (0.869, 0.761, 0.786) on the
+ * master, with more blue than green, and under the red lamp it read pink. Aged, that foam goes from
+ * (0.788, 0.702, 0.709) to an ivory (0.777, 0.686, 0.578), and the graded crema to a duller, darker
+ * latte brown, (0.373, 0.189, 0.079), green 0.51 of red.
  */
 vec3 lqGrade(vec3 c, vec3 gain) {
   return c * mix(gain, vec3(1.0), smoothstep(0.35, 0.8, dot(c, LQ_LUMA)));
@@ -228,7 +233,7 @@ vec3 lqPhoto(vec2 p) {
   if (uSurface.y > 0.001) colour += uSurface.y * lqGrade(texture2D(uSurfaceBloom, uv, soften).rgb, vec3(1.07, 1.33, 2.15));
   if (uSurface.z > 0.001) colour += uSurface.z * lqGrade(texture2D(uSurfaceRosetta, uv, soften).rgb, vec3(0.88, 1.11, 0.91));
   float grey = dot(colour, LQ_LUMA);
-  colour = mix(colour, vec3(grey) * vec3(1.04, 0.98, 0.92), uCool * 0.25) * (1.0 - 0.08 * uCool);
+  colour = mix(colour, vec3(grey), uCool * 0.3) * mix(vec3(1.0), vec3(1.0, 0.97, 0.8) * 0.92, uCool);
   return colour;
 }
 
@@ -323,9 +328,10 @@ vec3 lqSurface(vec2 p) {
   colour = mix(colour, halo, smoothstep(0.0, 0.25, art) * 0.5 * (1.0 - uCool * 0.5));
   colour = mix(colour, foam, smoothstep(0.15, 1.0, art));
 
-  // Cooling greys and dulls the whole surface a little.
+  // Cooling dulls the whole surface a little, towards a brown, not a grey (which reads pink under the
+  // lamp). The foam has already aged to beige in foamColour above.
   float grey = dot(colour, vec3(0.2126, 0.7152, 0.0722));
-  colour = mix(colour, vec3(grey) * vec3(1.03, 0.98, 0.93), uCool * 0.2);
+  colour = mix(colour, vec3(grey) * vec3(1.0, 0.97, 0.8), uCool * 0.2);
   return colour;
 }
 `

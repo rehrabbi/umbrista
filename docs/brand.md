@@ -162,6 +162,7 @@ Notes:
   photographs' browns to one hazel crema (owner review 2026-11-27: the photographs' own crema read
   rust-orange under the sodium lamp), leaving the milk and the art white. For the last cup the owner chose
   live ageing over surface 4: as the last chapter begins, the rosetta's edges soften, its sheen
-  flattens and its colour mutes, in the shader.
+  flattens and its colour mutes, in the shader: the browns duller and a touch darker, the foam
+  towards ivory, never grey or rosy under the lamp.
 - Planned: one 3D model per menu drink (plan Task 9b), each listed here once the owner approves and it
   is made.
