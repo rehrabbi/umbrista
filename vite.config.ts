@@ -1,6 +1,8 @@
 /// <reference types="vitest/config" />
 import react from '@vitejs/plugin-react'
 import { defineConfig, type Plugin } from 'vite'
+import { MEDIA } from './src/media/manifest'
+import { srcSet } from './src/media/srcset'
 
 /**
  * Preloads the fonts every page's first screen sets (the display face for headings, and the text
@@ -31,8 +33,39 @@ function preloadFirstScreenFonts(): Plugin {
   }
 }
 
+/** The landing hero's poster: the page's largest image, and the one it is judged by. */
+const HERO_POSTER = 'steam-loop-poster'
+
+/**
+ * Preloads the landing hero's poster from the HTML, so the browser starts on it at once instead of
+ * after the app's script has run and rendered the `<picture>`. Only on `/`: index.html serves every
+ * route, so a tiny script in the head adds the preload when the path is the landing's. Its srcset
+ * and sizes are the picture's own AVIF source, so the same file is used, not a second one.
+ * A Content Security Policy must allow this one inline script by its sha256 hash.
+ */
+function preloadHeroPoster(): Plugin {
+  const link = {
+    rel: 'preload',
+    as: 'image',
+    type: 'image/avif',
+    imagesrcset: srcSet(HERO_POSTER, MEDIA[HERO_POSTER].widths, 'avif'),
+    imagesizes: '100vw',
+    fetchpriority: 'high',
+  }
+  const script = `if(location.pathname==='/'){var l=document.createElement('link');${Object.entries(link)
+    .map(([key, value]) => `l.setAttribute(${JSON.stringify(key)},${JSON.stringify(value)});`)
+    .join('')}document.head.appendChild(l)}`
+  return {
+    name: 'umbrista:preload-hero-poster',
+    transformIndexHtml: {
+      order: 'post',
+      handler: () => [{ tag: 'script', children: script, injectTo: 'head-prepend' as const }],
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), preloadFirstScreenFonts()],
+  plugins: [react(), preloadFirstScreenFonts(), preloadHeroPoster()],
   build: {
     // The 3D canvas (three and R3F) is one lazy chunk of about 900 kB, loaded after first paint.
     chunkSizeWarningLimit: 1000,

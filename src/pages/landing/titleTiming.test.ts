@@ -13,10 +13,4 @@ describe("the title's timing", () => {
     expect(arrival).toBeGreaterThanOrEqual(0.6)
     expect(arrival).toBeLessThanOrEqual(1.2)
   })
-
-  it('sinks back faster than it rose, but never quicker than 0.6 seconds', () => {
-    const { arrival, sink } = titleTiming(LETTERS, RISE)
-    expect(sink).toBeLessThan(arrival)
-    expect(sink).toBeGreaterThanOrEqual(0.6)
-  })
 })

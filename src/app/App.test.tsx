@@ -32,7 +32,7 @@ describe('App', () => {
       </MemoryRouter>,
     )
     await screen.findByRole('heading', { level: 1 })
-    expect(screen.getByText(/café time/)).toBeInTheDocument()
+    expect(screen.getAllByText(/café time/)[0]).toBeInTheDocument()
   })
 
   it('marks the page as night or day, and the switch forces night', async () => {

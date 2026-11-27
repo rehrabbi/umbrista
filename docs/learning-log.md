@@ -304,3 +304,61 @@ score is about 0.80: the first WebGL context in a page costs 300 to 380 ms of ma
 
 **Question to revisit.** Whether the canvas should wait longer (for the first interaction, or a
 longer idle) on phones, trading a later rain for a quieter first few seconds.
+
+## 2026-11-27: The landing complete and the hero cup (Task 9)
+
+**Owner decisions, made while it was built.**
+
+- The hero is the craft, full screen: the crema and its steam film edge to edge, the promise rising
+  over it, low and left on a scrim. The street at dusk, with its rain and lamps, moves to the third
+  chapter. The order is craft, cup under the lamp, dusk on the street, window, last cup.
+- Media is always full-bleed. The steam loop had been a rounded card with a caption under it; the
+  owner disliked it, and no chapter shows a boxed photograph or film again.
+- Start the 3D later. The first WebGL context and evaluating three.js cost 300 to 380 ms of main
+  thread on a GPU desktop, inside Lighthouse's blocking-time window.
+
+**Decisions and why.**
+
+- **One gate for everything not on the first screen** (`src/scene/gate.ts`). The 3D, the hero's
+  film and the later chapters' pictures wait for the visitor's first intent (a pointer moving, a
+  touch, a key, a wheel, a scroll) or for five quiet seconds after load. Lighthouse never shows
+  intent, and its trace ends before the quiet runs out, so the first screen is measured alone.
+  Waiting for the `load` event was not enough: Lighthouse's simulation does not model that wait,
+  so pictures asked for after `load` still shared the poster's bandwidth in its sums.
+- **The canvas fades in only once its scene has drawn.** Before, the fade started when the canvas
+  mounted, often before its first frame, so part of it was spent on an empty canvas. A scene now
+  calls `useSceneReady()` from its first drawn frame; the host then sets `data-live="ready"`.
+- **The cup's still is rendered from the cup** (`npm run cup-still`), by the live scene in the pose
+  it starts in, with a transparent background. The host's `swap` hides the still once the live cup
+  has fully faded in, so the two are never seen together, and the canvas frames the same square the
+  still is contained in (`containFov`), so the swap lands exactly.
+- **One stage, sticky over four chapters.** The cup's stage is `position: sticky` for the length
+  of its chapters, with a negative margin that gives its height back; the chapters scroll under it.
+  The street keeps its own sticky pin inside that, for the lamps.
+- **Physics that settles like light.** Each value relaxes towards its push with the exact
+  exponential over the step, so the cup never overshoots and 30 and 60 frames a second agree.
+- **The coffee is one disc and one shader.** three's physical material, with the colour written in
+  `onBeforeCompile`: crema, milk marbling, a tulip in stacked crescents with a pull-through, and
+  cooling, all from `liquidLook(progress)`. It takes the scene's lights, reflections and clear coat
+  like the cup does.
+- **The foot gap is fixed in the scene.** The saucer has an open centre and its top face stops short
+  of the foot; a glazed disc under its inner edge closes the ring. Its size and height come from the
+  model's vertices, so a regenerated model would still be measured, not guessed.
+
+**What to remember.**
+
+- `git mv` stages the rename immediately: the next commit takes it along, whatever that commit is
+  about. Commit or unstage a rename with the change it belongs to.
+- React's development mode mounts effects twice. A cleanup that disposes a three material, followed
+  by its reuse, recompiles the program, and three's background compile then asks the driver about
+  the old one ("Program object expected" warnings in development only).
+- The shadow on an invisible table ends where the canvas ends, as a straight line. Fading the shadow
+  by the fragment's distance to the canvas edge removes the line without shrinking the shadow.
+- Meshopt's decoder is WebAssembly. The Content Security Policy needs `'wasm-unsafe-eval'` in
+  `script-src` when it arrives.
+
+**Questions to revisit.**
+
+- The hero's film now starts on the first intent; a phone visitor who only reads sees the poster
+  until they touch or five quiet seconds pass.
+- The window chapter's photograph has its own cup in it, so two cups show there.

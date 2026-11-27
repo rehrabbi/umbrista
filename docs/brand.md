@@ -129,14 +129,42 @@ masters stay in Higgsfield and are found again by their job IDs; only web deriva
 | Steam loop: six silent seconds, locked camera, first frame equals last | "The craft" | Seedance 2.5, 1080p (draft `560af24b` first) | `bf93d379` | 2026-11-26 |
 | Studio cup and saucer on navy | Reference for the cup model | Nano Banana 2, 4K still | `b22ab85d` | 2026-11-26 |
 | The cup and saucer as a 3D model, PBR textures, about 30,000 triangles | Hero cup, Brew-your-own | Meshy image to 3D, from a 1024 px copy of the studio still | `404fdaa5` | 2026-11-26 |
+| Coffee surface 1, from above: the espresso's crema | The cup's coffee surface (the cup chapter) | Nano Banana 2, 4K still | `aee4a370` | 2026-11-27 |
+| Coffee surface 2, from above: the milk blooming up through the crema | The cup's coffee surface (dusk on the street) | Nano Banana 2, 4K still | `5db64658` | 2026-11-27 |
+| Coffee surface 3, from above: a wide rosetta with a foam "lamp cord" and a round dot | The cup's coffee surface (the window, and aged for the last cup) | Nano Banana 2, 4K still | `8389ae19` | 2026-11-27 |
+| Coffee surface 4, from above: the last cup | Not used: the owner chose to age surface 3 live instead | Nano Banana 2, 4K still | `6fc56cef` | 2026-11-27 |
 
 Notes:
 
 - The cup's design (a flared low body, thin rim, rounded loop handle, plain white glaze) is
   Umbrista's own, written into the brief; nothing copies a real product.
-- The model's back and underside are inferred from one view; a small gap shows where the foot meets
-  the saucer and is fixed before use (plan Task 9).
+- The model's back and underside are inferred from one view. Where the foot meets the saucer, the
+  saucer's top face stops short of the foot and the page showed through a thin ring (the saucer has
+  an open centre). Fixed in the scene, not the asset (plan Task 9): a glazed disc sits just under
+  the saucer's inner edge, its middle hidden inside the foot and shaded darker towards it like the
+  crevice where a cup sits. The disc's place and size are measured from the model's own vertices
+  (`useCupModel`), so nothing was regenerated.
+- Web copy of the cup: `public/models/cup.glb`, **0.82 MB** (budget 2 MB), from the 7.6 MB master by
+  `npm run models`: meshopt geometry (positions 14 bits, normals 10, texture coordinates 14) and
+  WebP textures at 2048 px (quality 86, normal map 94). Same triangles as the master (about 30,000;
+  no simplification). Decoded by three's bundled meshopt decoder; nothing is fetched elsewhere.
+- The cup's still (`cup-still`, transparent AVIF and WebP at 640 and 1280 px) is not a generated
+  asset: `npm run cup-still` renders it from the model with the live scene itself, in the cup's rest
+  pose, with its espresso, at night, so the still and the live cup match where the one replaces the
+  other.
 - The steam loop arrives as HEVC, which not every browser plays; it is always re-encoded to VP9 WebM
   and H.264 MP4.
+- The coffee surfaces (owner decision 2026-11-27) replace the code-drawn crema, milk and latte art.
+  Their masters are in the git-ignored `media-src/surfaces/`; `npm run media` makes square WebP
+  textures at 768 px (used on the high tier: 121, 94 and 66 KB) and 512 px (other tiers: 54, 42
+  and 32 KB), WebP quality 55, loaded only with the cup's scene. They were 1024 px at quality 78
+  (306, 255 and 167 KB) until the owner's review of 2026-11-27; the cup is never more than about
+  700 CSS px across. The rosetta took four tries: `e6ea6e4a`,
+  `512456b1` and `38d8d10f` were rejected before `8389ae19`. The shader grades all three
+  photographs' browns to one hazel crema (owner review 2026-11-27: the photographs' own crema read
+  rust-orange under the sodium lamp), leaving the milk and the art white. For the last cup the owner chose
+  live ageing over surface 4: as the last chapter begins, the rosetta's edges soften, its sheen
+  flattens and its colour mutes, in the shader: the browns duller and a touch darker, the foam
+  towards ivory, never grey or rosy under the lamp.
 - Planned: one 3D model per menu drink (plan Task 9b), each listed here once the owner approves and it
   is made.

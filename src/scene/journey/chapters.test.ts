@@ -1,26 +1,27 @@
 import { describe, expect, it } from 'vitest'
 import { MEDIA } from '../../media/manifest'
-import { CHAPTERS, chapterAt, lampAt, OPENING } from './chapters'
+import { CHAPTERS, CUP_REST, DUSK, chapterAt, chapterIndex, lampAt, lampsAt, orbitAt } from './chapters'
 
 describe('CHAPTERS', () => {
-  it('tells the night in five chapters, in order', () => {
-    expect(CHAPTERS.map((chapter) => chapter.id)).toEqual(['dusk', 'cup', 'craft', 'window', 'last-cup'])
+  it('tells the night in five chapters, in the order the owner chose (2026-11-27)', () => {
+    expect(CHAPTERS.map((chapter) => chapter.id)).toEqual(['craft', 'cup', 'dusk', 'window', 'last-cup'])
   })
 
-  it('opens on the street at dusk, with the promise as its line', () => {
+  it('opens on the craft film, with the promise as its line', () => {
     const [first] = CHAPTERS
-    expect(first).toMatchObject({ still: 'street-dusk', line: 'We open when the light goes.' })
+    expect(first).toMatchObject({ still: 'steam-loop-poster', loop: 'steam-loop', line: 'We open when the light goes.' })
   })
 
   it('names only media that exist in public/media, stills as stills and loops as loops', () => {
     for (const chapter of CHAPTERS) {
-      expect(MEDIA[chapter.still as keyof typeof MEDIA], chapter.id).toMatchObject({ kind: 'still' })
+      if (chapter.still) expect(MEDIA[chapter.still as keyof typeof MEDIA], chapter.id).toMatchObject({ kind: 'still' })
       if (chapter.loop) expect(MEDIA[chapter.loop as keyof typeof MEDIA], chapter.id).toMatchObject({ kind: 'loop' })
     }
   })
 
-  it('gives the craft the steam loop', () => {
-    expect(CHAPTERS.find((chapter) => chapter.id === 'craft')?.loop).toBe('steam-loop')
+  it('puts the street at dusk and the rain window in their chapters', () => {
+    expect(CHAPTERS[chapterIndex('dusk')]!.still).toBe('street-dusk')
+    expect(CHAPTERS[chapterIndex('window')]!.still).toBe('rain-window')
   })
 
   it('writes every title and line in the voice: present, short, and never exclaimed', () => {
@@ -32,7 +33,10 @@ describe('CHAPTERS', () => {
     }
   })
 
-  it('keeps a camera move of finite numbers for every chapter', () => {
+  it('moves the camera continuously: each chapter starts where the one before it ended', () => {
+    for (let index = 1; index < CHAPTERS.length; index++) {
+      expect(CHAPTERS[index]!.camera.from, CHAPTERS[index]!.id).toEqual(CHAPTERS[index - 1]!.camera.to)
+    }
     for (const { camera } of CHAPTERS) {
       for (const point of [camera.from, camera.to]) {
         expect(point).toHaveLength(3)
@@ -57,14 +61,27 @@ describe('chapterAt', () => {
   })
 })
 
-describe('lampAt (the lamps coming on through chapter 1)', () => {
+describe('orbitAt', () => {
+  it('holds the cup at rest until its chapter, then follows each move without a jump', () => {
+    expect(orbitAt(0)).toEqual(CUP_REST)
+    expect(orbitAt(1)).toEqual(CUP_REST)
+    let previous = orbitAt(1)
+    for (let progress = 1.001; progress <= CHAPTERS.length; progress += 0.001) {
+      const orbit = orbitAt(progress)
+      for (let axis = 0; axis < 3; axis++) expect(Math.abs(orbit[axis]! - previous[axis]!)).toBeLessThan(0.2)
+      previous = orbit
+    }
+  })
+})
+
+describe('lampAt (the lamps coming on through the street chapter)', () => {
   it('leaves the lamps off while dusk sits on the street', () => {
     expect(lampAt(0)).toBe(0)
-    expect(lampAt(OPENING.lampsFrom)).toBe(0)
+    expect(lampAt(DUSK.lampsFrom)).toBe(0)
   })
 
   it('has them fully on by the end of the beat, and keeps them on', () => {
-    expect(lampAt(OPENING.lampsTo)).toBe(1)
+    expect(lampAt(DUSK.lampsTo)).toBe(1)
     expect(lampAt(1)).toBe(1)
   })
 
@@ -84,8 +101,11 @@ describe('lampAt (the lamps coming on through chapter 1)', () => {
     expect(lampAt(Number.NaN)).toBe(0)
   })
 
-  it('brings the title in once the lamps are nearly on, and leaves time to read it while pinned', () => {
-    expect(lampAt(OPENING.titleAt)).toBeGreaterThan(0.9)
-    expect(OPENING.titleAt).toBeLessThan(0.7)
+  it('reads the lamps from journey progress: off before the street, on after it', () => {
+    const dusk = chapterIndex('dusk')
+    expect(lampsAt(0.5)).toBe(0)
+    expect(lampsAt(dusk - 0.01)).toBe(0)
+    expect(lampsAt(dusk + 0.4)).toBeCloseTo(lampAt(0.4))
+    expect(lampsAt(dusk + 1.2)).toBe(1)
   })
 })

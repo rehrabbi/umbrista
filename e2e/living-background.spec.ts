@@ -1,12 +1,22 @@
 import { expect, test, type Page } from '@playwright/test'
-import { allowSoftwareGL, forceIntensity } from './software-gl'
+import { compare } from './compare'
+import { allowSoftwareGL, forceIntensity, withoutCup } from './software-gl'
 
 // The clock decides night or day, so pin it: 22:00 and 13:00 in London are night and day.
 test.use({ timezoneId: 'Europe/London', viewport: { width: 1440, height: 900 } })
 const NIGHT = new Date('2026-11-26T22:00:00Z')
 const DAY = new Date('2026-11-26T13:00:00Z')
 
-const READY = '.landing-scene canvas[data-backdrop="ready"]'
+const READY = '.dusk-scene canvas[data-backdrop="ready"]'
+
+/**
+ * The street is the third chapter (owner decision 2026-11-27). Its scene starts once the visitor has
+ * shown intent and the chapter is near the screen: move the pointer, then bring the chapter into view.
+ */
+async function showStreet(page: Page) {
+  await page.mouse.move(700, 300)
+  await page.locator('.dusk-stage').scrollIntoViewIfNeeded()
+}
 
 /** Console errors, page errors, and any shader trouble three reports (it warns about link logs). */
 function collectProblems(page: Page): string[] {
@@ -20,77 +30,18 @@ function collectProblems(page: Page): string[] {
   return problems
 }
 
-interface Comparison {
-  /** Mean absolute difference per channel, 0..255. */
-  meanDiff: number
-  /**
-   * Mean absolute difference of the two luminance images after each is normalised to zero mean and
-   * unit deviation: a global grade cancels out, a shifted or rescaled photograph does not.
-   */
-  structureDiff: number
-  /** Luminance deviation of the first image, 0..255: near zero when it is blank. */
-  deviation: number
-}
-
-/** Compares two same-sized PNG screenshots, decoded in the page. */
-async function compare(page: Page, a: Buffer, b: Buffer): Promise<Comparison> {
-  return page.evaluate(
-    // This function runs in the page, so its helpers live inside it: it cannot reach this module.
-    async ([first, second]) => {
-      // oxlint-disable-next-line unicorn/consistent-function-scoping
-      const pixels = async (base64: string) => {
-        const blob = await (await fetch(`data:image/png;base64,${base64}`)).blob()
-        const bitmap = await createImageBitmap(blob)
-        const canvas = new OffscreenCanvas(bitmap.width, bitmap.height)
-        const context = canvas.getContext('2d')!
-        context.drawImage(bitmap, 0, 0)
-        return context.getImageData(0, 0, bitmap.width, bitmap.height).data
-      }
-      // oxlint-disable-next-line unicorn/consistent-function-scoping
-      const luma = (data: Uint8ClampedArray) => {
-        const out = new Float64Array(data.length / 4)
-        for (let i = 0; i < out.length; i++) {
-          out[i] = 0.2126 * data[i * 4]! + 0.7152 * data[i * 4 + 1]! + 0.0722 * data[i * 4 + 2]!
-        }
-        let mean = 0
-        for (const v of out) mean += v
-        mean /= out.length
-        let variance = 0
-        for (const v of out) variance += (v - mean) ** 2
-        return { out, mean, sd: Math.sqrt(variance / out.length) }
-      }
-      const [pa, pb] = await Promise.all([pixels(first), pixels(second)])
-      let diff = 0
-      for (let i = 0; i < pa.length; i++) {
-        if (i % 4 !== 3) diff += Math.abs(pa[i]! - pb[i]!)
-      }
-      const la = luma(pa)
-      const lb = luma(pb)
-      let structure = 0
-      for (let i = 0; i < la.out.length; i++) {
-        structure += Math.abs((la.out[i]! - la.mean) / la.sd - (lb.out[i]! - lb.mean) / lb.sd)
-      }
-      return {
-        meanDiff: diff / ((pa.length / 4) * 3),
-        structureDiff: structure / la.out.length,
-        deviation: la.sd,
-      }
-    },
-    [a.toString('base64'), b.toString('base64')] as const,
-  )
-}
-
-// The scrim and the copy sit over both pictures; leave them out so the photograph itself is compared.
-const BARE = '.landing-hero::before{display:none!important}.landing-copy{visibility:hidden!important}'
+// The scrim, the copy and the cup sit over both pictures; leave them out so the photograph itself is compared.
+const BARE =
+  '.dusk-scene::after{display:none!important}.chapter-dusk .chapter-copy,.cup-stage{visibility:hidden!important}'
 
 /** The hero as the canvas draws it (the still hidden), then the still alone (the canvas hidden). */
 async function canvasAndStill(page: Page): Promise<[Buffer, Buffer]> {
-  const box = await page.locator('.landing-scene').boundingBox()
+  const box = await page.locator('.dusk-scene').boundingBox()
   expect(box).not.toBeNull()
   const clip = { x: box!.x, y: box!.y, width: box!.width, height: box!.height }
   const shot = (hide: string) =>
     page.screenshot({ clip, animations: 'disabled', style: `${BARE}${hide}{visibility:hidden!important}` })
-  return [await shot('.landing-scene img'), await shot('.scene-canvas')]
+  return [await shot('.dusk-scene img'), await shot('.dusk-scene .scene-canvas')]
 }
 
 test.describe('the living background', () => {
@@ -102,9 +53,11 @@ test.describe('the living background', () => {
     test(`draws the street photograph on the canvas at ${name}, lined up with the still`, async ({ page }) => {
       const problems = collectProblems(page)
       await allowSoftwareGL(page)
+      await withoutCup(page)
       await page.emulateMedia({ reducedMotion: 'reduce' })
       await page.clock.setFixedTime(time)
       await page.goto('/')
+      await showStreet(page)
       await expect(page.locator(READY)).toHaveCount(1, { timeout: 20_000 })
 
       const [canvas, still] = await canvasAndStill(page)
@@ -123,9 +76,11 @@ test.describe('the living background', () => {
 
   test('with the effect off, the canvas is the still to within a few levels', async ({ page }) => {
     await allowSoftwareGL(page)
+    await withoutCup(page)
     await forceIntensity(page, 0)
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto('/')
+    await showStreet(page)
     await expect(page.locator(READY)).toHaveCount(1, { timeout: 20_000 })
     const [canvas, still] = await canvasAndStill(page)
     const { meanDiff, deviation } = await compare(page, canvas, still)
@@ -139,7 +94,9 @@ test.describe('the living background', () => {
     test(`compiles and runs the ${tier} tier without shader errors`, async ({ page }) => {
       const problems = collectProblems(page)
       await allowSoftwareGL(page, tier)
+      await withoutCup(page)
       await page.goto('/')
+      await showStreet(page)
       const canvas = page.locator(READY)
       await expect(canvas).toHaveCount(1, { timeout: 20_000 })
       await expect(canvas).toHaveAttribute('data-tier', tier)

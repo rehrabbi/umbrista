@@ -2,16 +2,15 @@
 
 The resume-here snapshot. Read [`WAYS-OF-WORKING.md`](WAYS-OF-WORKING.md) first.
 
-Last updated: 2026-11-26.
+Last updated: 2026-11-27.
 
 ## 1. Current stage
 
-**Landing prototype, an owner checkpoint.** Task 8 is built on `task/8-landing-prototype`
-(committed locally, not pushed, no pull request yet; see section 3) and waits for the owner to judge
-the feel. Tasks 0 to 7 are merged into `develop`: the repository foundation, the app scaffold with
-CI, the approved brand, the brand system, the site shell, the two clocks (pull request #6), the media
-and 3D foundation (pull request #8) and the living background (pull request #10). Both `main` and `develop` are protected. The owner approved a photoreal direction after a
-look-development round (ADR 0002); the design and plan are amended for it.
+**Task 9, the landing complete and the hero cup**, built on `task/9-landing-complete` (local commits,
+not pushed, no pull request yet; see section 3), waiting for review. Tasks 0 to 8 are merged into
+`develop`; Task 8, the landing prototype, is pull request #11. Both `main` and `develop` are
+protected. The owner approved a photoreal direction (ADR 0002), and on 2026-11-27 decided the
+landing's order and hero (section 2).
 
 ## 2. Locked decisions
 
@@ -33,6 +32,13 @@ From design section 4 (decided by the owner):
 - Data requests go through a GitHub issue; no email is published.
 - A staff view for the owner's staff accounts and for demo users, who never see real data.
 - No deadline: build the whole site, then launch once as v1.0.0.
+- **The landing** (owner decisions, 2026-11-27): the hero is the craft, full screen (the crema and
+  its steam film edge to edge, the promise, the opening time and the actions low and left over a
+  scrim; its poster is the page's one priority image and LCP); the chapters then run the cup under
+  the lamp (the 3D cup, transforming), dusk on the street (the living background, the lamps coming
+  on), the window, the last cup. Every chapter's photograph or film is full-bleed, never a boxed or
+  rounded card. The 3D starts later: on the visitor's first intent, or after five quiet seconds once
+  the page has loaded. The Lighthouse budget stays green.
 - Workflow as in section 3 of [`WAYS-OF-WORKING.md`](WAYS-OF-WORKING.md).
 
 Stack (design section 5, [ADR 0001](adr/0001-stack-and-3d-approach.md)): Vite, React, TypeScript,
@@ -120,58 +126,61 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   `umbristaTestIntensity`; CI's SwiftShader needs the first for every canvas test. End-to-end tests:
   `e2e/living-background.spec.ts`.
 
-- Task 8, on `task/8-landing-prototype` (local commits only): the landing's first scroll chapter.
-  - `src/scene/journey/chapters.ts`: `Chapter` and `CHAPTERS` (dusk, cup, craft, window, last cup,
-    with titles and lines in the voice). Only chapter 1 is rendered; the cup's and the last cup's
-    stills are placeholders, and every `camera` is a placeholder until Task 9. Journey progress counts
-    chapters (`chapterAt`); `OPENING` holds chapter 1's beats and `lampAt` the lamps' rise.
-  - `src/scene/journey/progress.ts`: the journey progress, a small store outside React, so a scroll
-    frame re-renders only the scene inside the canvas. `Journey({ progress })` draws the living
-    background with the lamp for that progress.
-  - `LivingBackground` takes `lamp` (0..1, default 1) for the new `uLamp` uniform: the café window's
-    light (red first, then orange, as sodium strikes) and the glow's strength. It is a chapter's
-    progress, never a clock; `uNight` is untouched. At 1 the scene is exactly as before. The cover
-    crop now follows the still's `object-position` (the landing uses `35% 50%`, so the café window
-    stays on a phone screen). The shader compiles in the background (three's `compileAsync`, only
-    where `KHR_parallel_shader_compile` exists), keyed by shader variant per canvas.
-  - The landing (`src/pages/Landing.tsx`): chapter 1 is a tall section whose stage is CSS-sticky
-    (the pin); one ScrollTrigger reads its progress (`src/pages/landing/openingScroll.ts`, loaded
-    on idle or on the first scroll intent, never on the critical path). The lamps follow the scroll
-    exactly; the title is a cue: past `OPENING.titleAt` its letters rise one by one on
-    `--ease-settle` over `--dur-chapter`, 25 ms apart (about 1.15 s in all), and sink back 1.8
-    times faster (about 0.64 s) above it (`titleTiming.ts`). If the choreography cannot load, the
-    chapter ends as under reduced motion: title shown, lamps on, photograph undimmed. `--lamp` is set on the scene
-    host and the scroll cue only, and dims the still underneath while there is no canvas.
-    `KineticTitle` (`src/pages/landing/`) keeps the phrase as visually hidden text and the letters
-    `aria-hidden`. The h1 is "Umbrista" plus the promise. Under reduced motion there is no pin, no
-    ScrollTrigger and no GSAP: the title is whole, the lamps are on, and later chapters fade in.
-  - `src/scroll/useSmoothScroll.ts` has a frame driver (`driveWith`) and scroll listeners
-    (`onSmoothScroll`); `src/scroll/scrollTrigger.ts` hands Lenis to GSAP's ticker and updates
-    ScrollTrigger on every Lenis scroll. One Lenis, one loop, on one clock: the ticker passes
-    `performance.now()`, and a new driver's first time is lined up with the last, because a
-    backward step made a smooth scroll in flight jump to the top.
-  - `VideoLoop` asks for its poster only near the screen. `vite.config.ts` preloads the three
-    first-screen font files (the swap had shifted the large title).
-  - `lighthouserc.json` and the CI job "Lighthouse budget" (`npx lhci autorun` against
-    `vite preview`, mobile preset, `/`): performance at least 0.9, LCP at most 2.5 s, CLS at most
-    0.05, median of five runs. The new job is not yet a required check on `develop`.
-  - **What that budget measures.** CI's runner has no GPU and `SceneHost` refuses software WebGL,
-    so the job audits the landing without its canvas (it scores 0.96 to 0.99 there). On a desktop
-    with a GPU the canvas mounts during the audit and the score is about 0.80 locally: the page's
-    first WebGL context and evaluating three.js block the main thread. Whether the canvas should
-    mount later on phones is the owner's call at the checkpoint.
-  - End-to-end: `e2e/landing-chapter.spec.ts`.
+- Task 8, merged into `develop` (pull request #11): the scroll journey's machinery. `chapters.ts`
+  (`CHAPTERS`, `chapterAt`, the lamps' rise), the journey progress store (`progress.ts`), the
+  living background's `uLamp` (the lamps coming on, a chapter's progress, never a clock; `uNight`
+  stays the visitor's clock), the CSS-sticky pin with ScrollTrigger reading progress, `KineticTitle`,
+  one Lenis on GSAP's ticker on one clock (`src/scroll/`), preloaded first-screen fonts, and the
+  Lighthouse budget in CI ("Lighthouse budget": performance at least 0.9, LCP at most 2.5 s, CLS at
+  most 0.05, median of five runs, mobile preset, `/`; CI has no GPU, so it measures the page without
+  its canvas).
 
-Not yet: the rest of the journey, the hero cup, and any real page content beyond the landing.
+- Task 9, on `task/9-landing-complete` (local commits only): the landing complete and the hero cup.
+  - **The order** (owner decision 2026-11-27): `CHAPTERS` is craft, cup, dusk, window, last cup.
+    Journey progress counts chapters; a chapter is halfway when its middle is at the middle of the
+    screen. `orbitAt` is the cup's camera path; `lampsAt` the street's lamps.
+  - **The hero** (`src/pages/Landing.tsx`): the steam loop's poster through `Picture` (priority),
+    the film over it on the first intent (`VideoLoop` with `poster={false}`, faded in when it
+    plays), the h1 "Umbrista" plus the promise rising letter by letter in CSS (`KineticTitle rise`,
+    25 ms apart over `--dur-chapter`), the lede, `OpeningTime`, "Reserve a table" and "See the menu".
+  - **The cup's stage** (`src/pages/landing/CupStage.tsx`): sticky across chapters 2 to 5, over them,
+    the cup on the right on a wide screen and above the copy on a phone. A `SceneHost` with the cup's
+    still (`swap`: the still steps aside once the live cup has faded in), `near` and `deferStill`,
+    and the drag surface. `journeyScroll.ts` (lazy, with GSAP) has one ScrollTrigger per chapter
+    and writes the journey progress and `--lamp`. Under reduced motion, or if it cannot load, each
+    chapter is a still (an IntersectionObserver sets the chapter's midpoint).
+  - **The cup** (`src/scene/cup/`): `useCupModel` (the compressed glTF through drei's `useGLTF`
+    with three's bundled meshopt decoder; it measures the rim, the coffee's height, the wall, the
+    seat and the handle), `HeroCup` (a sodium spot key with a shadow, a cool fill and rim, a room
+    built in code for reflections, the night grade stepped from `useNight`; programs compile in the
+    background and textures go up one a frame before the first draw), `liquidSurface` (the coffee's
+    disc with a meniscus, and its physical material showing the three photographed surfaces
+    (crema, milk bloom, rosetta; owner decision 2026-11-27), cross-faded, graded, aged live for the
+    last cup, lit by the scene and rippled by a splash), `liquidLook` (the coffee for a progress), `physics` (tilt,
+    spin, slosh), `CupControls` (buttons, arrow keys, the drag surface), `cupInput` (page to
+    scene).
+  - **The foot gap** is closed in the scene by a seat disc (see `docs/brand.md`).
+  - **Start the 3D later** (`src/scene/gate.ts`): no WebGL context, no GSAP, no hero film and no
+    picture below the first screen until the first intent or five quiet seconds after load; each canvas fades in over its still once its scene has drawn
+    (`useSceneReady`).
+  - **The hero's poster is preloaded** from the HTML on `/` only, by a small head script that
+    `vite.config.ts` adds at build (srcset and sizes are the picture's own, from `src/media/srcset.ts`).
+  - **Scripts:** `npm run models` (list-driven, `scripts/models.mjs`), `npm run cup-still`
+    (`scripts/cup-still/`), and `npm run media` keeps a still's transparency.
+
+Not yet: the drink models and the menu, and any real page content beyond the landing.
 
 ## 4. Exact next step
 
-**Show the owner Task 8** in the browser pane (desktop and phone size, day and night, and once with
-reduced motion), record the verdict on the feel in the learning log, and change what they ask for.
-Only after their approval: push `task/8-landing-prototype`, open the pull request into `develop`,
-merge on green, archive the branch as `merged/task-8-landing-prototype`, and add "Lighthouse budget"
-to `develop`'s required checks (a repository setting, the owner's call). Do not start Task 9 before
-the approval. Still open from earlier tasks: check the 16 px favicon in a real browser tab.
+**Review Task 9**: push `task/9-landing-complete`, open its pull request into `develop`, let CI run
+(the full end-to-end suite and the five-run Lighthouse budget run there), merge on green, archive
+the branch as `merged/task-9-landing-complete`. Then **Task 9b, the drink models**, an owner
+checkpoint: propose the drink list and each drink's brief, models and credits; nothing is generated
+without the owner's go for that drink. "Lighthouse budget" is a required check on `main` and
+`develop` (the owner, 2026-11-27). Still open for the Content Security Policy when `vercel.json`
+arrives: `'wasm-unsafe-eval'` in `script-src` for the meshopt decoder, and the sha256 of the one
+inline script in `index.html` (the hero poster's preload on `/`, added at build by
+`vite.config.ts`). Also the 16 px favicon in a real browser tab.
 
 ## 5. Bring-up on a new machine
 
@@ -182,7 +191,7 @@ accounts are created from the command line.
 
 ## 6. Owner checkpoints still ahead
 
-1. The landing prototype (plan Task 8): built, waiting for the owner's verdict.
+1. The drink models (plan Task 9b): the list, then each drink on its own go.
 2. Each pull request.
 3. The launch: the release from `develop` to `main` and the production deploy.
 
