@@ -1,3 +1,4 @@
+import { CartProvider } from '../cart/CartProvider'
 import { useSmoothScroll } from '../scroll/useSmoothScroll'
 import { TimeOfDay } from '../time/TimeOfDay'
 import { Footer } from '../ui/Footer'
@@ -15,16 +16,18 @@ export function App() {
 
   return (
     <RouteFocusProvider value={routeFocus}>
-      <TimeOfDay />
-      <SkipLink />
-      <div className="shell">
-        <Nav />
-        <main id="main" tabIndex={-1} className="shell-main">
-          <AppRoutes />
-        </main>
-        <Footer />
-      </div>
-      <Toaster />
+      <CartProvider>
+        <TimeOfDay />
+        <SkipLink />
+        <div className="shell">
+          <Nav />
+          <main id="main" tabIndex={-1} className="shell-main">
+            <AppRoutes />
+          </main>
+          <Footer />
+        </div>
+        <Toaster />
+      </CartProvider>
     </RouteFocusProvider>
   )
 }
