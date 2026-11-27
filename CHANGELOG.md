@@ -17,7 +17,8 @@ once the whole site is built.
   photograph or film fills the screen edge to edge.
 - The hero cup in 3D, lit live by a sodium lamp and a cool window, with the night or day grade. It
   appears in the cup's chapter and stays on screen through every chapter after it while its coffee
-  changes with the scroll: an espresso, then milk pouring, latte art, and the last cup, cooled. It
+  changes with the scroll, shown in photographs of real coffee from above: an espresso, then the
+  milk blooming up through the crema, a rosetta, and the last cup, aged as its chapter begins. It
   can be tilted, spun and made to ripple with buttons, the arrow keys or a sideways drag, and a
   vertical swipe over it still scrolls the page. Until the 3D is ready, and without WebGL, the cup
   is a still rendered from the same model in the same pose.

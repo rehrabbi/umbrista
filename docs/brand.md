@@ -129,6 +129,10 @@ masters stay in Higgsfield and are found again by their job IDs; only web deriva
 | Steam loop: six silent seconds, locked camera, first frame equals last | "The craft" | Seedance 2.5, 1080p (draft `560af24b` first) | `bf93d379` | 2026-11-26 |
 | Studio cup and saucer on navy | Reference for the cup model | Nano Banana 2, 4K still | `b22ab85d` | 2026-11-26 |
 | The cup and saucer as a 3D model, PBR textures, about 30,000 triangles | Hero cup, Brew-your-own | Meshy image to 3D, from a 1024 px copy of the studio still | `404fdaa5` | 2026-11-26 |
+| Coffee surface 1, from above: the espresso's crema | The cup's coffee surface (the cup chapter) | Nano Banana 2, 4K still | `aee4a370` | 2026-11-27 |
+| Coffee surface 2, from above: the milk blooming up through the crema | The cup's coffee surface (dusk on the street) | Nano Banana 2, 4K still | `5db64658` | 2026-11-27 |
+| Coffee surface 3, from above: a wide rosetta with a foam "lamp cord" and a round dot | The cup's coffee surface (the window, and aged for the last cup) | Nano Banana 2, 4K still | `8389ae19` | 2026-11-27 |
+| Coffee surface 4, from above: the last cup | Not used: the owner chose to age surface 3 live instead | Nano Banana 2, 4K still | `6fc56cef` | 2026-11-27 |
 
 Notes:
 
@@ -150,5 +154,12 @@ Notes:
   other.
 - The steam loop arrives as HEVC, which not every browser plays; it is always re-encoded to VP9 WebM
   and H.264 MP4.
+- The coffee surfaces (owner decision 2026-11-27) replace the code-drawn crema, milk and latte art.
+  Their masters are in the git-ignored `media-src/surfaces/`; `npm run media` makes square WebP
+  textures at 1024 px (used on the high tier: 306, 255 and 167 KB) and 512 px (other tiers: 78, 64
+  and 48 KB), loaded only with the cup's scene. The rosetta took four tries: `e6ea6e4a`,
+  `512456b1` and `38d8d10f` were rejected before `8389ae19`. For the last cup the owner chose
+  live ageing over surface 4: as the last chapter begins, the rosetta's edges soften, its sheen
+  flattens and its colour mutes, in the shader.
 - Planned: one 3D model per menu drink (plan Task 9b), each listed here once the owner approves and it
   is made.

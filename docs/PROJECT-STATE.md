@@ -154,8 +154,9 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
     seat and the handle), `HeroCup` (a sodium spot key with a shadow, a cool fill and rim, a room
     built in code for reflections, the night grade stepped from `useNight`; programs compile in the
     background and textures go up one a frame before the first draw), `liquidSurface` (the coffee's
-    disc with a meniscus, and its physical material with procedural crema, milk marbling, a tulip
-    latte art, ripples and cooling), `liquidLook` (the coffee for a progress), `physics` (tilt,
+    disc with a meniscus, and its physical material showing the three photographed surfaces
+    (crema, milk bloom, rosetta; owner decision 2026-11-27), cross-faded, graded, aged live for the
+    last cup, lit by the scene and rippled by a splash), `liquidLook` (the coffee for a progress), `physics` (tilt,
     spin, slosh), `CupControls` (buttons, arrow keys, the drag surface), `cupInput` (page to
     scene).
   - **The foot gap** is closed in the scene by a seat disc (see `docs/brand.md`).
