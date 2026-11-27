@@ -144,9 +144,10 @@ Notes:
   `npm run models`: meshopt geometry (positions 14 bits, normals 10, texture coordinates 14) and
   WebP textures at 2048 px (quality 86, normal map 94). Same triangles as the master (about 30,000;
   no simplification). Decoded by three's bundled meshopt decoder; nothing is fetched elsewhere.
-- The cup's still (`cup-still`, transparent AVIF and WebP at 640, 1280 and 1920 px) is not a
-  generated asset: `npm run cup-still` renders it from the model with the live scene itself, at
-  rest, at night, so the still and the live cup match where the one replaces the other.
+- The cup's still (`cup-still`, transparent AVIF and WebP at 640 and 1280 px) is not a generated
+  asset: `npm run cup-still` renders it from the model with the live scene itself, in the cup's rest
+  pose, with its espresso, at night, so the still and the live cup match where the one replaces the
+  other.
 - The steam loop arrives as HEVC, which not every browser plays; it is always re-encoded to VP9 WebM
   and H.264 MP4.
 - Planned: one 3D model per menu drink (plan Task 9b), each listed here once the owner approves and it

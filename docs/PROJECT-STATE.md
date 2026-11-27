@@ -162,6 +162,8 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   - **Start the 3D later** (`src/scene/gate.ts`): no WebGL context, no GSAP, no hero film and no
     picture below the first screen until the first intent or five quiet seconds after load; each canvas fades in over its still once its scene has drawn
     (`useSceneReady`).
+  - **The hero's poster is preloaded** from the HTML on `/` only, by a small head script that
+    `vite.config.ts` adds at build (srcset and sizes are the picture's own, from `src/media/srcset.ts`).
   - **Scripts:** `npm run models` (list-driven, `scripts/models.mjs`), `npm run cup-still`
     (`scripts/cup-still/`), and `npm run media` keeps a still's transparency.
 
@@ -173,9 +175,11 @@ Not yet: the drink models and the menu, and any real page content beyond the lan
 (the full end-to-end suite and the five-run Lighthouse budget run there), merge on green, archive
 the branch as `merged/task-9-landing-complete`. Then **Task 9b, the drink models**, an owner
 checkpoint: propose the drink list and each drink's brief, models and credits; nothing is generated
-without the owner's go for that drink. Still open: adding "Lighthouse budget" to `develop`'s
-required checks (a repository setting, the owner's call), the CSP's `'wasm-unsafe-eval'` for the
-meshopt decoder when `vercel.json` arrives, and the 16 px favicon in a real browser tab.
+without the owner's go for that drink. "Lighthouse budget" is a required check on `main` and
+`develop` (the owner, 2026-11-27). Still open for the Content Security Policy when `vercel.json`
+arrives: `'wasm-unsafe-eval'` in `script-src` for the meshopt decoder, and the sha256 of the one
+inline script in `index.html` (the hero poster's preload on `/`, added at build by
+`vite.config.ts`). Also the 16 px favicon in a real browser tab.
 
 ## 5. Bring-up on a new machine
 

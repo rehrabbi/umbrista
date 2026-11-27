@@ -23,31 +23,25 @@ once the whole site is built.
   is a still rendered from the same model in the same pose.
 - `npm run models` compresses the 3D models (meshopt geometry, WebP textures; the cup is 0.82 MB),
   and `npm run cup-still` renders the cup's still from the model.
-
-- The landing's first chapter. The street at dusk holds still while the visitor scrolls through it,
-  the café window and the lamp's glow come on, then "We open when the light goes." rises letter by
-  letter under the café's name. The opening time and the line beneath stay readable throughout. With
-  reduced motion it is one still screen with the lamps on and the title whole, and the sections
-  below fade in. The scroll is smooth and the animation follows it in the same frame.
-- A Lighthouse budget in CI for the landing on a phone profile: performance at least 90, the largest
-  image painted within 2.5 seconds, and layout shift below 0.05. CI's runner has no GPU, so it
-  measures the landing without its 3D canvas; on a desktop with a GPU the score is about 80, held
-  back by starting WebGL and loading three.js.
+- In the street chapter the visitor scrolls through dusk while the street holds still and the café
+  window and the lamps come on. The scroll is smooth, and the scene follows it in the same frame.
+- A Lighthouse budget for the landing on a phone profile, a required check on `main` and
+  `develop`: performance at least 90, the largest image painted within 2.5 seconds, layout shift
+  below 0.05, median of five runs.
 
 ### Changed
 
-- The first screen loads alone: no WebGL, no three.js, no scroll choreography, no film and no
-  picture below it until the visitor moves the pointer, touches, presses a key or scrolls, or the
-  loaded page has been quiet for five seconds. Each canvas fades in
-  over its still only once its scene has drawn.
+- The first screen loads alone: the hero's poster is preloaded from the HTML, the fonts every page
+  needs arrive with the first script, and the film follows once the page has loaded (never when the
+  visitor saves data). No WebGL, no three.js, no scroll choreography and no picture below the first
+  screen until the visitor moves the pointer, touches, presses a key or scrolls, or the loaded page
+  has been quiet for five seconds. Each canvas fades in over its still only once its scene has
+  drawn, and the cup's controls appear once the live cup is there. Shaders compile without
+  freezing the first frame where the browser allows it.
 - With reduced motion each chapter is a still: the cup shows that chapter's coffee and fades to the
   next chapter's, and the street is one screen with the lamps on.
 
-- The landing loads faster: the fonts every page needs arrive with the first script, the steam
-  loop's poster waits until it is near the screen, the scroll choreography loads once the page is
-  idle, and the rain's shader compiles without freezing the first frame where the browser allows it.
-
-- The landing photograph comes alive: rain runs down the glass in front of the Calvessa street and
+- The street's photograph comes alive: rain runs down the glass in front of the Calvessa street and
   bends the view through each drop, a sodium lamp glow follows the pointer and rests on the lit café
   window, the street recedes a little as the page scrolls, and the scene grades from overcast dusk
   by day to lamp-lit night. It loads after first paint, lines up exactly with the photograph under
@@ -58,8 +52,6 @@ once the whole site is built.
   loads the 3D canvas after first paint and falls back to the photograph without WebGL or when the
   context is lost. Quality tiers set the canvas pixel ratio from the device. `npm run media` builds
   the committed web derivatives from local masters.
-- The landing page now opens on a full-bleed photograph of the Calvessa street at dusk under the
-  heading, with a steam loop below it.
 - Repository foundation: design, plan, governance documents, licence and GitHub templates.
 - The Umbrista brand: the logo (a cup with a long shadow), the favicon and app icons, the link
   preview image, the web manifest, the night and day colours, and the two self-hosted fonts.
