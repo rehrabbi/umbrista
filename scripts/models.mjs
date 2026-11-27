@@ -1,13 +1,19 @@
 // Builds the web copies of the 3D models in public/models/ from the local masters in media-src/.
 // Masters are never committed; the compressed models are.
 //
-//   npm run models              build what is missing
-//   npm run models -- --force   rebuild everything (after replacing a master or changing a setting)
+//   npm run models                          build what is missing
+//   npm run models -- --force               rebuild everything (after replacing a master or changing a setting)
+//   npm run models -- fog-line lantern      only these models (a drink's name selects its light version too)
 //
-// Every model goes through the same steps with @gltf-transform/cli: tidy (dedupe, prune, weld,
-// resize the textures), WebP textures, then meshopt geometry. The page decodes meshopt with three's
-// own decoder, bundled with the site: nothing is fetched from another origin. The steps are
-// deterministic, so a rebuild with --force gives the same bytes and `git status` stays clean.
+// Every model goes through the same steps with @gltf-transform/cli: tidy (dedupe, prune, weld, and
+// for a light version simplify the geometry), resize the textures where the entry asks for less than
+// the master has, WebP textures, then meshopt geometry. The page decodes meshopt with three's own decoder, bundled with the site: nothing is
+// fetched from another origin. The steps are deterministic, so a rebuild with --force gives the same
+// bytes and `git status` stays clean.
+//
+// The models are built one at a time and the image work runs on one thread (VIPS_CONCURRENCY and
+// UV_THREADPOOL_SIZE are 1 in each step's environment): slower, but it never loads every core.
+// Building a few models per run, with a pause between runs, keeps the machine cooler still.
 //
 // The list is the only thing to edit when a model is added: one entry per model.
 
@@ -23,19 +29,53 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const SRC = join(root, 'media-src')
 const OUT = join(root, 'public', 'models')
 const force = process.argv.includes('--force')
+const names = process.argv.slice(2).filter((arg) => !arg.startsWith('--'))
 
 /**
  * The models. `master` is the file in media-src/, `out` the path under public/models/.
  * `textureSize` caps every texture's longest side; `budget` is the most the output may weigh, in
  * bytes (the media rules: the cup about 2 MB or less, each drink about 1.5 MB or less).
+ * `simplify`, when set, cuts the geometry with meshoptimizer's simplifier: `ratio` is the share of
+ * vertices to keep, `error` the most the surface may move, as a fraction of the model's size.
  */
-const MODELS = [{ id: 'cup', master: 'cup.glb', out: 'cup.glb', textureSize: 2048, budget: 2_000_000 }]
+const MODELS = [
+  { id: 'cup', master: 'cup.glb', out: 'cup.glb', textureSize: 2048, budget: 2_000_000 },
+  // Each menu drink twice: the full model for the bar, and a light one for the counter, where all
+  // eight show at once and small (textures at 512 px, about a quarter of the triangles, 400 KB or less).
+  // A full model keeps 2048 px textures unless that is over its budget; then it gets 1024. A light
+  // model's simplifier error is 0.001 unless the model stays over its budget; then `liteError` loosens it.
+  ...[
+    { id: 'fog-line', textureSize: 2048 },
+    { id: 'lantern', textureSize: 1024 },
+    { id: 'sodium', textureSize: 1024 },
+    { id: 'night-ferry', textureSize: 1024 },
+    { id: 'low-tide', textureSize: 1024 },
+    { id: 'umbra', textureSize: 1024 },
+    { id: 'wet-cobble', textureSize: 1024 },
+    { id: 'three-oclock', textureSize: 1024, liteError: 0.002 },
+  ].flatMap(({ id, textureSize, liteError = 0.001 }) => [
+    { id, master: `drinks/${id}.glb`, out: `drinks/${id}.glb`, textureSize, budget: 1_500_000 },
+    {
+      id: `${id}-lite`,
+      master: `drinks/${id}.glb`,
+      out: `drinks/${id}-lite.glb`,
+      textureSize: 512,
+      simplify: { ratio: 0.25, error: liteError },
+      budget: 400_000,
+    },
+  ]),
+]
+
+// The image work on one thread (sharp/libvips and Node's own pool), in every step's environment.
+const ENV = { ...process.env, VIPS_CONCURRENCY: '1', UV_THREADPOOL_SIZE: '1' }
 
 // WebP quality for colour-like textures, and for the normal map, whose small errors show as bumps.
 const WEBP_QUALITY = 86
 const NORMAL_QUALITY = 94
 // Texture coordinates keep 14 bits: a 2048 px atlas then lands within a quarter of a texel.
 const TEXCOORD_BITS = 14
+// The image-to-3D masters all come with 2048 px textures.
+const MASTER_TEXTURE_SIZE = 2048
 
 // The CLI's own entry point: the `bin` its package.json names. The package exports only its main
 // module, so its folder is found by walking up from that to its package.json.
@@ -66,7 +106,7 @@ function fail(message) {
 }
 
 function transform(args) {
-  const result = spawnSync(process.execPath, [CLI, ...args], { encoding: 'utf8' })
+  const result = spawnSync(process.execPath, [CLI, ...args], { encoding: 'utf8', env: ENV })
   if (result.error || result.status !== 0) {
     const detail = result.error?.message ?? `${result.stderr}${result.stdout}`.trim().split('\n').slice(-3).join(' | ')
     fail(`gltf-transform ${args[0]} failed: ${detail}`)
@@ -91,20 +131,31 @@ function build(model) {
   const work = mkdtempSync(join(tmpdir(), `umbrista-${model.id}-`))
   try {
     const tidy = join(work, '1-tidy.glb')
-    const textured = join(work, '2-colour.glb')
-    const webp = join(work, '3-webp.glb')
-    // Dedupe, prune, weld and resize; geometry is kept as modelled (no simplification), and
-    // compression is left to the steps below so each has its own settings.
+    const sized = join(work, '2-sized.glb')
+    const textured = join(work, '3-colour.glb')
+    const webp = join(work, '4-webp.glb')
+    // Dedupe, prune and weld; geometry is kept as modelled unless the entry asks for
+    // simplification, and compression is left to the steps below so each has its own settings.
+    const simplify = model.simplify
+      ? ['--simplify', 'true', '--simplify-ratio', String(model.simplify.ratio), '--simplify-error', String(model.simplify.error)]
+      : ['--simplify', 'false']
     transform([
       'optimize', master, tidy,
       '--compress', 'false',
       '--texture-compress', 'false',
-      '--texture-size', String(model.textureSize),
-      '--simplify', 'false',
+      ...simplify,
       '--palette', 'false',
       '--instance', 'false',
     ])
-    transform(['webp', tidy, textured, '--slots', '{baseColorTexture,emissiveTexture,metallicRoughnessTexture}', '--quality', String(WEBP_QUALITY), '--effort', '100'])
+    // Resize only below the masters' own size. optimize's --texture-size acts only when optimize
+    // itself compresses the textures, and this step re-encodes every image, so at full size it is
+    // skipped and the images reach WebP untouched.
+    let textures = tidy
+    if (model.textureSize < MASTER_TEXTURE_SIZE) {
+      transform(['resize', tidy, sized, '--width', String(model.textureSize), '--height', String(model.textureSize)])
+      textures = sized
+    }
+    transform(['webp', textures, textured, '--slots', '{baseColorTexture,emissiveTexture,metallicRoughnessTexture}', '--quality', String(WEBP_QUALITY), '--effort', '100'])
     transform(['webp', textured, webp, '--slots', 'normalTexture', '--quality', String(NORMAL_QUALITY), '--effort', '100'])
     transform(['meshopt', webp, out, '--level', 'high', '--quantize-texcoord', String(TEXCOORD_BITS)])
   } finally {
@@ -115,4 +166,8 @@ function build(model) {
   if (bytes > model.budget) fail(`${model.id} is ${bytes} bytes, over its budget of ${model.budget}`)
 }
 
-for (const model of MODELS) build(model)
+const unknown = names.filter((name) => !MODELS.some((model) => model.id === name))
+if (unknown.length > 0) fail(`no model named ${unknown.join(', ')}. The names are: ${MODELS.map((model) => model.id).join(', ')}`)
+const chosen = names.length === 0 ? MODELS : MODELS.filter((model) => names.some((name) => model.id === name || model.id === `${name}-lite`))
+
+for (const model of chosen) build(model)

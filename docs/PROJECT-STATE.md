@@ -6,9 +6,9 @@ Last updated: 2026-11-27.
 
 ## 1. Current stage
 
-**Task 9, the landing complete and the hero cup**, built on `task/9-landing-complete` (local commits,
-not pushed, no pull request yet; see section 3), waiting for review. Tasks 0 to 8 are merged into
-`develop`; Task 8, the landing prototype, is pull request #11. Both `main` and `develop` are
+**Task 9b, the drink models**, built on `task/9b-drink-models` (pushed, no pull request yet; see
+section 3), waiting for review. Tasks 0 to 9 are merged into `develop`; Task 9, the landing
+complete and the hero cup, is pull request #12. Both `main` and `develop` are
 protected. The owner approved a photoreal direction (ADR 0002), and on 2026-11-27 decided the
 landing's order and hero (section 2).
 
@@ -135,7 +135,7 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   most 0.05, median of five runs, mobile preset, `/`; CI has no GPU, so it measures the page without
   its canvas).
 
-- Task 9, on `task/9-landing-complete` (local commits only): the landing complete and the hero cup.
+- Task 9, merged into `develop` (pull request #12): the landing complete and the hero cup.
   - **The order** (owner decision 2026-11-27): `CHAPTERS` is craft, cup, dusk, window, last cup.
     Journey progress counts chapters; a chapter is halfway when its middle is at the middle of the
     screen. `orbitAt` is the cup's camera path; `lampsAt` the street's lamps.
@@ -168,15 +168,23 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   - **Scripts:** `npm run models` (list-driven, `scripts/models.mjs`), `npm run cup-still`
     (`scripts/cup-still/`), and `npm run media` keeps a still's transparency.
 
-Not yet: the drink models and the menu, and any real page content beyond the landing.
+- Task 9b, on `task/9b-drink-models`: the eight menu drinks as web 3D models (Drink 1, Last Tram,
+  reuses the cup). `npm run models` builds each twice from its master in `media-src/drinks/`:
+  `public/models/drinks/<id>.glb` for the bar (at most 1.5 MB; textures at 2048 px for Fog Line,
+  1024 for the rest) and `<id>-lite.glb` for the counter (at most 400 KB; 512 px textures and
+  meshopt-simplified geometry). Sizes, triangle counts and sha256 are in `docs/brand.md`. The
+  script builds one model at a time on one image thread and takes model names
+  (`npm run models -- fog-line lantern`). Night Ferry and Low Tide read frosted: no baked glass.
+
+Not yet: the menu, and any real page content beyond the landing.
 
 ## 4. Exact next step
 
-**Review Task 9**: push `task/9-landing-complete`, open its pull request into `develop`, let CI run
-(the full end-to-end suite and the five-run Lighthouse budget run there), merge on green, archive
-the branch as `merged/task-9-landing-complete`. Then **Task 9b, the drink models**, an owner
-checkpoint: propose the drink list and each drink's brief, models and credits; nothing is generated
-without the owner's go for that drink. "Lighthouse budget" is a required check on `main` and
+**Review Task 9b**: open the pull request for `task/9b-drink-models` into `develop`, let CI run,
+merge on green, archive the branch as `merged/task-9b-drink-models`. Then **Task 10, the menu**
+(the 3D bar and counter, and the cart; plan Task 10): `useDrinkModel(id, 'full' | 'lite')` loads
+`public/models/drinks/<id>.glb` or `<id>-lite.glb`; Night Ferry and Low Tide may need a glass
+material. "Lighthouse budget" is a required check on `main` and
 `develop` (the owner, 2026-11-27). Still open for the Content Security Policy when `vercel.json`
 arrives: `'wasm-unsafe-eval'` in `script-src` for the meshopt decoder, and the sha256 of the one
 inline script in `index.html` (the hero poster's preload on `/`, added at build by
@@ -191,9 +199,8 @@ accounts are created from the command line.
 
 ## 6. Owner checkpoints still ahead
 
-1. The drink models (plan Task 9b): the list, then each drink on its own go.
-2. Each pull request.
-3. The launch: the release from `develop` to `main` and the production deploy.
+1. Each pull request.
+2. The launch: the release from `develop` to `main` and the production deploy.
 
-The design, the plan and the brand board were the first three checkpoints; they are approved and
+The design, the plan, the brand board and the drink models (the list, then each drink on its own go) were the first four checkpoints; they are approved and
 stay open to the owner's review.
