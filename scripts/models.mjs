@@ -40,6 +40,8 @@ const names = process.argv.slice(2).filter((arg) => !arg.startsWith('--'))
  */
 const MODELS = [
   { id: 'cup', master: 'cup.glb', out: 'cup.glb', textureSize: 2048, budget: 2_000_000 },
+  // The cup as Last Tram on the menu's counter: light like the drinks' counter versions below.
+  { id: 'cup-lite', master: 'cup.glb', out: 'cup-lite.glb', textureSize: 512, simplify: { ratio: 0.25, error: 0.001 }, budget: 400_000 },
   // Each menu drink twice: the full model for the bar, and a light one for the counter, where all
   // eight show at once and small (textures at 512 px, about a quarter of the triangles, 400 KB or less).
   // A full model keeps 2048 px textures unless that is over its budget; then it gets 1024. A light
