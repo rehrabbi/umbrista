@@ -25,10 +25,17 @@ describe('KineticTitle', () => {
     expect(words).toEqual(['We', 'open', 'when', 'the', 'light', 'goes.'])
   })
 
-  it('shows the letters at rest unless it is told to wait for its cue', () => {
-    const { container, rerender } = render(<KineticTitle text="Dusk" />)
+  it('shows the letters at rest unless it is asked to rise', () => {
+    const { container, rerender } = render(<KineticTitle text='Dusk' />)
     expect(container.querySelector('[data-kinetic]')).toHaveAttribute('data-state', 'shown')
-    rerender(<KineticTitle text="Dusk" waiting />)
-    expect(container.querySelector('[data-kinetic]')).toHaveAttribute('data-state', 'waiting')
+    rerender(<KineticTitle text='Dusk' rise />)
+    expect(container.querySelector('[data-kinetic]')).toHaveAttribute('data-state', 'rising')
+  })
+
+  it('staggers the letters by the title timing, counting across words', () => {
+    const { container } = render(<KineticTitle text='We open' rise />)
+    const letters = [...container.querySelectorAll<HTMLElement>('[data-letter]')]
+    expect(letters.map((letter) => letter.style.getPropertyValue('--letter'))).toEqual(['0', '1', '2', '3', '4', '5'])
+    expect(container.querySelector<HTMLElement>('[data-kinetic]')!.style.getPropertyValue('--kinetic-stagger')).toBe('25ms')
   })
 })

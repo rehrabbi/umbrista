@@ -1,24 +1,36 @@
 import { lazy, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { Link } from 'react-router'
+import { Picture } from '../media/Picture'
+import { usePageLoaded } from '../media/usePageLoaded'
 import { VideoLoop } from '../media/VideoLoop'
 import { usePrefersReducedMotion } from '../media/usePrefersReducedMotion'
-import { CHAPTERS } from '../scene/journey/chapters'
+import { CupControls } from '../scene/cup/CupControls'
+import { pushCupInput } from '../scene/cup/cupInput'
+import { CHAPTERS, chapterIndex } from '../scene/journey/chapters'
 import { journeyProgress, useJourneyProgress } from '../scene/journey/progress'
 import { SceneHost } from '../scene/SceneHost'
 import { OpeningTime } from '../time/OpeningTime'
+import { buttonClasses } from '../ui/Button'
 import { PageHeading } from '../ui/PageHeading'
+import { CupStage } from './landing/CupStage'
 import { KineticTitle } from './landing/KineticTitle'
 import './Landing.css'
 
-// The journey's scene imports three, so it loads with the canvas after first paint, never with the page.
+// The street's scene imports three, so it loads with its canvas after first paint, never with the page.
 const Journey = lazy(() => import('../scene/journey/Journey').then((module) => ({ default: module.Journey })))
 
-const OPENING_CHAPTER = CHAPTERS[0]!
+const chapter = (id: string) => CHAPTERS[chapterIndex(id)]!
+const CRAFT = chapter('craft')
+const CUP = chapter('cup')
+const DUSK = chapter('dusk')
+const WINDOW = chapter('window')
+const LAST_CUP = chapter('last-cup')
 
-/** The scene inside the canvas. It alone re-renders as the visitor scrolls; the page does not. */
-function LiveJourney({ still }: { still: boolean }) {
+/** The street's scene inside its canvas. It alone re-renders as the visitor scrolls; the page does not. */
+function LiveStreet({ still }: { still: boolean }) {
   const progress = useJourneyProgress()
   // A still page is the finished chapter: the lamps are on.
-  return <Journey progress={still ? 1 : progress} />
+  return <Journey progress={still ? CHAPTERS.length : progress} />
 }
 
 const INTENT = ['wheel', 'touchstart', 'keydown', 'pointerdown', 'scroll'] as const
@@ -53,43 +65,30 @@ function whenIdleOrIntent(task: () => void): () => void {
 }
 
 /**
- * Chapter 1's scroll choreography (pin, lamps, title), while motion is allowed. GSAP loads with
- * it, once the page is idle or the visitor starts to scroll. If it cannot load, the chapter ends
- * as it does under reduced motion: the title shown, the lamps on, the photograph undimmed.
- * Returns whether the title should still wait for its cue, and whether the choreography failed.
+ * The journey's scroll choreography, while motion is allowed. GSAP loads with it, once the page is
+ * idle or the visitor starts to scroll. Returns whether it failed to load: the page then shows its
+ * chapters as stills, as it does under reduced motion.
  */
-function useOpeningScroll(
-  reduced: boolean,
-  section: RefObject<HTMLElement | null>,
-  stage: RefObject<HTMLElement | null>,
-): { waiting: boolean; failed: boolean } {
+function useJourneyScroll(reduced: boolean, root: RefObject<HTMLElement | null>): boolean {
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
-    const sectionElement = section.current
-    const stageElement = stage.current
-    if (reduced || !sectionElement || !stageElement) return
+    const page = root.current
+    if (reduced || !page) return
     let cancelled = false
     let stop: (() => void) | undefined
-    const lamps = [...stageElement.querySelectorAll<HTMLElement>('.landing-scene, .scroll-cue')]
     const cancelWait = whenIdleOrIntent(() => {
-      import('./landing/openingScroll')
-        .then(({ playOpening }) => {
+      import('./landing/journeyScroll')
+        .then(({ playJourney }) => {
           if (cancelled) return
-          stop = playOpening({
-            section: sectionElement,
-            lamps,
-            letters: [...sectionElement.querySelectorAll<HTMLElement>('[data-letter]')],
+          stop = playJourney({
+            chapters: [...page.querySelectorAll<HTMLElement>('section[data-chapter]')],
+            lamps: [...page.querySelectorAll<HTMLElement>('.dusk-scene')],
             onProgress: journeyProgress.set,
           })
         })
         .catch(() => {
-          if (cancelled) return
-          for (const element of lamps) element.style.setProperty('--lamp', '1')
-          stop = () => {
-            for (const element of lamps) element.style.removeProperty('--lamp')
-          }
-          setFailed(true)
+          if (!cancelled) setFailed(true)
         })
     })
     return () => {
@@ -98,16 +97,54 @@ function useOpeningScroll(
       stop?.()
       journeyProgress.set(0)
     }
-  }, [reduced, section, stage])
+  }, [reduced, root])
 
-  return { waiting: !reduced && !failed, failed: !reduced && failed }
+  return failed
 }
 
 /**
- * A chapter below the first. It fades up as it arrives, with or without reduced motion (a fade is
+ * Without the scroll choreography, each chapter is a still: the journey stands at the middle of the
+ * chapter crossing the middle of the screen, so the cup shows that chapter's coffee.
+ */
+function useStillJourney(still: boolean, root: RefObject<HTMLElement | null>): void {
+  useEffect(() => {
+    const page = root.current
+    if (!still || !page || typeof IntersectionObserver === 'undefined') return
+    const sections = [...page.querySelectorAll<HTMLElement>('section[data-chapter]')]
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue
+          const index = sections.indexOf(entry.target as HTMLElement)
+          if (index >= 0) journeyProgress.set(index + 0.5)
+        }
+      },
+      // A thin line across the middle of the screen: the chapter on it is the one being read.
+      { rootMargin: '-50% 0px -50% 0px' },
+    )
+    for (const section of sections) observer.observe(section)
+    return () => {
+      observer.disconnect()
+      journeyProgress.set(0)
+    }
+  }, [still, root])
+}
+
+/**
+ * A chapter after the first. It fades up as it arrives, with or without reduced motion (a fade is
  * not movement); without IntersectionObserver it is simply shown.
  */
-function Chapter({ id, className, children }: { id: string; className?: string; children: ReactNode }) {
+function Chapter({
+  id,
+  className,
+  motion,
+  children,
+}: {
+  id: string
+  className?: string
+  motion?: 'scroll' | 'still'
+  children: ReactNode
+}) {
   const ref = useRef<HTMLElement>(null)
   const [arrived, setArrived] = useState(() => typeof IntersectionObserver === 'undefined')
 
@@ -127,60 +164,137 @@ function Chapter({ id, className, children }: { id: string; className?: string; 
   }, [])
 
   return (
-    <section ref={ref} data-chapter={id} data-fade={arrived ? 'in' : 'waiting'} className={['chapter', className].filter(Boolean).join(' ')}>
+    <section
+      ref={ref}
+      data-chapter={id}
+      data-motion={motion}
+      data-fade={arrived ? 'in' : 'waiting'}
+      className={['chapter', className].filter(Boolean).join(' ')}
+    >
       {children}
     </section>
   )
 }
 
+/** A chapter's small number and name. */
+function ChapterMark({ index, title }: { index: number; title: string }) {
+  return (
+    <p className="chapter-mark">
+      <span className="chapter-number">{String(index + 1).padStart(2, '0')}</span> {title}
+    </p>
+  )
+}
+
 export function Landing() {
   const reduced = usePrefersReducedMotion()
-  const section = useRef<HTMLElement>(null)
-  const stage = useRef<HTMLDivElement>(null)
-  const { waiting, failed } = useOpeningScroll(reduced, section, stage)
+  const root = useRef<HTMLDivElement>(null)
+  const failed = useJourneyScroll(reduced, root)
+  const still = reduced || failed
+  useStillJourney(still, root)
+  const loaded = usePageLoaded()
 
   return (
-    <div className="landing">
+    <div ref={root} className="landing">
       {/*
-       * Chapter 1. With motion allowed the section is tall and its stage sticks to the viewport
-       * while the visitor scrolls through it: dusk, then the lamps, then the promise. With reduced
-       * motion it is one still screen with the lamps on and the title whole.
+       * The hero: the craft, full screen. The crema's close-up fills the viewport edge to edge (its
+       * poster is the page's one priority image); the film swaps in over it once the page has
+       * loaded, frame for frame, and stays the poster under reduced motion. The copy comes first in
+       * the document, so the heading is read before any picture.
        */}
-      <section ref={section} data-chapter={OPENING_CHAPTER.id} data-motion={reduced ? 'still' : 'scroll'} className="chapter chapter-opening">
-        <div ref={stage} className="landing-hero">
-          <div className="landing-copy">
-            <p className="chapter-mark">
-              <span className="chapter-number">01</span> {OPENING_CHAPTER.title}
-            </p>
-            <PageHeading className="landing-title">
-              <span className="landing-name">Umbrista</span> <KineticTitle text={OPENING_CHAPTER.line} waiting={waiting} />
-            </PageHeading>
-            <div className="landing-facts">
-              <OpeningTime className="landing-lede" />
-              <p className="landing-lede">A coffee bar in Calvessa, lit from dusk until three.</p>
-            </div>
+      <section data-chapter={CRAFT.id} className="chapter chapter-hero">
+        <div className="chapter-copy hero-copy">
+          <ChapterMark index={0} title={CRAFT.title} />
+          <PageHeading className="landing-title">
+            <span className="landing-name">Umbrista</span> <KineticTitle text={CRAFT.line} rise={!reduced} />
+          </PageHeading>
+          <p className="landing-lede">A coffee bar in Calvessa, lit from dusk until three.</p>
+          <OpeningTime className="landing-hours" />
+          <div className="landing-actions">
+            <Link to="/reserve" className={buttonClasses('primary')}>
+              Reserve a table
+            </Link>
+            <Link to="/menu" className={buttonClasses('secondary')}>
+              See the menu
+            </Link>
           </div>
-          <SceneHost
-            className="landing-scene"
-            still={OPENING_CHAPTER.still}
-            label="A fogged hill street in Calvessa at dusk, tram rails running down it and one café window lit."
-            priority
-          >
-            <LiveJourney still={reduced || failed} />
-          </SceneHost>
-          {!reduced && (
-            <p className="scroll-cue" aria-hidden="true">
-              Scroll
-            </p>
-          )}
+        </div>
+        <div className="chapter-media hero-media">
+          <Picture name="steam-loop-poster" alt="Crema on a fresh espresso, close up, with steam rising from it." priority className="chapter-photo" />
+          {!reduced && loaded && <VideoLoop name="steam-loop" poster={false} className="chapter-photo hero-film" />}
         </div>
       </section>
 
-      {/* Temporary home for the loop, until the chapters of Task 9. */}
-      <Chapter id="craft" className="landing-craft">
-        <VideoLoop name="steam-loop" className="landing-loop" />
-        <p className="landing-lede">Steam first, then the lamps, then you.</p>
-      </Chapter>
+      {/* The cup's chapters: the cup stays on its stage while they scroll around it. */}
+      <div className="journey">
+        <CupStage still={still} />
+
+        <Chapter id={CUP.id} className="chapter-cup">
+          <div className="chapter-copy">
+            <ChapterMark index={1} title={CUP.title} />
+            <h2 className="chapter-line">{CUP.line}</h2>
+            <p className="chapter-note">Tilt it, spin it, or set the coffee moving.</p>
+            <CupControls onInput={pushCupInput} />
+          </div>
+        </Chapter>
+
+        {/*
+         * The street at dusk. With motion allowed the chapter is tall and its stage sticks to the
+         * screen while the lamps come on; with reduced motion it is one still screen, lamps on.
+         */}
+        <Chapter id={DUSK.id} className="chapter-dusk" motion={still ? 'still' : 'scroll'}>
+          <div className="dusk-stage">
+            <SceneHost
+              className="chapter-media dusk-scene"
+              still="street-dusk"
+              label="A fogged hill street in Calvessa at dusk, tram rails running down it and one café window lit."
+              near="100% 0px"
+            >
+              <LiveStreet still={still} />
+            </SceneHost>
+            <div className="chapter-copy">
+              <ChapterMark index={2} title={DUSK.title} />
+              <h2 className="chapter-line">{DUSK.line}</h2>
+            </div>
+          </div>
+        </Chapter>
+
+        <Chapter id={WINDOW.id} className="chapter-window">
+          <div className="chapter-media">
+            <Picture
+              name="rain-window"
+              alt="Rain on the café window at night, a lamp over the table and the wet street outside."
+              className="chapter-photo"
+            />
+          </div>
+          <div className="chapter-copy">
+            <ChapterMark index={3} title={WINDOW.title} />
+            <h2 className="chapter-line">{WINDOW.line}</h2>
+            <p className="chapter-note">Rain on the glass, a lamp overhead, and nobody asking you to leave.</p>
+          </div>
+        </Chapter>
+
+        <Chapter id={LAST_CUP.id} className="chapter-last">
+          <div className="chapter-copy">
+            <ChapterMark index={4} title={LAST_CUP.title} />
+            <h2 className="chapter-line">{LAST_CUP.line}</h2>
+            <OpeningTime className="landing-hours" />
+            <nav aria-label="Where next" className="landing-next">
+              <Link to="/menu" className={buttonClasses('primary')}>
+                The menu
+              </Link>
+              <Link to="/brew" className={buttonClasses('secondary')}>
+                Brew your own
+              </Link>
+              <Link to="/reserve" className={buttonClasses('secondary')}>
+                Reserve a table
+              </Link>
+              <Link to="/join" className={buttonClasses('secondary')}>
+                Join the list
+              </Link>
+            </nav>
+          </div>
+        </Chapter>
+      </div>
     </div>
   )
 }

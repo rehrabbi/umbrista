@@ -17,7 +17,8 @@
     "wordmark": "node scripts/outline-wordmark.mjs",
     "icons": "tsx scripts/render-icons.mjs",
     "media": "node scripts/media.mjs",
-    "models": "node scripts/models.mjs"
+    "models": "node scripts/models.mjs",
+    "cup-still": "node scripts/cup-still/render.mjs"
   },
   "dependencies": {
     "@fontsource/atkinson-hyperlegible-next": "^5.3.0",

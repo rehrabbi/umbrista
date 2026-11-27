@@ -1,97 +1,76 @@
 /*
- * Chapter 1. The stage is full bleed: the street photograph fills it, a scrim of the page colour
- * fades it out behind the text, and the copy sits at the bottom where the scrim is strongest. The
- * scrim is the page colour, so it follows night and day with the tokens.
- *
- * With motion allowed, the section is taller than the screen and the stage sticks to the top while
- * the visitor scrolls through the extra height: that is the pin (ScrollTrigger only reads the
- * progress, so nothing in the layout moves when the script arrives, and nothing shifts). With
- * reduced motion the section is just the stage.
+ * The landing's scroll journey (owner decision 2026-11-27): the craft film as the hero, then the
+ * cup under the lamp, dusk on the street, the window and the last cup. Every chapter's photograph or
+ * film fills the screen edge to edge (never a framed box), a scrim of the page colour fades it out
+ * behind the copy, and the copy sits low and left. The scrim is the page colour, so it follows night
+ * and day with the tokens.
  */
-.chapter-opening {
+.landing {
   position: relative;
 }
 
-.chapter-opening[data-motion='scroll'] {
-  /* One screen to stand on, plus about 1.25 screens of scroll through the chapter. */
-  height: 225svh;
-}
-
-.landing-hero {
+.chapter {
   position: relative;
   isolation: isolate;
-  min-height: min(88svh, 60rem);
   display: flex;
   align-items: flex-end;
-  overflow: hidden;
+  min-height: 100svh;
 }
 
-.chapter-opening[data-motion='scroll'] .landing-hero {
-  position: sticky;
-  top: 0;
-  height: 100svh;
-  min-height: 32rem;
-  /* The lamps, 0..1, set by the chapter's script as the visitor scrolls. Off until it arrives. */
-  --lamp: 0;
-}
-
-.landing-scene {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-}
-
-/*
- * The lit café window sits left of centre in the photograph; on a narrow screen a centred crop
- * would push it off the edge. This crop keeps it near the middle. The canvas reads the same
- * object-position, so it still lines up with the photograph exactly.
- */
-.landing-scene .scene-still {
-  object-position: 35% 50%;
-}
-
-/*
- * The photograph underneath stands in for the lamps when there is no canvas: dimmer and greyer
- * while they are off, itself once they are on. The canvas draws the real thing over it.
- */
-.chapter-opening[data-motion='scroll'] .landing-scene .scene-still {
-  filter: brightness(calc(0.78 + 0.22 * var(--lamp))) saturate(calc(0.55 + 0.45 * var(--lamp)));
-}
-
-/* Once the canvas has drawn the photograph over it, the still underneath need not be filtered. */
-.chapter-opening[data-motion='scroll'] .landing-scene:has(canvas[data-backdrop='ready']) .scene-still {
-  filter: none;
-}
-
-.landing-hero::before {
-  content: '';
+/* A chapter's photograph or film: behind everything, edge to edge, cropped to fill. */
+.chapter-media {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(
-    to top,
-    var(--color-bg) 0%,
-    color-mix(in srgb, var(--color-bg) 92%, transparent) 40%,
-    color-mix(in srgb, var(--color-bg) 45%, transparent) 62%,
-    color-mix(in srgb, var(--color-bg) 10%, transparent) 100%
-  );
+  overflow: hidden;
+  background: var(--color-bg);
 }
 
-.landing-copy {
+.chapter-media > picture {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.chapter-photo,
+.chapter-media .scene-still {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The scrim: strongest under the copy, low and left, clear towards the top and the right. */
+.chapter-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      to top,
+      var(--color-bg) 0%,
+      color-mix(in srgb, var(--color-bg) 88%, transparent) 22%,
+      color-mix(in srgb, var(--color-bg) 35%, transparent) 50%,
+      color-mix(in srgb, var(--color-bg) 8%, transparent) 100%
+    ),
+    linear-gradient(to right, color-mix(in srgb, var(--color-bg) 55%, transparent), transparent 60%);
+}
+
+.chapter-copy {
   width: 100%;
   max-width: 72rem;
   margin: 0 auto;
-  padding: var(--space-8) var(--space-4) var(--space-7);
+  padding: var(--space-8) var(--space-4) 12svh;
   display: grid;
   gap: var(--space-4);
+  align-content: end;
 }
 
-/*
- * At the top of the page the site header sits above the stage, so the stage's last few rems start
- * below the fold until the header has scrolled away. Leave that much room under the copy.
- */
-.chapter-opening[data-motion='scroll'] .landing-copy {
-  padding-bottom: calc(var(--space-7) + 4.5rem);
+/* On a phone the copy keeps to the lower half; the cup has the upper half from the second chapter on. */
+.chapter-copy > * {
+  max-width: 36rem;
 }
 
 .chapter-mark {
@@ -110,6 +89,38 @@
   letter-spacing: 0.08em;
 }
 
+.chapter-line {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.25rem, 5vw, 4.5rem);
+  line-height: 0.95;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.chapter-note {
+  color: var(--color-text-quiet);
+  font-size: 1.125rem;
+}
+
+/* 1. The craft: the hero. */
+.chapter-hero .chapter-copy {
+  /* The site header sits above the hero at the top of the page: leave its height under the copy. */
+  padding-bottom: calc(10svh + 4.5rem);
+}
+
+/* The film lies over its own poster, frame for frame, and fades in once it is actually playing. */
+.hero-film.video-loop {
+  height: 100%;
+  background: transparent;
+  opacity: 0;
+  transition: opacity var(--dur-scene) var(--ease-settle);
+}
+
+.hero-film[data-playing] {
+  opacity: 1;
+}
+
 .landing-title {
   display: grid;
   gap: var(--space-2);
@@ -126,40 +137,102 @@
   color: var(--color-signal);
 }
 
-.landing-facts {
-  display: grid;
-  gap: var(--space-3);
-}
-
 .landing-lede {
-  max-width: 40rem;
   color: var(--color-text);
-  font-size: 1.125rem;
+  font-size: 1.25rem;
 }
 
-/* A quiet hint while the chapter waits for its first scroll; it fades as the lamps come on. */
-.scroll-cue {
-  position: absolute;
-  right: var(--space-4);
-  bottom: var(--space-5);
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
+.landing-hours {
   color: var(--color-text-quiet);
-  font-size: 0.8125rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  opacity: calc(1 - 2.5 * var(--lamp, 0));
 }
 
-.scroll-cue::after {
-  content: '';
-  width: 2.5rem;
-  height: 1px;
-  background: currentColor;
+.landing-hours time {
+  color: var(--color-text);
 }
 
-/* Chapters below the first fade up as they arrive, the way a lamp warms. */
+.landing-actions,
+.landing-next {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/*
+ * The cup's chapters. Its stage is sticky for all of them and sits over them, transparent but for
+ * the cup, which never moves while the chapters pass: the right half of a wide screen, the upper
+ * half of a phone's. The chapters' copy keeps clear of it.
+ */
+.journey {
+  position: relative;
+}
+
+/* 2. The cup under the lamp: no photograph, only the lamp's pool of light where the cup stands. */
+.chapter-cup {
+  background:
+    radial-gradient(ellipse 70% 42% at 50% 30%, color-mix(in srgb, var(--color-signal) 16%, transparent), transparent 70%),
+    var(--color-bg);
+}
+
+/*
+ * 3. Dusk on the street. With motion allowed the chapter is tall and its stage sticks to the screen
+ * (the pin) while the lamps come on; ScrollTrigger only reads the progress, so nothing in the layout
+ * moves when the script arrives. With reduced motion it is one still screen, lamps on.
+ */
+.chapter-dusk {
+  display: block;
+}
+
+.chapter-dusk[data-motion='scroll'] {
+  height: 225svh;
+}
+
+.dusk-stage {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  min-height: 100svh;
+  overflow: hidden;
+}
+
+.chapter-dusk[data-motion='scroll'] .dusk-stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  /* The lamps, 0..1, set by the journey's script as the visitor scrolls. Off until it arrives. */
+  --lamp: 0;
+}
+
+/*
+ * The lit café window sits left of centre in the photograph; on a narrow screen a centred crop
+ * would push it off the edge. This crop keeps it near the middle. The canvas reads the same
+ * object-position, so it still lines up with the photograph exactly.
+ */
+.dusk-scene .scene-still {
+  object-position: 35% 50%;
+}
+
+/*
+ * The photograph underneath stands in for the lamps when there is no canvas: dimmer and greyer
+ * while they are off, itself once they are on. The canvas draws the real thing over it.
+ */
+.chapter-dusk[data-motion='scroll'] .dusk-scene .scene-still {
+  filter: brightness(calc(0.78 + 0.22 * var(--lamp))) saturate(calc(0.55 + 0.45 * var(--lamp)));
+}
+
+/* Once the canvas has drawn the photograph over it, the still underneath need not be filtered. */
+.chapter-dusk[data-motion='scroll'] .dusk-scene:has(canvas[data-backdrop='ready']) .scene-still {
+  filter: none;
+}
+
+/* 5. The last cup: the room after closing, one lamp left low. */
+.chapter-last {
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 32%, color-mix(in srgb, var(--color-signal) 9%, transparent), transparent 72%),
+    var(--color-bg);
+}
+
+/* Chapters after the first fade up as they arrive, the way a lamp warms. */
 .chapter[data-fade] {
   transition: opacity var(--dur-scene) var(--ease-settle);
 }
@@ -178,54 +251,28 @@
   }
 }
 
-.landing-craft {
-  width: 100%;
-  max-width: 72rem;
-  margin: 0 auto;
-  padding: var(--space-7) var(--space-4);
-  display: grid;
-  gap: var(--space-4);
+/* On a phone the cup takes the upper half: the copy below it keeps the lower half. */
+@media (max-width: 59.99rem) {
+  .journey .chapter-copy {
+    min-height: 48svh;
+  }
 }
 
-.landing-craft .landing-lede {
-  color: var(--color-text-quiet);
-}
-
-.landing-loop {
-  border-radius: var(--radius-md);
-}
-
-/*
- * On a wide screen the copy is a low band (the title, with the opening time beside it), so the scrim
- * can stop lower and leave the café window clear to light up.
- */
+/* On a wide screen the cup stands on the right; the copy keeps to the left half. */
 @media (min-width: 60rem) {
-  .landing-hero::before {
-    background: linear-gradient(
-      to top,
-      var(--color-bg) 0%,
-      color-mix(in srgb, var(--color-bg) 90%, transparent) 30%,
-      color-mix(in srgb, var(--color-bg) 35%, transparent) 50%,
-      color-mix(in srgb, var(--color-bg) 10%, transparent) 100%
-    );
+  .journey .chapter-copy > * {
+    max-width: min(36rem, 44vw);
   }
 
-  .landing-copy {
-    grid-template-columns: minmax(0, 1fr) minmax(16rem, 24rem);
-    column-gap: var(--space-7);
-    align-items: end;
+  .chapter-cup {
+    background:
+      radial-gradient(ellipse 45% 55% at 72% 42%, color-mix(in srgb, var(--color-signal) 16%, transparent), transparent 70%),
+      var(--color-bg);
   }
 
-  .landing-copy > .chapter-mark,
-  .landing-copy > .landing-title {
-    grid-column: 1;
-  }
-
-  .landing-facts {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    align-self: end;
-    /* Sit on the title's last baseline rather than below its descenders. */
-    padding-bottom: 0.5rem;
+  .chapter-last {
+    background:
+      radial-gradient(ellipse 40% 50% at 72% 45%, color-mix(in srgb, var(--color-signal) 9%, transparent), transparent 72%),
+      var(--color-bg);
   }
 }

@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import { useEffect, type ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setIntersecting, useFakeIntersectionObserver } from '../test/intersection'
@@ -92,7 +92,7 @@ describe('SceneHost', () => {
     const host = container.querySelector('[data-scene-host]')!
     intent()
     await screen.findByTestId('r3f', {}, SLOW)
-    expect(host).toHaveAttribute('data-live', 'ready')
+    await waitFor(() => expect(host).toHaveAttribute('data-live', 'ready'))
     expect(screen.getByAltText(LABEL)).toBeInTheDocument()
   })
 

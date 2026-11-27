@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import type { StillName } from '../media/manifest'
 import { Picture } from '../media/Picture'
+import { usePageLoaded } from '../media/usePageLoaded'
 import { dprFor, isSoftwareRenderer, measureFrameTime, quality, type Quality, type Tier } from './quality'
 import { whenScenesMayStart } from './gate'
 import { SceneBoundary } from './SceneBoundary'
@@ -19,6 +20,13 @@ export interface SceneHostProps {
   label: string
   /** Pass for the page's LCP image. */
   priority?: boolean
+  /** The still's `sizes`, when the host is not as wide as the viewport. */
+  sizes?: string
+  /**
+   * Ask for the still only once the page has loaded, so a still just below the first screen never
+   * competes with the first screen's own image for the network.
+   */
+  deferStill?: boolean
   className?: string
   /**
    * Start only once the host is within this distance of the screen (an IntersectionObserver
@@ -125,6 +133,8 @@ export function SceneHost({
   still,
   label,
   priority = false,
+  sizes,
+  deferStill = false,
   className,
   near,
   swap = false,
@@ -138,6 +148,7 @@ export function SceneHost({
   const active = useSceneActive(ref)
   const isNear = useNear(ref, near)
   const ready = useCallback(() => setDrawn(true), [])
+  const loaded = usePageLoaded()
   // Waited for from mount, so the visitor's intent counts even while the host is still far away.
   const [mayStart, setMayStart] = useState(false)
   useEffect(() => whenScenesMayStart(() => setMayStart(true)), [])
@@ -182,7 +193,7 @@ export function SceneHost({
       data-swap={swap ? '' : undefined}
       className={['scene-host', className].filter(Boolean).join(' ')}
     >
-      <Picture name={still} alt={label} priority={priority} className="scene-still" />
+      {(!deferStill || loaded) && <Picture name={still} alt={label} priority={priority} sizes={sizes} className="scene-still" />}
       {showCanvas && (
         <SceneBoundary
           onError={() => {

@@ -18,6 +18,11 @@ export interface VideoLoopProps {
   /** Describes the loop. Without it the loop is decoration and hidden from assistive technology. */
   label?: string
   className?: string
+  /**
+   * Show the loop's own poster until it plays (the default). Off when the page already draws the
+   * same frame underneath, as the hero does, so it is not downloaded twice.
+   */
+  poster?: boolean
 }
 
 /**
@@ -25,12 +30,13 @@ export interface VideoLoopProps {
  * would otherwise compete with the first screen's image), plays only while on screen, and under
  * reduced motion is just its poster (no video element at all).
  */
-export function VideoLoop({ name, label, className }: VideoLoopProps) {
+export function VideoLoop({ name, label, className, poster = true }: VideoLoopProps) {
   const reduced = usePrefersReducedMotion()
   const small = useMaxWidth(SMALL_VIEWPORT)
   const loop = MEDIA[name]
   const classes = ['video-loop', className].filter(Boolean).join(' ')
   const [near, setNear] = useState(false)
+  const [playing, setPlaying] = useState(false)
 
   // A callback ref, so the observer follows the element when it is replaced (viewport size change).
   const watch = useCallback((video: HTMLVideoElement | null) => {
@@ -86,7 +92,9 @@ export function VideoLoop({ name, label, className }: VideoLoopProps) {
       className={classes}
       width={width}
       height={height}
-      poster={near ? `/media/${loop.poster}-${width}.webp` : undefined}
+      poster={near && poster ? `/media/${loop.poster}-${width}.webp` : undefined}
+      data-playing={playing ? '' : undefined}
+      onPlaying={() => setPlaying(true)}
       muted
       loop
       playsInline

@@ -15,30 +15,30 @@ function distance(a: LiquidLook, b: LiquidLook): number {
 describe('liquidLook', () => {
   it('lands on each chapter state at the chapter midpoint', () => {
     expect(liquidLook(1.5)).toEqual(LOOKS.cup)
-    expect(liquidLook(2.5)).toEqual(LOOKS.craft)
+    expect(liquidLook(2.5)).toEqual(LOOKS.dusk)
     expect(liquidLook(3.5)).toEqual(LOOKS.window)
     expect(liquidLook(4.5)).toEqual(LOOKS['last-cup'])
-    // The street chapter has no cup on screen; the espresso waits for it there.
+    // The hero is the craft film, with no cup on screen; the espresso waits for it there.
     expect(liquidLook(0.5)).toEqual(LOOKS.cup)
   })
 
   it('tells the story: espresso, then milk pouring, then latte art, then the cup cooled', () => {
-    const { cup, craft, window, 'last-cup': last } = LOOKS
+    const { cup, dusk, window, 'last-cup': last } = LOOKS
     expect(cup.milk).toBe(0)
     expect(cup.art).toBe(0)
     expect(cup.pour).toBe(0)
     expect(cup.crema).toBe(1)
-    expect(craft.pour).toBe(1)
-    expect(craft.swirl).toBeGreaterThan(0.5)
-    expect(craft.milk).toBeGreaterThan(cup.milk)
-    expect(craft.level).toBeGreaterThan(cup.level)
+    expect(dusk.pour).toBe(1)
+    expect(dusk.swirl).toBeGreaterThan(0.5)
+    expect(dusk.milk).toBeGreaterThan(cup.milk)
+    expect(dusk.level).toBeGreaterThan(cup.level)
     expect(window.art).toBe(1)
     expect(window.pour).toBe(0)
     expect(window.milk).toBe(1)
     expect(last.cool).toBe(1)
     expect(last.pour).toBe(0)
     expect(last.level).toBeLessThan(window.level)
-    for (const look of [cup, craft, window]) expect(look.cool).toBe(0)
+    for (const look of [cup, dusk, window]) expect(look.cool).toBe(0)
   })
 
   it('is continuous: no jump anywhere, including between chapters', () => {

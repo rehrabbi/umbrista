@@ -1,7 +1,7 @@
 /*
  * What the coffee in the hero cup looks like at each point of the scroll journey. The cup travels
  * through chapters 2 to 5 and its coffee changes with them: an espresso under the lamp, milk pouring
- * in with the craft, latte art bloomed by the window, then the last cup, cooled. Each chapter's state
+ * in as the street goes dark, latte art bloomed by the window, then the last cup, cooled. Each chapter's state
  * is exact at the chapter's midpoint; between two midpoints the look eases from one to the next, so
  * nothing jumps where one chapter hands over to the next. Pure: the same progress, the same look.
  *
@@ -31,14 +31,14 @@ export interface LiquidLook {
   level: number
 }
 
-type ChapterId = 'cup' | 'craft' | 'window' | 'last-cup'
+type ChapterId = 'cup' | 'dusk' | 'window' | 'last-cup'
 
 /** Each cup chapter's state, at its midpoint. */
 export const LOOKS: Readonly<Record<ChapterId, Readonly<LiquidLook>>> = {
   // An espresso: all crema, nothing added yet.
   cup: { coffee: [0.21, 0.11, 0.05], crema: 1, milk: 0, swirl: 0, pour: 0, art: 0, cool: 0, level: 0.06 },
-  // The milk pours in from low: the level rises and the white marbles through the crema.
-  craft: { coffee: [0.42, 0.25, 0.12], crema: 0.7, milk: 0.55, swirl: 1, pour: 1, art: 0.2, cool: 0, level: 0.55 },
+  // At dusk the milk pours in from low: the level rises and the white marbles through the crema.
+  dusk: { coffee: [0.42, 0.25, 0.12], crema: 0.7, milk: 0.55, swirl: 1, pour: 1, art: 0.2, cool: 0, level: 0.55 },
   // The pour has finished and the pattern has bloomed on a brown canvas.
   window: { coffee: [0.6, 0.39, 0.22], crema: 0.45, milk: 1, swirl: 0.2, pour: 0, art: 1, cool: 0, level: 0.8 },
   // The last cup: half drunk, cooled, its sheen gone flat and its pattern softened.

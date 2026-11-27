@@ -32,12 +32,23 @@
 }
 
 /*
- * Waiting for the cue: below the baseline and transparent. Only with motion allowed; GSAP's inline
- * styles take over from here, and with reduced motion the title is simply there.
+ * Rising: each letter climbs from below its baseline into place, on the settle curve, one after the
+ * other. Only with motion allowed; with reduced motion the title is simply there.
  */
 @media (prefers-reduced-motion: no-preference) {
-  .kinetic[data-state='waiting'] .kinetic-letter {
+  .kinetic[data-state='rising'] .kinetic-letter {
+    animation: kinetic-rise var(--dur-chapter) var(--ease-settle) both;
+    animation-delay: calc(var(--kinetic-delay, 200ms) + var(--letter, 0) * var(--kinetic-stagger, 25ms));
+  }
+}
+
+@keyframes kinetic-rise {
+  from {
     transform: translateY(105%);
     opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
   }
 }

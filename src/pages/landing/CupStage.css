@@ -1,0 +1,39 @@
+/*
+ * The cup's stage: one screen tall, sticky for the length of the cup's chapters, laid over them
+ * (the negative margin gives its height back, so the first chapter starts at the same place). Only
+ * the cup and its drag area take any room; the rest lets clicks and selection through.
+ */
+.cup-stage {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 100svh;
+  margin-bottom: -100svh;
+  pointer-events: none;
+}
+
+/* The cup's box: the still is contained in it and the canvas frames the same square. */
+.cup-scene,
+.cup-scene-drag {
+  position: absolute;
+  inset: 4svh 4vw 50svh;
+}
+
+.cup-scene.scene-host {
+  background: transparent;
+}
+
+.cup-scene .scene-still {
+  object-fit: contain;
+}
+
+.cup-scene-drag {
+  pointer-events: auto;
+}
+
+@media (min-width: 60rem) {
+  .cup-scene,
+  .cup-scene-drag {
+    inset: 8svh 3vw 8svh 50vw;
+  }
+}

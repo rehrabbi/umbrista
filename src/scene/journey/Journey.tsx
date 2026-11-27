@@ -1,5 +1,5 @@
 import { LivingBackground } from '../background/LivingBackground'
-import { CHAPTERS, chapterAt, lampAt } from './chapters'
+import { lampsAt } from './chapters'
 
 export interface JourneyProps {
   /** How far through the journey, in chapters (see chapters.ts). */
@@ -7,12 +7,10 @@ export interface JourneyProps {
 }
 
 /**
- * The scroll journey's scene, drawn inside a SceneHost. Chapter 1 is the street at dusk under the
- * living background, with the lamps coming on as it is scrolled through. Later chapters keep the
- * lamps on; the cup's chapters join here in Task 9.
+ * The street chapter's scene, drawn inside its SceneHost: the street at dusk under the living
+ * background, its lamps off until the visitor reaches the chapter, coming on as they scroll through
+ * it, and on from then on.
  */
 export function Journey({ progress }: JourneyProps) {
-  const { index, local } = chapterAt(progress)
-  const lamp = index === 0 ? lampAt(local) : 1
-  return <LivingBackground backdrop={CHAPTERS[0]!.still} intensity={1} lamp={lamp} />
+  return <LivingBackground backdrop="street-dusk" intensity={1} lamp={lampsAt(progress)} />
 }
