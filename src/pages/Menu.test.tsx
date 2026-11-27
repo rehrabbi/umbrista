@@ -95,7 +95,9 @@ async function renderLive(progress: number) {
   const view = renderMenu()
   intent(view.container)
   await waitFor(() => expect(screen.getAllByTestId('r3f')).toHaveLength(2), SLOW)
-  // Count from here: before this, the bar stood where jsdom's empty layout put it.
+  // The bar's scene arrives a moment after its canvas, holding the drinks where jsdom's empty layout
+  // put the bar (its end). Count from once it has.
+  await waitFor(() => expect(fullModels().size).toBeGreaterThan(0), SLOW)
   requests.length = 0
   act(() => barProgress.set(progress))
   await settle(SETTLE_MS + 100)
