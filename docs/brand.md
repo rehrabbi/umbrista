@@ -134,8 +134,19 @@ Notes:
 
 - The cup's design (a flared low body, thin rim, rounded loop handle, plain white glaze) is
   Umbrista's own, written into the brief; nothing copies a real product.
-- The model's back and underside are inferred from one view; a small gap shows where the foot meets
-  the saucer and is fixed before use (plan Task 9).
+- The model's back and underside are inferred from one view. Where the foot meets the saucer, the
+  saucer's top face stops short of the foot and the page showed through a thin ring (the saucer has
+  an open centre). Fixed in the scene, not the asset (plan Task 9): a glazed disc sits just under
+  the saucer's inner edge, its middle hidden inside the foot and shaded darker towards it like the
+  crevice where a cup sits. The disc's place and size are measured from the model's own vertices
+  (`useCupModel`), so nothing was regenerated.
+- Web copy of the cup: `public/models/cup.glb`, **0.82 MB** (budget 2 MB), from the 7.6 MB master by
+  `npm run models`: meshopt geometry (positions 14 bits, normals 10, texture coordinates 14) and
+  WebP textures at 2048 px (quality 86, normal map 94). Same triangles as the master (about 30,000;
+  no simplification). Decoded by three's bundled meshopt decoder; nothing is fetched elsewhere.
+- The cup's still (`cup-still`, transparent AVIF and WebP at 640, 1280 and 1920 px) is not a
+  generated asset: `npm run cup-still` renders it from the model with the live scene itself, at
+  rest, at night, so the still and the live cup match where the one replaces the other.
 - The steam loop arrives as HEVC, which not every browser plays; it is always re-encoded to VP9 WebM
   and H.264 MP4.
 - Planned: one 3D model per menu drink (plan Task 9b), each listed here once the owner approves and it

@@ -43,11 +43,15 @@ world is a night café.
   1. A **living background**: photoreal stills and short silent video loops of Calvessa's night, with
      real-time WebGL layered over them (rain running down the glass, lamp glow that follows the
      cursor, gentle depth and parallax), reacting to the cursor and to scroll.
-  2. A **scroll journey** on the landing page: chapters of the café's night (dusk falls on the
-     street, the cup under the lamp, the craft, the window, the last cup), each built from
-     art-directed photoreal media and moved by scroll, with big kinetic type. The hero cup travels
-     with the visitor and **transforms** as the chapters pass: an espresso, then milk pours and latte
-     art blooms, then it cools to the last cup, while the page moves around it.
+  2. A **scroll journey** on the landing page: chapters of the café's night, in this order (owner
+     decision 2026-11-27): **the craft** as the hero (the crema and its steam film, full screen, the
+     promise rising over it), **the cup under the lamp**, **dusk on the street** (the living
+     background, the lamps coming on), **the window**, **the last cup**. Each is built from
+     art-directed photoreal media that fills the screen edge to edge (never a framed box or card),
+     moved by scroll, with big kinetic type. The hero cup first appears in the second chapter, then
+     travels with the visitor and **transforms** as the chapters pass: an espresso, then milk pours
+     and latte art blooms, then it cools to the last cup, while the page moves around it. Nothing 3D
+     is needed for the first screen; the 3D starts on the visitor's first intent.
   3. A **hero object to play with**: the Umbrista cup as a photoreal 3D model, lit live, that can be
      tilted, spun and made to ripple with cursor, touch or keyboard.
   4. **Brew-your-own**: the visitor picks beans, roast, method and milk, and the same 3D cup fills and
