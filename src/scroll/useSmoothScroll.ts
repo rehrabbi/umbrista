@@ -61,6 +61,11 @@ export function onSmoothScroll(listener: () => void): () => void {
   }
 }
 
+/** The running Lenis, or null (reduced motion, or before the shell has started it). */
+export function smoothScroller(): Lenis | null {
+  return current
+}
+
 function setCurrent(next: Lenis | null): void {
   current = next
   for (const listener of listeners) listener()

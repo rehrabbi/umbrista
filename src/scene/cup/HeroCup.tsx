@@ -1,20 +1,14 @@
 import { useFrame, useLoader, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  BackSide,
-  BoxGeometry,
   CanvasTexture,
   Color,
   DirectionalLight,
   Group,
   Mesh,
-  MeshBasicMaterial,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   PerspectiveCamera,
-  PlaneGeometry,
-  PMREMGenerator,
-  Scene,
   ShadowMaterial,
   SpotLight,
   SRGBColorSpace,
@@ -23,7 +17,6 @@ import {
   Vector2,
   Vector3,
   type Object3D,
-  type WebGLRenderer,
 } from 'three'
 import { usePrefersReducedMotion } from '../../media/usePrefersReducedMotion'
 import { useNight } from '../../time/useNight'
@@ -38,6 +31,7 @@ import { LOOKS, chapterLook, liquidLook, type LiquidLook } from './liquidLook'
 import { applyLook, createLiquidMaterial, liquidSurface } from './liquidSurface'
 import { REST, step, type CupInput, type CupState } from './physics'
 import { useCupModel, type CupModel } from './useCupModel'
+import { nightRoom } from '../nightRoom'
 
 /** The lens: a long, quiet portrait lens, as in the approved preview. Vertical, for a square frame. */
 const FOV = 28
@@ -108,39 +102,6 @@ function placeCamera(camera: PerspectiveCamera, orbit: Orbit, target: Vector3, f
     target.z + distance * Math.sin(polar) * Math.cos(azimuth),
   )
   camera.lookAt(target)
-}
-
-/*
- * The light the cup reflects: a dark room built in code (no image is fetched), with a warm panel
- * overhead for the sodium lamp and a tall cool panel to one side for the window. Prefiltered once.
- */
-function nightRoom(gl: WebGLRenderer): Texture {
-  const room = new Scene()
-  const box = new Mesh(new BoxGeometry(12, 8, 12), new MeshBasicMaterial({ color: new Color('#0a1120'), side: BackSide }))
-  box.position.y = 2
-  room.add(box)
-  const lamp = new Mesh(new PlaneGeometry(2.4, 2.4), new MeshBasicMaterial({ color: new Color(6.0, 3.4, 1.4) }))
-  lamp.position.set(-1.6, 5.5, 1.2)
-  lamp.rotation.x = Math.PI / 2
-  room.add(lamp)
-  const pane = new Mesh(new PlaneGeometry(3.2, 4.5), new MeshBasicMaterial({ color: new Color(0.55, 0.7, 1.05) }))
-  pane.position.set(5.8, 2.2, -1.2)
-  pane.rotation.y = -Math.PI / 2
-  room.add(pane)
-  const floor = new Mesh(new PlaneGeometry(12, 12), new MeshBasicMaterial({ color: new Color(0.05, 0.04, 0.035) }))
-  floor.rotation.x = -Math.PI / 2
-  floor.position.y = -1.9
-  room.add(floor)
-  const pmrem = new PMREMGenerator(gl)
-  const target = pmrem.fromScene(room, 0.03)
-  pmrem.dispose()
-  room.traverse((object) => {
-    if (object instanceof Mesh) {
-      object.geometry.dispose()
-      ;(object.material as MeshBasicMaterial).dispose()
-    }
-  })
-  return target.texture
 }
 
 /** A soft dark disc, drawn on the table under the saucer where little light reaches. */

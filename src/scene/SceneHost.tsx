@@ -13,10 +13,14 @@ import './SceneHost.css'
 const SceneCanvas = lazy(() => import('./SceneCanvas'))
 
 export interface SceneHostProps {
-  /** The photoreal still under the canvas, and the whole scene whenever WebGL is not available. */
-  still: StillName
+  /**
+   * The photoreal still under the canvas, and the whole scene whenever WebGL is not available. A
+   * host without one (the menu's) leaves its stills to the page around it, which hides them once
+   * the host says `data-live="ready"`.
+   */
+  still?: StillName
   /** Describes the still (its alt text). */
-  label: string
+  label?: string
   /** Pass for the page's LCP image. */
   priority?: boolean
   /** The still's `sizes`, when the host is not as wide as the viewport. */
@@ -39,6 +43,11 @@ export interface SceneHostProps {
   swap?: boolean
   /** Smooth the canvas's edges (multisampling). Worth it for an object with fine edges, not a backdrop. */
   antialias?: boolean
+  /**
+   * Draw only when the scene asks (R3F's `invalidate`), even while on screen: for scenes that move
+   * only with the scroll or the visitor's input, so the frame loop idles whenever nothing moves.
+   */
+  onDemand?: boolean
   /** R3F elements drawn over the still. */
   children?: ReactNode
 }
@@ -138,6 +147,7 @@ export function SceneHost({
   near,
   swap = false,
   antialias = false,
+  onDemand = false,
   children,
 }: SceneHostProps) {
   const ref = useRef<HTMLDivElement>(null)
@@ -190,7 +200,7 @@ export function SceneHost({
       data-swap={swap ? '' : undefined}
       className={['scene-host', className].filter(Boolean).join(' ')}
     >
-      {(!deferStill || mayStart) && <Picture name={still} alt={label} priority={priority} sizes={sizes} className="scene-still" />}
+      {still && (!deferStill || mayStart) && <Picture name={still} alt={label ?? ''} priority={priority} sizes={sizes} className="scene-still" />}
       {showCanvas && (
         <SceneBoundary
           onError={() => {
@@ -199,7 +209,7 @@ export function SceneHost({
           }}
         >
           <Suspense fallback={null}>
-            <SceneCanvas frameloop={active ? 'always' : 'demand'} dpr={tier.dpr} antialias={antialias && tier.tier !== 'low'}>
+            <SceneCanvas frameloop={active && !onDemand ? 'always' : 'demand'} dpr={tier.dpr} antialias={antialias && tier.tier !== 'low'}>
               <SceneQualityContext value={tier}>
                 <SceneReadyContext value={ready}>{children}</SceneReadyContext>
               </SceneQualityContext>
