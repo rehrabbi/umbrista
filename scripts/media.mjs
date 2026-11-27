@@ -33,15 +33,16 @@ const STILLS = ['street-dusk', 'rain-window', 'crema-macro']
 const ALPHA_STILLS = ['cup-still']
 const LOOPS = [{ name: 'steam-loop', file: 'steam-loop.mp4' }]
 // Textures for the 3D scenes: square WebP only (a WebGL texture loads through a plain image, with no
-// <picture> to fall back from AVIF), at 1024 px and 512 px for the low quality tier. The hero cup's
-// coffee surfaces, photographed from above (docs/brand.md).
+// <picture> to fall back from AVIF), at 768 px and 512 px for the low quality tier. The hero cup's
+// coffee surfaces, photographed from above (docs/brand.md). The cup is never more than about 700 CSS
+// px across; at 1024 px the espresso's finely flecked crema was still 222 KB at quality 60.
 const TEXTURES = [
   { name: 'surface-espresso', file: 'surfaces/1-espresso.png' },
   { name: 'surface-bloom', file: 'surfaces/2-milk-bloom.png' },
   { name: 'surface-rosetta', file: 'surfaces/3-lamp-rosetta.png' },
 ]
-const TEXTURE_WIDTHS = [1024, 512]
-const TEXTURE_QUALITY = 78
+const TEXTURE_WIDTHS = [768, 512]
+const TEXTURE_QUALITY = 55
 
 const BITEXACT = ['-map_metadata', '-1', '-fflags', '+bitexact', '-flags:v', '+bitexact']
 

@@ -156,8 +156,10 @@ Notes:
   and H.264 MP4.
 - The coffee surfaces (owner decision 2026-11-27) replace the code-drawn crema, milk and latte art.
   Their masters are in the git-ignored `media-src/surfaces/`; `npm run media` makes square WebP
-  textures at 1024 px (used on the high tier: 306, 255 and 167 KB) and 512 px (other tiers: 78, 64
-  and 48 KB), loaded only with the cup's scene. The rosetta took four tries: `e6ea6e4a`,
+  textures at 768 px (used on the high tier: 121, 94 and 66 KB) and 512 px (other tiers: 54, 42
+  and 32 KB), WebP quality 55, loaded only with the cup's scene. They were 1024 px at quality 78
+  (306, 255 and 167 KB) until the owner's review of 2026-11-27; the cup is never more than about
+  700 CSS px across. The rosetta took four tries: `e6ea6e4a`,
   `512456b1` and `38d8d10f` were rejected before `8389ae19`. The shader grades all three
   photographs' browns to one hazel crema (owner review 2026-11-27: the photographs' own crema read
   rust-orange under the sodium lamp), leaving the milk and the art white. For the last cup the owner chose

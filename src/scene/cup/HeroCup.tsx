@@ -263,7 +263,7 @@ function texturesOf(scene: Object3D): Texture[] {
 /** The photographed coffee surfaces, in the order the look weighs them (liquidLook's `surface`). */
 const SURFACES: readonly TextureName[] = ['surface-espresso', 'surface-bloom', 'surface-rosetta']
 
-/** The surfaces' files: 1024 px on the high tier, the 512 px copies otherwise. */
+/** The surfaces' files: 768 px on the high tier, the 512 px copies otherwise. */
 function surfaceUrls(tier: string): string[] {
   return SURFACES.map((name) => {
     const widths = MEDIA[name].widths
