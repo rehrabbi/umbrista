@@ -27,7 +27,7 @@ import { useDrinkModel } from './useDrinkModel'
 
 /** A long, quiet lens, as for the hero cup. */
 const FOV = 26
-/** What the camera must fit around a drink (one unit tall, at most one wide), in scene units. */
+/** What the camera must fit around a drink (at most one unit on its largest side), in scene units. */
 const FRAME_HEIGHT = 1.4
 const FRAME_WIDTH = 1.25
 /** How quickly a drink catches up with its angle (per second; higher is quicker). */

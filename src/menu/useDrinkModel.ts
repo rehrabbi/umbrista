@@ -67,8 +67,9 @@ function release(url: string, scene: Object3D): void {
 }
 
 /**
- * A drink's model, standing on y = 0, centred on its axis and one unit tall, so every drink and the
- * cup take the same place in a scene. Suspends until it has loaded. Each caller gets its own copy
+ * A drink's model, standing on y = 0, centred on its axis, and scaled so its largest side (its
+ * height, or the width of a wide cup or bowl) is one unit, so every drink and the cup take the same
+ * place in a scene. Suspends until it has loaded. Each caller gets its own copy
  * of the model's nodes (one object can only be drawn in one place) sharing the loaded geometry,
  * materials and textures.
  */
@@ -85,12 +86,12 @@ export function useDrinkModel(model: string, detail: DrinkDetail): Group {
       boxes.set(scene, box)
     }
     const centre = box.getCenter(new Vector3())
-    const height = Math.max(1e-6, box.max.y - box.min.y)
+    const extent = Math.max(1e-6, box.max.y - box.min.y, box.max.x - box.min.x, box.max.z - box.min.z)
     const copy = scene.clone(true)
     copy.position.set(-centre.x, -box.min.y, -centre.z)
     const holder = new Group()
     holder.add(copy)
-    holder.scale.setScalar(1 / height)
+    holder.scale.setScalar(1 / extent)
     return holder
   }, [scene])
 
