@@ -27,9 +27,10 @@ export interface CupModel {
 
 /**
  * The meshopt decoder is three's own, bundled with the site (a small WebAssembly module embedded
- * in it), so nothing is fetched from a CDN. Draco is never used: the cup is not Draco-compressed.
+ * in it), so nothing is fetched from a CDN. Draco is never used: no model is Draco-compressed. The
+ * menu's drinks load through the same setup.
  */
-const withLocalDecoders: NonNullable<Parameters<typeof useGLTF>[3]> = (loader) => {
+export const withLocalDecoders: NonNullable<Parameters<typeof useGLTF>[3]> = (loader) => {
   loader.setMeshoptDecoder(MeshoptDecoder)
 }
 

@@ -1,0 +1,164 @@
+/*
+ * The counter: a row of places, one per drink, scrolled sideways. The 3D scene sits behind the
+ * row, the same size, and draws each drink above its place's name; until it has drawn (and for good
+ * without it) each place shows the drink's still. The row is the listbox, so its focus ring is the
+ * whole counter and the chosen place is marked with the signal colour.
+ */
+.counter {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 var(--space-4) var(--space-7);
+}
+
+.counter-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-5);
+}
+
+.counter-title {
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
+}
+
+.counter-hint {
+  color: var(--color-text-quiet);
+}
+
+.counter-stage {
+  position: relative;
+  isolation: isolate;
+  height: clamp(15rem, 38svh, 22rem);
+  /* The counter's top, lit from above: a band of surface fading into the page. */
+  background: linear-gradient(to top, var(--color-surface) 0, var(--color-surface) 30%, var(--color-bg) 30.5%, var(--color-bg) 100%);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.counter-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.counter-scene.scene-host {
+  background: transparent;
+}
+
+.counter-strip {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0 calc(50% - 4.5rem);
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  touch-action: pan-x pan-y;
+  cursor: grab;
+}
+
+.counter-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.counter-strip:focus-visible {
+  outline-offset: -3px;
+}
+
+.counter-place {
+  flex: 0 0 9rem;
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  justify-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-2) var(--space-4);
+  scroll-snap-align: center;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+/*
+ * A drink's still is about the size its 3D model stands at (three-quarters of its place), and no
+ * larger: shown from the first paint, a bigger one became the page's largest image, and the
+ * Menu's largest paint waited for it (2.57 s against the 2.5 s budget). At this size the intro's
+ * text is the largest thing on the first screen.
+ */
+.counter-still-box {
+  align-self: stretch;
+  justify-self: center;
+  position: relative;
+  width: min(100%, 7rem);
+  min-height: 0;
+  /* The still is sized from the box (cqw, cqh), so the box must not size itself from the still. */
+  container-type: size;
+}
+
+.counter-still-box > picture {
+  position: absolute;
+  inset: 0;
+}
+
+/*
+ * The still is exactly the photograph's square, the largest that fits the place, standing on the
+ * counter, and its studio backdrop fades into the counter in a circle, as in the bar (DrinkStage.css):
+ * never a square tile, only the drink. A mask changes no layout, so nothing shifts.
+ */
+.counter-still {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: min(100cqw, 100cqh);
+  height: min(100cqw, 100cqh);
+  margin: 0 auto;
+  -webkit-mask-image: radial-gradient(closest-side circle at 50% 52%, #000 78%, transparent 100%);
+  mask-image: radial-gradient(closest-side circle at 50% 52%, #000 78%, transparent 100%);
+}
+
+/* Once the 3D counter has drawn, the stills step aside (after it has faded in). */
+.counter-scene[data-live='ready'] ~ .counter-strip .counter-still {
+  visibility: hidden;
+  transition: visibility 0s linear var(--dur-scene);
+}
+
+.counter-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.counter-price {
+  color: var(--color-text-quiet);
+  font-variant-numeric: tabular-nums;
+}
+
+.counter-place[aria-selected='true'] .counter-name {
+  color: var(--color-signal);
+}
+
+.counter-place[aria-selected='true'] {
+  box-shadow: inset 0 -3px 0 var(--color-signal);
+}
+
+@media (min-width: 60rem) {
+  .counter-place {
+    flex-basis: 11rem;
+  }
+
+  .counter-strip {
+    padding: 0 var(--space-5);
+  }
+}

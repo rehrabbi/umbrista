@@ -142,6 +142,10 @@ masters stay in Higgsfield and are found again by their job IDs; only web deriva
 | Coffee surface 2, from above: the milk blooming up through the crema | The cup's coffee surface (dusk on the street) | Nano Banana 2, 4K still | `5db64658` | 2026-11-27 |
 | Coffee surface 3, from above: a wide rosetta with a foam "lamp cord" and a round dot | The cup's coffee surface (the window, and aged for the last cup) | Nano Banana 2, 4K still | `8389ae19` | 2026-11-27 |
 | Coffee surface 4, from above: the last cup | Not used: the owner chose to age surface 3 live instead | Nano Banana 2, 4K still | `6fc56cef` | 2026-11-27 |
+| Burnt custard tart, studio still on the seamless navy set | Menu, the night snacks | Nano Banana 2, 4K still | `550fcdae` | 2026-11-28 |
+| Olive oil and orange cake, studio still on the seamless navy set | Menu, the night snacks | Nano Banana 2, 4K still | `99018d8b` | 2026-11-28 |
+| Dark chocolate with sea salt, studio still on the seamless navy set | Menu, the night snacks | Nano Banana 2, 4K still | `249abc6a` | 2026-11-28 |
+| Burnt custard tart on linen | Not used: shot on a linen tablecloth, not the seamless navy set | Nano Banana 2, 4K still | `54ef8076` | 2026-11-28 |
 
 Notes:
 
@@ -157,6 +161,11 @@ Notes:
   `npm run models`: meshopt geometry (positions 14 bits, normals 10, texture coordinates 14) and
   WebP textures at 2048 px (quality 86, normal map 94). Same triangles as the master (about 30,000;
   no simplification). Decoded by three's bundled meshopt decoder; nothing is fetched elsewhere.
+- The cup's light copy for the menu's counter: `public/models/cup-lite.glb`, **0.18 MB** (budget
+  400 KB), by `npm run models -- cup-lite`, the same steps as the drinks' light versions (512 px
+  textures, meshoptimizer's simplifier with a target of a quarter of the vertices and an error bound
+  of 0.001); sha256 `cf03b8f653f2b4a941b8013f6792fb8c32d8b641660f7472355fa5b607698da4`. The full cup
+  is unchanged, byte for byte.
 - The cup's still (`cup-still`, transparent AVIF and WebP at 640 and 1280 px) is not a generated
   asset: `npm run cup-still` renders it from the model with the live scene itself, in the cup's rest
   pose, with its espresso, at night, so the still and the live cup match where the one replaces the
@@ -181,7 +190,16 @@ Notes:
   copy of that still. The masters (about 10 to 12 MB each) are in
   the git-ignored `media-src/drinks/`.
 - Night Ferry and Low Tide are glass drinks, and image to 3D bakes no transmission: their textures
-  read frosted and opaque. The menu (plan Task 10) may give their glass a glass material.
+  read frosted and opaque. The menu (plan Task 10) does not give their glass a glass material yet:
+  whether one is worth its cost needs a look on a GPU.
+- The drinks' studio stills are also the menu's photographs (plan Task 10), shown before the 3D
+  arrives and for good under reduced motion or without WebGL: `npm run media` makes `drink-<id>`
+  in AVIF and WebP at 640 and 1280 px (7 to 145 KB). Last Tram uses the cup's still. The rejected
+  glass Three O'Clock is not encoded.
+- The night snacks' stills (owner's go, 2026-11-28) are on the menu's snack cards: `npm run media`
+  makes `snack-<id>` in AVIF and WebP at 640 and 1280 px (19 to 90 KB) from the masters in the
+  git-ignored `media-src/snacks/`. The rejected linen tart and the contact sheets there are never
+  encoded.
 - Web copies of the drinks, by `npm run models`, the same steps as the cup's (meshopt, WebP at
   quality 86, normal map 94). Each drink has two: `public/models/drinks/<id>.glb`, the full model
   for the bar (budget 1.5 MB, every triangle of the master, textures at 2048 px unless that is over
