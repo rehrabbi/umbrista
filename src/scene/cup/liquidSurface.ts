@@ -111,6 +111,11 @@ export interface LiquidUniforms {
   uSurface: { value: Vector3 }
   /** How much of the procedural crema shows instead, 0..1: only while taking over from the still. */
   uProcedural: { value: number }
+  /**
+   * A gain on the photographs' browns, after their grade (Brew-your-own's roast). (1, 1, 1), the
+   * default and the landing's, leaves them exactly as graded.
+   */
+  uTint: { value: Vector3 }
 }
 
 const NOISE = /* glsl */ `
@@ -192,6 +197,7 @@ uniform sampler2D uSurfaceBloom;
 uniform sampler2D uSurfaceRosetta;
 uniform vec3 uSurface;
 uniform float uProcedural;
+uniform vec3 uTint;
 varying vec2 vDisc;
 ${NOISE}
 
@@ -232,6 +238,8 @@ vec3 lqPhoto(vec2 p) {
   if (uSurface.x > 0.001) colour += uSurface.x * lqGrade(texture2D(uSurfaceEspresso, uv, soften).rgb, vec3(0.79, 1.21, 2.55));
   if (uSurface.y > 0.001) colour += uSurface.y * lqGrade(texture2D(uSurfaceBloom, uv, soften).rgb, vec3(1.07, 1.33, 2.15));
   if (uSurface.z > 0.001) colour += uSurface.z * lqGrade(texture2D(uSurfaceRosetta, uv, soften).rgb, vec3(0.88, 1.11, 0.91));
+  // Brew-your-own's roast, on the browns only. Skipped at (1, 1, 1), so the landing's cup is untouched.
+  if (uTint != vec3(1.0)) colour = lqGrade(colour, uTint);
   float grey = dot(colour, LQ_LUMA);
   colour = mix(colour, vec3(grey), uCool * 0.3) * mix(vec3(1.0), vec3(1.0, 0.97, 0.8) * 0.92, uCool);
   return colour;
@@ -371,6 +379,7 @@ export function createLiquidMaterial(radius: number): MeshPhysicalMaterial & { u
     uSurfaceRosetta: { value: null },
     uSurface: { value: new Vector3(1, 0, 0) },
     uProcedural: { value: 0 },
+    uTint: { value: new Vector3(1, 1, 1) },
   }
   const material = new MeshPhysicalMaterial({
     roughness: 0.32,
@@ -393,7 +402,7 @@ export function createLiquidMaterial(radius: number): MeshPhysicalMaterial & { u
       .replace('#include <roughnessmap_fragment>', FRAGMENT_ROUGHNESS)
   }
   // One program for every liquid, whatever its radius.
-  material.customProgramCacheKey = () => 'umbrista-liquid-3'
+  material.customProgramCacheKey = () => 'umbrista-liquid-4'
   return material
 }
 
