@@ -6,9 +6,9 @@ Last updated: 2026-11-28.
 
 ## 1. Current stage
 
-**Task 10, the menu and the cart**, built on `task/10-menu-cart`, draft pull request #14 into
-`develop`, with CI verifying. Tasks 0 to 9b are merged into `develop` (Task 9b, the drink models,
-is pull request #13). Both `main` and `develop` are protected. The owner approved a photoreal direction (ADR 0002), and on 2026-11-27 decided the
+**Task 11, Brew-your-own**, built on `task/11-brew`, draft pull request #15 into `develop`, with
+CI verifying. Tasks 0 to 10 are merged into `develop` (Task 10, the menu and the cart, is pull
+request #14). Both `main` and `develop` are protected. The owner approved a photoreal direction (ADR 0002), and on 2026-11-27 decided the
 landing's order and hero (section 2).
 
 ## 2. Locked decisions
@@ -175,7 +175,7 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   script builds one model at a time on one image thread and takes model names
   (`npm run models -- fog-line lantern`). Night Ferry and Low Tide read frosted: no baked glass.
 
-- Task 10, on `task/10-menu-cart` (pull request #14): the menu and the order-ahead cart.
+- Task 10, merged into `develop` (pull request #14): the menu and the order-ahead cart.
   - **Data** (`shared/`, pure, for the server too): `menu.ts` (`MENU`, the nine approved drinks and
     three night snacks, prices in hundredths of a crown; `DRINKS`, the ones with a model, `model`
     `cup` for Last Tram), `money.ts` (`formatPrice` "4.60", `formatTotal` "19.10 crowns") and
@@ -214,15 +214,44 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
   - Not done here: a glass material for Night Ferry and Low Tide (left out of this task by the
     controller), and frame times on a GPU (the owner's PC cannot run them; ruling 5).
 
-Not yet: any real page content beyond the landing and the menu.
+- Task 11, on `task/11-brew` (pull request #15): Brew-your-own.
+  - **Data** (`shared/brew.ts`, pure, for the server too): the options next to `BrewChoice`
+    (`BEANS`, `ROASTS`, `METHODS`, `MILKS`, each with a label, a note in the house voice and its
+    price), `DEFAULT_BREW` (the house espresso), `brewPrice` (method plus beans plus milk; every
+    combination 2.80 to 4.80 crowns; throws a `RangeError` for an option not offered, so the server
+    can refuse it), `brewName` (the visitor's name, trimmed, or one made from the choices) and
+    `brewLook` (`{ liquid, crema, fill, foam }`: colours mixed between palette ends, the brand's
+    crema for the lightest roast and its day crema for the darkest; the method sets the fill and
+    milk raises it).
+  - **The cup** (`src/scene/cup/`): `brewSurface.ts` adapts a `brewLook` to the cup's liquid look
+    (the crema, bloom or rosetta photograph by the foam; the level by the fill) and a grade tint on
+    the photographs' browns: a pale golden hazel (`#c09560`) for the lightest crema, a deep brown
+    (`#553220`) for the darkest, exactly 1 at the house espresso, in ratio between (fix round 1:
+    the first, softer tint did not show the roast under the lamp). `BrewCup.tsx`
+    is the hero cup at rest with a `source` for its coffee, easing each new choice in over 0.6 s
+    (at once under reduced motion). `HeroCup` takes an optional `source`; `liquidSurface` has a
+    `uTint` uniform that defaults to (1, 1, 1) and is skipped there, so the landing's cup is
+    unchanged.
+  - **The page** (`src/pages/Brew.tsx`): four fieldsets of radios (each option's note is its
+    description), an optional name (at most 60 characters, as the cart keeps), one polite, atomic
+    live line describing the cup and its price (it leaves the name out, so typing says nothing),
+    "Add to order" (a `custom` line with the choice as `options`, its id built from the choice and
+    the name, so the same drink twice is one line of two), the total on its own line inside the
+    live region, each option's surcharge over its group's cheapest, and the cup's still with the 3D
+    over it on the visitor's first intent (`SceneHost`, `onDemand`), the whole host masked by a soft
+    ellipse so the table shadow baked into the still never shows as a box on the plain page. Not in `lighthouserc.json` (ruling 5).
+  - Not done here: the cup's tilt and spin controls on this page (optional in the rulings), and a
+    look at the brewed colours on a GPU (the owner's PC cannot render them).
+
+Not yet: any real page content beyond the landing, the menu and Brew-your-own.
 
 ## 4. Exact next step
 
-**Review Task 10**: pull request #14 into `develop`; on green, a short look at the menu's frame
-times on a GPU (a drink on screen, and flicking along the counter), then merge and archive the
-branch as `merged/task-10-menu-cart`. Then **Task 11, Brew-your-own** (plan Task 11): `brewLook`
-and `brewPrice` in `shared/brew.ts`, the BrewCup, and "Add to order" as a `custom` cart line through
-`useCart`. "Lighthouse budget" is a required check on `main` and `develop` (the owner, 2026-11-27). Still open for the Content Security Policy when `vercel.json`
+**Review Task 11**: pull request #15 into `develop`; on green, a look at `/brew` in a browser
+with a GPU (a light, a medium and a dark roast, with and without milk, to judge the grade tint's
+strength), then merge and archive the branch as `merged/task-11-brew`. Then **Task 12, Story, Visit,
+Journal and Privacy** (plan Task 12). The menu's frame times on a GPU (Task 10) are still to look
+at. "Lighthouse budget" is a required check on `main` and `develop` (the owner, 2026-11-27). Still open for the Content Security Policy when `vercel.json`
 arrives: `'wasm-unsafe-eval'` in `script-src` for the meshopt decoder, and the sha256 of the one
 inline script in `index.html` (the hero poster's preload on `/`, added at build by
 `vite.config.ts`). Also the 16 px favicon in a real browser tab.

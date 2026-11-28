@@ -67,7 +67,8 @@ function mix(a: number, b: number, t: number): number {
   return a + (b - a) * t
 }
 
-function blend(a: Readonly<LiquidLook>, b: Readonly<LiquidLook>, t: number): LiquidLook {
+/** Between two looks, `t` of the way from the first. */
+export function blend(a: Readonly<LiquidLook>, b: Readonly<LiquidLook>, t: number): LiquidLook {
   return {
     coffee: [mix(a.coffee[0], b.coffee[0], t), mix(a.coffee[1], b.coffee[1], t), mix(a.coffee[2], b.coffee[2], t)],
     crema: mix(a.crema, b.crema, t),

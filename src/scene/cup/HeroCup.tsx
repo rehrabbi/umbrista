@@ -27,7 +27,7 @@ import { MEDIA, type TextureName } from '../../media/manifest'
 import { useSceneQuality } from '../scene-quality'
 import { useSceneReady } from '../scene-ready'
 import { onCupInput, setCupLive, takeCupInputs } from './cupInput'
-import { LOOKS, chapterLook, liquidLook, type LiquidLook } from './liquidLook'
+import { LOOKS, chapterLook, liquidLook, type LiquidLook, type Rgb } from './liquidLook'
 import { applyLook, createLiquidMaterial, liquidSurface } from './liquidSurface'
 import { REST, step, type CupInput, type CupState } from './physics'
 import { useCupModel, type CupModel } from './useCupModel'
@@ -254,6 +254,13 @@ interface Push {
   until: number
 }
 
+/**
+ * Where the coffee's look comes from instead of the journey (Brew-your-own), asked every frame with
+ * the wall clock in seconds: the look, a gain on the photographs' browns, and whether it is still
+ * easing (so a canvas drawn on demand keeps drawing until it settles).
+ */
+export type CupSource = (now: number) => { look: LiquidLook; tint: Rgb; changing: boolean }
+
 export interface HeroCupProps {
   /** Test and tooling only: draw this journey progress, not the page's. */
   progress?: number
@@ -262,6 +269,8 @@ export interface HeroCupProps {
    * chapter's as it changes. Under reduced motion always; also when the page cannot follow the scroll.
    */
   still?: boolean
+  /** The coffee follows this, not the journey. The landing never sets it. */
+  source?: CupSource
 }
 
 /**
@@ -271,7 +280,7 @@ export interface HeroCupProps {
  * spin and splash it (physics.ts). Under reduced motion the camera never moves and each chapter's
  * coffee is a still, fading to the next chapter's as the chapter changes.
  */
-export default function HeroCup({ progress: fixedProgress, still: asStill }: HeroCupProps) {
+export default function HeroCup({ progress: fixedProgress, still: asStill, source }: HeroCupProps) {
   const model = useCupModel()
   const reduced = usePrefersReducedMotion()
   const still = asStill === true || reduced
@@ -422,7 +431,14 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
     // chapters, each chapter's own state, changing to the next over STILL_FADE_SECONDS.
     let look: LiquidLook
     let fading = false
-    if (still) {
+    let tint: Rgb | null = null
+    if (source) {
+      // Brew-your-own: the visitor's drink, eased in from the still's espresso like the journey's look.
+      const sourced = source(now)
+      look = blendLooks(LOOKS.cup, sourced.look, handoff)
+      tint = [1 + (sourced.tint[0] - 1) * handoff, 1 + (sourced.tint[1] - 1) * handoff, 1 + (sourced.tint[2] - 1) * handoff]
+      fading = sourced.changing
+    } else if (still) {
       const wanted = handing ? LOOKS.cup : chapterLook(progress)
       if (!tween.current || !sameLook(tween.current.to, wanted)) {
         tween.current = { from: shown.current, to: wanted, start: now }
@@ -437,6 +453,7 @@ export default function HeroCup({ progress: fixedProgress, still: asStill }: Her
     const uniforms = (surface.current?.material as typeof liquid.material | undefined)?.userData.uniforms
     if (!uniforms) return
     applyLook(uniforms, look)
+    if (tint) uniforms.uTint.value.set(tint[0], tint[1], tint[2])
     uniforms.uTime.value = reduced ? 0 : frame.clock.elapsedTime
     uniforms.uSlosh.value = state.current.slosh
     uniforms.uSloshDir.value.copy(sloshDir)

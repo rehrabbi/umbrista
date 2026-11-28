@@ -422,3 +422,62 @@ longer idle) on phones, trading a later rain for a quieter first few seconds.
   on a GPU before it is worth its cost.
 - The menu's frame times, with a drink on screen and while flicking along the counter, need a short
   look on a machine with a GPU.
+
+## 2026-11-28: Brew-your-own (Task 11)
+
+**Decisions and why.**
+
+- **The same cup, not a copy.** `BrewCup` is the hero cup with a `source` for its coffee: the
+  model, glaze, lamp, shadow, warm-up and hand-off from the still are the landing's own code. The
+  landing never passes a source, so its cup takes the path it always did.
+- **Photographed, not drawn** (owner, 2026-11-27). The drink picks one of the three coffee
+  photographs: the crema without milk, the milk blooming through it for a spot of foam, the rosetta
+  for poured milk. One photograph at a time, never two held half and half, which would show two
+  pours ghosted over each other; the 0.6 s ease cross-fades them only while it runs.
+- **Roast as a grade, not a new picture.** The roast and beans shift the photographs' browns
+  through a tint after their grade, using the same `lqGrade` that leaves the milk white. The tint
+  is the ratio of the drink's crema to the house espresso's, in linear light, raised to 0.6, so a
+  light or dark roast moves the photograph without turning it into a flat beige or a dull brown.
+  The house espresso's tint is exactly 1, and the shader skips the tint at (1, 1, 1): the landing's
+  pixels cannot change.
+- **The look is pure and tested; the uniforms are an adapter.** `brewLook` describes the drink in
+  palette colours and amounts (what the server and the tests can reason about); `brewSurface` turns
+  that into the cup's liquid look and tint. Neither knows about three.
+- **Every pull carries a crema.** The methods are all pulled on the bar's machine (ristretto,
+  espresso, lungo, long black), because a pour-over has no crema and there is no photograph of a
+  bare coffee surface. Drawing one would go against the owner's decision.
+- **One announcement per change.** The live line is one string in one text node, `aria-atomic`,
+  and it leaves out the visitor's name, so typing a name says nothing and each choice is said once,
+  with its new price. A test counts the mutations.
+- **The same drink twice is one line.** A brewed line's id is built from its choice and name, so the
+  cart's reducer adds the quantities, as it does for menu items; another drink is another line.
+
+**What to remember.**
+
+- `MutationObserver.takeRecords()` reads the pending records synchronously, so a test can count
+  exactly what one change did to a live region without waiting for the observer's microtask.
+- GLSL compares whole vectors with `==` and `!=` (a single bool), which makes a uniform-driven
+  skip cheap and exact: `mix(gain, vec3(1.0), s)` with a gain of one is not guaranteed to be
+  exactly one in every driver's arithmetic, but skipping it is.
+
+**Questions to revisit.**
+
+- The tint's strength (0.6) and the palette ends are chosen by numbers, not seen: the owner's PC
+  cannot render. A look on a GPU at a light, medium and dark roast, with and without milk, should
+  settle them.
+- The cup's tilt, spin and splash controls could come to this page too (optional in the rulings).
+
+**Fix round 1** (the controller's look in Brave, day theme, and the review's minor points).
+
+- **A still is only boxless on the background it was made for.** The cup's still carries the
+  lamp's shadow on the table as a faint darkening out to its edges: invisible over the landing's
+  dark photographs, a dark box on Brew's plain page. A soft elliptical mask on the whole host (the
+  still and the canvas) clears the edges; it was sized from the still's own alpha, so the cup and
+  saucer stay solid.
+- **A ratio cannot carry a hue it does not have.** The brand's two cremas are close in hue, so a
+  tint following their ratio only brightened or darkened the photograph, and under the sodium
+  lamp both ends read the same rust-orange. Each end now has a target colour chosen for what it
+  should read as (pale golden hazel, deep brown), and the house espresso stays exactly at 1.
+- **One announcement is one batch.** With the total on its own line, a change edits two text
+  nodes. A mutation observer is called once for everything changed in one task, so the test counts
+  its calls, not its records.
