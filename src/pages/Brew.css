@@ -24,9 +24,22 @@
   justify-self: center;
 }
 
+/*
+ * The cup sits straight on the page: no box, no edge, before the 3D and after it (the owner's rule:
+ * no boxed or framed media). The host has no backdrop, and the whole host, still and canvas alike,
+ * is masked by a soft ellipse. The cup's still was rendered for the landing, where it stands over
+ * dark photographs: the lamp's shadow on the table is baked into it as a wide, faint darkening that
+ * reaches the still's left, right and bottom edges, invisible there and a dark box on this page's
+ * plain background (the controller's look, day theme). The ellipse is clear at the host's sides
+ * and bottom and solid out to 86% of its size: measured on the still, the cup and saucer reach 84.6%
+ * of it (every pixel at least 200 of 255 opaque), so only the shadow fades. A mask changes no
+ * layout, so nothing shifts.
+ */
 .brew-scene {
   aspect-ratio: 1;
   width: 100%;
+  -webkit-mask-image: radial-gradient(50% 44% at 50% 56%, #000 86%, transparent 100%);
+  mask-image: radial-gradient(50% 44% at 50% 56%, #000 86%, transparent 100%);
 }
 
 .brew-scene.scene-host {

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -158,6 +159,19 @@ describe('Brew your own', () => {
     fireEvent.change(screen.getByRole('textbox', { name: /name/i }), { target: { value: 'The long way home' } })
     expect(observer.takeRecords()).toHaveLength(0)
     observer.disconnect()
+  })
+
+  it('sets the cup straight on the page: no backdrop, and its edges masked away softly', () => {
+    const css = readFileSync('src/pages/Brew.css', 'utf8')
+    const rule = (selector: string) => {
+      const start = css.indexOf(`\n${selector} {`)
+      expect(start).toBeGreaterThan(-1)
+      return css.slice(start, css.indexOf('}', start))
+    }
+    expect(rule('.brew-scene.scene-host')).toMatch(/background:\s*transparent/)
+    const scene = rule('.brew-scene')
+    expect(scene).toMatch(/(?<!-webkit-)mask-image:\s*radial-gradient\([^;]*transparent 100%\);/)
+    expect(scene).toMatch(/-webkit-mask-image:\s*radial-gradient\([^;]*transparent 100%\);/)
   })
 
   it('works without the 3D: the choices, the description and the order', async () => {
