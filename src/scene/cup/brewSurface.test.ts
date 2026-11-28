@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_BREW, ROASTS, brewLook, type BrewChoice } from '../../../shared/brew'
-import { blendBrew, brewSurface } from './brewSurface'
+import { BEANS, DEFAULT_BREW, ROASTS, brewLook, type BrewChoice } from '../../../shared/brew'
+import { GRADED_CREMA, blendBrew, brewSurface } from './brewSurface'
 
 const surfaceOf = (choice: BrewChoice) => brewSurface(brewLook(choice)).look.surface
+
+/** The photographs' graded crema, as a choice tints it, in linear light. */
+function tinted(choice: BrewChoice): [number, number, number] {
+  const { tint } = brewSurface(brewLook(choice))
+  return GRADED_CREMA.map((value, index) => value * tint[index]!) as [number, number, number]
+}
+
+const luma = ([r, g, b]: number[]) => 0.2126 * r! + 0.7152 * g! + 0.0722 * b!
 
 describe('brewSurface', () => {
   it('shows the espresso’s crema photograph without milk', () => {
@@ -42,12 +50,34 @@ describe('brewSurface', () => {
     expect(dark![1] / dark![0]).toBeLessThan(light![1] / light![0])
   })
 
-  it('keeps the tint gentle, so the photograph still reads as itself', () => {
-    for (const roast of ROASTS) {
-      for (const channel of brewSurface(brewLook({ ...DEFAULT_BREW, roast: roast.id })).tint) {
-        expect(channel).toBeGreaterThan(0.4)
-        expect(channel).toBeLessThan(1.6)
+  it('makes the roast plain to see: a pale golden light roast, a deep brown dark one with little gold', () => {
+    const house = tinted(DEFAULT_BREW)
+    const light = tinted({ ...DEFAULT_BREW, roast: 'light' })
+    const dark = tinted({ ...DEFAULT_BREW, roast: 'dark' })
+    // Light: twice as bright as the house crema, and golden (more green against its red).
+    expect(luma(light)).toBeGreaterThan(2 * luma(house))
+    expect(light[1] / light[0]).toBeGreaterThan(0.55)
+    // Dark: under a third as bright, with less gold than the house crema's 0.42.
+    expect(luma(dark)).toBeLessThan(luma(house) / 3)
+    expect(dark[1] / dark[0]).toBeLessThan(0.38)
+  })
+
+  it('never makes an unreal colour: every crema stays a brown, red over green over blue', () => {
+    for (const beans of BEANS) {
+      for (const roast of ROASTS) {
+        const [r, g, b] = tinted({ ...DEFAULT_BREW, beans: beans.id, roast: roast.id })
+        expect(r).toBeGreaterThan(g)
+        expect(g).toBeGreaterThan(b)
+        expect(r).toBeLessThan(1)
       }
+    }
+  })
+
+  it('moves the tint steadily with the roast and beans, the house blend between Sidamo and decaf', () => {
+    for (const roast of ROASTS) {
+      const [sidamo, harbour, decaf] = ['sidamo', 'harbour', 'decaf'].map((beans) => luma(tinted({ ...DEFAULT_BREW, beans, roast: roast.id })))
+      expect(sidamo).toBeGreaterThanOrEqual(harbour!)
+      expect(decaf).toBeLessThanOrEqual(harbour!)
     }
   })
 
