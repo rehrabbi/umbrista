@@ -13,10 +13,12 @@ once the whole site is built.
   medium, dark), how it is pulled (ristretto, espresso, lungo, long black) and the milk (none, a
   spot of foam, whole or oat), and to name the drink if you like. Beside it, the hero cup fills
   with the drink, still in photographs of real coffee: the crema without milk, the milk blooming
-  through it for a spot of foam, a rosetta for poured milk, its browns darker for a darker roast,
-  the level set by the pull and the milk. Each change eases in over 0.6 seconds, at once under
-  reduced motion. One line says what is in the cup and what it costs, for screen readers as it
-  changes; every drink is priced between 2.80 and 4.80 crowns. "Add to order" puts it in the cart
+  through it for a spot of foam, a rosetta for poured milk, its crema a pale golden hazel for a
+  light roast and a deep brown for a dark one, the level set by the pull and the milk. The cup
+  sits straight on the page, with no box around it. Each change eases in over 0.6 seconds, at once
+  under reduced motion. A description of the cup and its total, on a line of its own, are said
+  together to screen readers as they change; each option shows what it adds to the price. Every
+  drink is priced between 2.80 and 4.80 crowns. "Add to order" puts it in the cart
   as a line of its own, the same drink twice counting as two. The 3D starts on the visitor's first
   intent, over the cup's still, and the page works fully without it.
 - The menu. At the top, the counter: every drink standing in a row under the lamp, in 3D, slid

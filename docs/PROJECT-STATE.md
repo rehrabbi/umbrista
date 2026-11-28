@@ -225,7 +225,9 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
     milk raises it).
   - **The cup** (`src/scene/cup/`): `brewSurface.ts` adapts a `brewLook` to the cup's liquid look
     (the crema, bloom or rosetta photograph by the foam; the level by the fill) and a grade tint on
-    the photographs' browns, measured against the house espresso, whose tint is 1. `BrewCup.tsx`
+    the photographs' browns: a pale golden hazel (`#c09560`) for the lightest crema, a deep brown
+    (`#553220`) for the darkest, exactly 1 at the house espresso, in ratio between (fix round 1:
+    the first, softer tint did not show the roast under the lamp). `BrewCup.tsx`
     is the hero cup at rest with a `source` for its coffee, easing each new choice in over 0.6 s
     (at once under reduced motion). `HeroCup` takes an optional `source`; `liquidSurface` has a
     `uTint` uniform that defaults to (1, 1, 1) and is skipped there, so the landing's cup is
@@ -234,8 +236,10 @@ Motion; Vercel functions with Neon Postgres; Vitest, Testing Library and Playwri
     description), an optional name (at most 60 characters, as the cart keeps), one polite, atomic
     live line describing the cup and its price (it leaves the name out, so typing says nothing),
     "Add to order" (a `custom` line with the choice as `options`, its id built from the choice and
-    the name, so the same drink twice is one line of two), and the cup's still with the 3D over it
-    on the visitor's first intent (`SceneHost`, `onDemand`). Not in `lighthouserc.json` (ruling 5).
+    the name, so the same drink twice is one line of two), the total on its own line inside the
+    live region, each option's surcharge over its group's cheapest, and the cup's still with the 3D
+    over it on the visitor's first intent (`SceneHost`, `onDemand`), the whole host masked by a soft
+    ellipse so the table shadow baked into the still never shows as a box on the plain page. Not in `lighthouserc.json` (ruling 5).
   - Not done here: the cup's tilt and spin controls on this page (optional in the rulings), and a
     look at the brewed colours on a GPU (the owner's PC cannot render them).
 

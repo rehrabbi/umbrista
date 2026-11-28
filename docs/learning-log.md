@@ -466,3 +466,18 @@ longer idle) on phones, trading a later rain for a quieter first few seconds.
   cannot render. A look on a GPU at a light, medium and dark roast, with and without milk, should
   settle them.
 - The cup's tilt, spin and splash controls could come to this page too (optional in the rulings).
+
+**Fix round 1** (the controller's look in Brave, day theme, and the review's minor points).
+
+- **A still is only boxless on the background it was made for.** The cup's still carries the
+  lamp's shadow on the table as a faint darkening out to its edges: invisible over the landing's
+  dark photographs, a dark box on Brew's plain page. A soft elliptical mask on the whole host (the
+  still and the canvas) clears the edges; it was sized from the still's own alpha, so the cup and
+  saucer stay solid.
+- **A ratio cannot carry a hue it does not have.** The brand's two cremas are close in hue, so a
+  tint following their ratio only brightened or darkened the photograph, and under the sodium
+  lamp both ends read the same rust-orange. Each end now has a target colour chosen for what it
+  should read as (pale golden hazel, deep brown), and the house espresso stays exactly at 1.
+- **One announcement is one batch.** With the total on its own line, a change edits two text
+  nodes. A mutation observer is called once for everything changed in one task, so the test counts
+  its calls, not its records.
