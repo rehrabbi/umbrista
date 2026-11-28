@@ -1,0 +1,140 @@
+/*
+ * Brew-your-own: the introduction, then the cup beside the form. On a phone the cup sits above the
+ * form; on a wide screen it stands on the right and stays in view while the choices scroll past.
+ * The form is plain: each choice a fieldset of radios with a hairline in crema, the notes quiet,
+ * the description and "Add to order" at the end.
+ */
+.brew-intro {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.brew-key {
+  color: var(--color-text-quiet);
+  font-size: 0.9375rem;
+}
+
+.brew-layout {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.brew-cup {
+  width: min(100%, 26rem);
+  justify-self: center;
+}
+
+.brew-scene {
+  aspect-ratio: 1;
+  width: 100%;
+}
+
+.brew-scene.scene-host {
+  background: transparent;
+}
+
+.brew-scene .scene-still {
+  object-fit: contain;
+}
+
+.brew-form {
+  display: grid;
+  gap: var(--space-6);
+  max-width: 40rem;
+}
+
+.brew-group {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0 0 var(--space-5);
+  border: 0;
+  border-bottom: 1px solid var(--color-crema);
+}
+
+.brew-legend {
+  padding: 0;
+  margin-bottom: var(--space-3);
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.brew-options {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* The radio and its label on one line, the note under the label. */
+.brew-option {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
+  align-items: center;
+}
+
+.brew-radio {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  accent-color: var(--color-signal);
+}
+
+.brew-radio:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 3px;
+}
+
+.brew-option-label {
+  min-height: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.brew-option-note {
+  grid-column: 2;
+  color: var(--color-text-quiet);
+  font-size: 0.9375rem;
+}
+
+.brew-summary {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+}
+
+.brew-description {
+  font-size: 1.125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.brew-order {
+  font-variant-numeric: tabular-nums;
+}
+
+.brew-order a {
+  color: var(--color-signal);
+}
+
+@media (min-width: 60rem) {
+  .brew-layout {
+    grid-template-columns: minmax(0, 40rem) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .brew-cup {
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: var(--space-6);
+    width: 100%;
+    max-width: 34rem;
+  }
+
+  .brew-form {
+    grid-column: 1;
+    grid-row: 1;
+  }
+}
