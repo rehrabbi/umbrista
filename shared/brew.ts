@@ -81,8 +81,10 @@ export const DEFAULT_BREW: Readonly<BrewChoice> = { beans: 'harbour', roast: 'me
  * darkest its day crema. The coffee's own colour runs from a light roast's chestnut to a dark roast's
  * near black.
  */
-const CREMA_LIGHT = '#d3b48c'
-const CREMA_DARK = '#7e6040'
+/** The brand's crema (`--color-crema`, night): the lightest roast's crema. */
+export const CREMA_LIGHT = '#d3b48c'
+/** The brand's day crema (`--color-crema`, day): the darkest roast's crema. */
+export const CREMA_DARK = '#7e6040'
 const LIQUID_LIGHT = '#4a2c17'
 const LIQUID_DARK = '#1c100a'
 

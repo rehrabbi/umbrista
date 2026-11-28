@@ -1,6 +1,19 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { MENU } from './menu'
-import { BEANS, DEFAULT_BREW, METHODS, MILKS, ROASTS, brewLook, brewName, brewPrice, type BrewChoice } from './brew'
+import {
+  BEANS,
+  CREMA_DARK,
+  CREMA_LIGHT,
+  DEFAULT_BREW,
+  METHODS,
+  MILKS,
+  ROASTS,
+  brewLook,
+  brewName,
+  brewPrice,
+  type BrewChoice,
+} from './brew'
 
 /** Every choice a visitor can make. */
 function everyChoice(): BrewChoice[] {
@@ -106,9 +119,24 @@ describe('brewLook', () => {
   })
 
   it('takes its crema from the palette: the lightest roast is the brand’s crema, the darkest its day crema', () => {
-    const lightest = everyChoice().map((choice) => brewLook(choice).crema)
-    expect(lightest).toContain('#d3b48c')
-    expect(lightest).toContain('#7e6040')
+    const cremas = everyChoice().map((choice) => brewLook(choice).crema)
+    expect(cremas).toContain(CREMA_LIGHT)
+    expect(cremas).toContain(CREMA_DARK)
+  })
+
+  it('keeps its crema ends equal to the brand’s crema tokens and docs/brand.md, so they cannot drift', () => {
+    // shared/ imports nothing, so the values are written there; this reads the sources they copy.
+    const tokens = readFileSync('src/styles/tokens.css', 'utf8')
+    const crema = (selector: string) => {
+      const start = tokens.indexOf(`${selector} {`)
+      const rule = tokens.slice(start, tokens.indexOf('}', start))
+      return /--color-crema:\s*(#[0-9a-f]{6})/i.exec(rule)?.[1]?.toLowerCase()
+    }
+    expect(crema(':root')).toBe(CREMA_LIGHT)
+    expect(crema(':root[data-time="day"]')).toBe(CREMA_DARK)
+    const brand = readFileSync('docs/brand.md', 'utf8')
+    const row = /^\| Crema \(details only\) \| `(#[0-9A-F]{6})` \| `(#[0-9A-F]{6})` \|$/im.exec(brand)
+    expect(row?.slice(1).map((hex) => hex.toLowerCase())).toEqual([CREMA_LIGHT, CREMA_DARK])
   })
 
   it('fills the cup by the method, and higher with milk', () => {
