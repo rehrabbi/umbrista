@@ -79,10 +79,10 @@
   gap: var(--space-3);
 }
 
-/* The radio and its label on one line, the note under the label. */
+/* The radio, its label and what it adds to the price on one line, the note under the label. */
 .brew-option {
   display: grid;
-  grid-template-columns: 1.5rem 1fr;
+  grid-template-columns: 1.5rem 1fr auto;
   column-gap: var(--space-3);
   row-gap: var(--space-1);
   align-items: center;
@@ -106,8 +106,13 @@
   cursor: pointer;
 }
 
+.brew-surcharge {
+  color: var(--color-text-quiet);
+  font-variant-numeric: tabular-nums;
+}
+
 .brew-option-note {
-  grid-column: 2;
+  grid-column: 2 / -1;
   color: var(--color-text-quiet);
   font-size: 0.9375rem;
 }
@@ -118,8 +123,21 @@
   justify-items: start;
 }
 
+.brew-live {
+  display: grid;
+  gap: var(--space-2);
+}
+
 .brew-description {
   font-size: 1.125rem;
+}
+
+/* The total, in the signal colour, as the menu shows its prices. */
+.brew-price {
+  color: var(--color-signal);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
 }
 

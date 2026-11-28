@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BEANS, METHODS, MILKS, ROASTS, brewPrice, type BrewChoice } from '../../shared/brew'
-import { formatTotal } from '../../shared/money'
+import { formatPrice, formatTotal } from '../../shared/money'
 import { CartProvider } from '../cart/CartProvider'
 import { CART_KEY, type CartLine } from '../cart/cartStore'
 import { resetSceneGate } from '../scene/gate'
@@ -74,6 +74,9 @@ function liveRegions(container: HTMLElement) {
   return [...container.querySelectorAll('[aria-live]')]
 }
 
+/** Lets a mutation observer's callback run: it is called once for everything one task changed. */
+const delivered = () => new Promise((resolve) => setTimeout(resolve, 0))
+
 function storedCart(): CartLine[] {
   return JSON.parse(sessionStorage.getItem(CART_KEY) ?? '[]') as CartLine[]
 }
@@ -108,10 +111,34 @@ describe('Brew your own', () => {
     }
   })
 
-  it('describes each option in words, tied to its radio', () => {
+  it('describes each option in words, tied to its radio, with what it adds to the price', () => {
     renderBrew()
-    const radio = screen.getByRole('radio', { name: 'Sidamo' })
-    expect(radio).toHaveAccessibleDescription(BEANS.find((bean) => bean.id === 'sidamo')!.note)
+    const sidamo = BEANS.find((bean) => bean.id === 'sidamo')!
+    expect(screen.getByRole('radio', { name: 'Sidamo' })).toHaveAccessibleDescription(`${sidamo.note} +0.60`)
+    const harbour = BEANS.find((bean) => bean.id === 'harbour')!
+    expect(screen.getByRole('radio', { name: 'Harbour' })).toHaveAccessibleDescription(harbour.note)
+  })
+
+  it('shows each option’s surcharge as text, and nothing for the cheapest option of a choice', () => {
+    renderBrew()
+    const groups: [string, readonly { label: string; price: number }[]][] = [
+      ['Beans', BEANS],
+      ['Roast', ROASTS],
+      ['Method', METHODS],
+      ['Milk', MILKS],
+    ]
+    for (const [name, options] of groups) {
+      const fieldset = screen.getByRole('group', { name })
+      const base = Math.min(...options.map((option) => option.price))
+      for (const option of options) {
+        const row = within(fieldset).getByRole('radio', { name: option.label }).closest('.brew-option') as HTMLElement
+        const surcharge = option.price - base
+        if (surcharge > 0) expect(row).toHaveTextContent(`+${formatPrice(surcharge)}`)
+        else expect(row.textContent).not.toMatch(/\+\d/)
+      }
+    }
+    expect(within(screen.getByRole('group', { name: 'Method' })).getByText('+0.40')).toBeInTheDocument()
+    expect(within(screen.getByRole('group', { name: 'Milk' })).getByText('+1.00')).toBeInTheDocument()
   })
 
   it('starts from the house espresso, priced as text', () => {
@@ -122,7 +149,10 @@ describe('Brew your own', () => {
     expect(screen.getByRole('radio', { name: 'No milk' })).toBeChecked()
     const [live] = liveRegions(container)
     expect(live).toHaveTextContent('Harbour espresso')
-    expect(live).toHaveTextContent(formatTotal(280))
+    // The total is a line of its own, beside "Add to order", and inside the live region.
+    const price = within(live as HTMLElement).getByText(formatTotal(280))
+    expect(price.tagName).toBe('P')
+    expect(price.textContent).toBe('2.80 crowns')
   })
 
   it('offers an optional name of up to 60 characters', () => {
@@ -132,7 +162,7 @@ describe('Brew your own', () => {
     expect(name).toHaveAttribute('maxLength', '60')
   })
 
-  it('describes the cup in one polite live region, which changes once per change of choice', () => {
+  it('describes the cup and its price in one polite, atomic live region, changed once per change of choice', async () => {
     const { container } = renderBrew()
     const regions = liveRegions(container)
     expect(regions).toHaveLength(1)
@@ -140,24 +170,30 @@ describe('Brew your own', () => {
     expect(live).toHaveAttribute('aria-live', 'polite')
     expect(live).toHaveAttribute('aria-atomic', 'true')
 
-    const observer = new MutationObserver(() => {})
+    // A mutation observer is called once for everything changed in one task: one batch is one
+    // update of the region, which a screen reader says once (atomic: the whole region).
+    const batches: string[] = []
+    const observer = new MutationObserver(() => batches.push(live.textContent ?? ''))
     observer.observe(live, { subtree: true, childList: true, characterData: true })
     const before = live.textContent
 
     choose('Roast', 'Dark')
-    expect(observer.takeRecords()).toHaveLength(1)
-    expect(live.textContent).not.toBe(before)
+    await delivered()
+    expect(batches).toHaveLength(1)
+    expect(batches[0]).not.toBe(before)
     expect(live).toHaveTextContent('dark roast')
 
     choose('Milk', 'Oat milk')
-    expect(observer.takeRecords()).toHaveLength(1)
+    await delivered()
+    expect(batches).toHaveLength(2)
     expect(live).toHaveTextContent('oat milk')
     expect(live).toHaveTextContent(formatTotal(brewPrice({ beans: 'harbour', roast: 'dark', method: 'espresso', milk: 'oat' })))
 
     // The same choice again, or a name, changes nothing in the cup: nothing is said.
     choose('Milk', 'Oat milk')
     fireEvent.change(screen.getByRole('textbox', { name: /name/i }), { target: { value: 'The long way home' } })
-    expect(observer.takeRecords()).toHaveLength(0)
+    await delivered()
+    expect(batches).toHaveLength(2)
     observer.disconnect()
   })
 

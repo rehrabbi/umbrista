@@ -12,7 +12,7 @@ import {
   type BrewChoice,
   type BrewOption,
 } from '../../shared/brew'
-import { formatTotal } from '../../shared/money'
+import { formatPrice, formatTotal } from '../../shared/money'
 import { useCart } from '../cart/CartProvider'
 import { MAX_BREW_NAME, cartCount, cartTotal } from '../cart/cartStore'
 import { SceneHost } from '../scene/SceneHost'
@@ -27,7 +27,7 @@ const BrewCup = lazy(() => import('../scene/cup/BrewCup'))
 
 type Part = 'beans' | 'roast' | 'method' | 'milk'
 
-const CREMA_WORDS: Record<BrewChoice['roast'], string> = { light: 'pale gold', medium: 'hazel', dark: 'dark brown' }
+const CREMA_WORDS: Record<BrewChoice['roast'], string> = { light: 'pale golden', medium: 'hazel', dark: 'deep brown' }
 
 /** How full the cup is, in words. */
 function depthWords(fill: number): string {
@@ -38,8 +38,8 @@ function depthWords(fill: number): string {
 }
 
 /**
- * The cup in words, with its price: what the 3D cup shows, for everyone. The choice carries no name
- * (the page keeps the visitor's name apart), so typing one says nothing.
+ * The cup in words: what the 3D cup shows, for everyone. The choice carries no name (the page keeps
+ * the visitor's name apart), so typing one says nothing.
  */
 function describeCup(choice: BrewChoice): string {
   const look = brewLook(choice)
@@ -53,7 +53,7 @@ function describeCup(choice: BrewChoice): string {
       : look.foam < 0.75
         ? `${depth}, a spot of milk foam blooming through a ${crema}`
         : `${depth}, a rosetta of ${milk.phrase} on top`
-  return `${brewName(choice)}, ${roast.label.toLowerCase()} roast: ${surface}. ${formatTotal(brewPrice(choice))}.`
+  return `${brewName(choice)}, ${roast.label.toLowerCase()} roast: ${surface}.`
 }
 
 interface ChoiceGroupProps {
@@ -64,15 +64,21 @@ interface ChoiceGroupProps {
   onChange: (part: Part, value: string) => void
 }
 
-/** One choice: a fieldset of radios, each option's note tied to it as its description. */
+/**
+ * One choice: a fieldset of radios, each option's note, and what it adds to the price over the
+ * group's cheapest option (none for the cheapest), tied to it as its description.
+ */
 function ChoiceGroup({ legend, part, options, value, onChange }: ChoiceGroupProps) {
   const id = useId()
+  const base = Math.min(...options.map((option) => option.price))
   return (
     <fieldset className="brew-group">
       <legend className="brew-legend">{legend}</legend>
       <div className="brew-options">
         {options.map((option) => {
           const optionId = `${id}-${option.id}`
+          const surcharge = option.price - base
+          const describedBy = surcharge > 0 ? `${optionId}-note ${optionId}-surcharge` : `${optionId}-note`
           return (
             <div key={option.id} className="brew-option">
               <input
@@ -82,12 +88,17 @@ function ChoiceGroup({ legend, part, options, value, onChange }: ChoiceGroupProp
                 value={option.id}
                 checked={value === option.id}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(part, event.target.value)}
-                aria-describedby={`${optionId}-note`}
+                aria-describedby={describedBy}
                 className="brew-radio"
               />
               <label htmlFor={optionId} className="brew-option-label">
                 {option.label}
               </label>
+              {surcharge > 0 && (
+                <span id={`${optionId}-surcharge`} className="brew-surcharge">
+                  +{formatPrice(surcharge)}
+                </span>
+              )}
               <p id={`${optionId}-note`} className="brew-option-note">
                 {option.note}
               </p>
@@ -114,7 +125,7 @@ function OrderNote() {
 
 /**
  * Brew-your-own: a plain form (the beans, the roast, how it is pulled, the milk and, if the visitor
- * likes, a name) beside the hero cup, whose coffee follows every choice. A live line says what the
+ * likes, a name) beside the hero cup, whose coffee follows every choice. A live region says what the
  * cup holds and what it costs, so nothing depends on the 3D, which starts only on the visitor's
  * first intent, over the cup's still. "Add to order" puts the drink in the cart as a line of its own.
  */
@@ -172,9 +183,11 @@ export default function Brew() {
             onChange={(event: ChangeEvent<HTMLInputElement>) => setName(event.target.value)}
           />
           <div className="brew-summary">
-            <p aria-live="polite" aria-atomic="true" className="brew-description">
-              {describeCup(choice)}
-            </p>
+            {/* The cup and its price, said together, once for each change. */}
+            <div aria-live="polite" aria-atomic="true" className="brew-live">
+              <p className="brew-description">{describeCup(choice)}</p>
+              <p className="brew-price">{formatTotal(brewPrice(choice))}</p>
+            </div>
             <Button type="submit">Add to order</Button>
             <OrderNote />
           </div>
